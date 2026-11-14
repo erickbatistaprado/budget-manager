@@ -39,3 +39,8 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+
+# Bank statements and other personal finance documents
+statements/
+*.pdf
+!**/test/resources/fixtures/**/*.pdf

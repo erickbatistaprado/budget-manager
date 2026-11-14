@@ -29,7 +29,7 @@ run `make api-client-generate` and commit the generated sources.
 
 - Java 25
 - Node.js 24 and npm 11+
-- Docker with Docker Compose
+- Docker with Docker Compose (also needed by the API tests)
 - Terraform 1.13+ (only when changing infrastructure)
 
 ## Getting started
@@ -50,6 +50,9 @@ targets a development build; use `npm --prefix apps/mobile run start:go` for
 Expo Go.
 
 ## Quality gates
+
+API tests start PostgreSQL with Testcontainers, so Docker must be running for
+`make check` and `make api-check`.
 
 ```bash
 make check

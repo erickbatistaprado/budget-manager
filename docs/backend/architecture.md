@@ -7,7 +7,8 @@ contexts:
 
 - **Identity** owns users, roles, authentication, refresh tokens, and profile
   images.
-- **Ledger** owns categories, transactions, and installments.
+- **Ledger** owns categories, transactions, and installments. Categories belong
+  to a user, and names are unique per user and transaction type.
 - **Savings** owns savings goals and their location rules.
 
 The code is split by capability first and then by DDD layer:
@@ -22,8 +23,40 @@ The code is split by capability first and then by DDD layer:
 
 Dependencies point inward: controllers call application services; services use
 repositories; domain objects never access application or infrastructure types.
-ArchUnit enforces those boundaries and prevents HTTP adapters from accessing
-persistence adapters directly in every Maven verification.
+Controllers convert DTOs to domain objects before calling a service, and back to
+DTOs on the way out. Services report failures with `ApplicationException` and an
+`ApplicationError` kind; the HTTP adapter maps each kind to a status code.
+
+`ArchitectureTest` (ArchUnit) enforces these rules in every Maven verification:
+
+- the domain depends on neither application nor infrastructure code, Spring
+  Security, or Jackson;
+- application services do not depend on HTTP adapters or `org.springframework.http`;
+- HTTP adapters do not access persistence adapters;
+- `@RestController` methods never return JPA entities.
+
+## Authentication
+
+- Sign-in sets two HTTP-only cookies: a 15-minute JWT `access_token` and an
+  opaque `refresh_token`.
+- Every sign-in creates its own refresh token, so the web and mobile apps keep
+  separate sessions. Only its SHA-256 hash is stored.
+- `POST /auth/refresh` swaps the refresh token for a new one in a single
+  conditional `UPDATE`, so a token works once even under concurrent requests.
+- Logout revokes the current device's token; a password change revokes all of them.
+- Clients refresh on the first 401 and retry once (`BudgetManagerClient` and the
+  web `fetchers.lib.ts`).
+- Unsafe requests need the `X-CSRF-Token` header. One token from `GET /auth/csrf`
+  stays valid until sign-out.
+- An invalid access token never blocks public endpoints; protected endpoints
+  answer 401.
+
+## Tests
+
+API tests run against PostgreSQL in Testcontainers with the real Flyway
+migrations, so Docker must be running for `make api-check`. Each migration that
+rewrites existing data gets a test that loads the previous schema version, seeds
+data and migrates forward (see `CategoryOwnershipMigrationTest`).
 
 ## Evolution rules
 
