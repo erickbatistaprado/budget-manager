@@ -38,12 +38,10 @@ function expandTransaction(
         const parsedDueDate = parseApiDate(dueDate);
         return parsedDueDate >= startDate && parsedDueDate <= endDate;
       })
-      .map(
-        ({ amount, dueDate }: Installment): ExpandTransaction => ({
-          month: format(startOfMonth(parseApiDate(dueDate)), 'MMM yyyy'),
-          amount: Number(amount),
-        })
-      );
+      .map(({ amount, dueDate }: Installment): ExpandTransaction => ({
+        month: format(startOfMonth(parseApiDate(dueDate)), 'MMM yyyy'),
+        amount: Number(amount),
+      }));
   }
   if (transaction.repeats === RepeatInterval.MONTHLY) {
     const results: ExpandTransaction[] = [];

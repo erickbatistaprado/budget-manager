@@ -41,8 +41,7 @@ export default function ProfileForm(): JSX.Element {
   const { push } = useRouter();
 
   const profileImageUrl: string | undefined = useMemo(():
-    | string
-    | undefined => {
+    string | undefined => {
     if (updatedImage) {
       return URL.createObjectURL(updatedImage);
     }
@@ -120,9 +119,10 @@ export default function ProfileForm(): JSX.Element {
   function handleChange({
     currentTarget: { value, id },
   }: ChangeEvent<HTMLInputElement>): void {
-    setUpdatedUser(
-      (prev: UpdatedUser): UpdatedUser => ({ ...prev, [id]: value })
-    );
+    setUpdatedUser((prev: UpdatedUser): UpdatedUser => ({
+      ...prev,
+      [id]: value,
+    }));
   }
 
   function handleChangeImage({

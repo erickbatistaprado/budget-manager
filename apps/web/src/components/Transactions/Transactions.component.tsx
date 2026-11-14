@@ -96,16 +96,14 @@ export default function Transactions({
         onScroll={loadMoreIfNeeded}
         ref={scrollContainerRef}
       >
-        {transactions?.map(
-          (transaction: Transaction): JSX.Element => (
-            <FinancialMovements
-              key={transaction.id}
-              transaction={transaction}
-              mutateOnDelete={transactionsMutate}
-              selectedDate={selectedDate}
-            />
-          )
-        )}
+        {transactions?.map((transaction: Transaction): JSX.Element => (
+          <FinancialMovements
+            key={transaction.id}
+            transaction={transaction}
+            mutateOnDelete={transactionsMutate}
+            selectedDate={selectedDate}
+          />
+        ))}
         {isLoadingMore && (
           <div className="py-2 text-center text-sm text-[var(--ctp-subtext0)]">
             Loading more...

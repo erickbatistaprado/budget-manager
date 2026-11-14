@@ -6,15 +6,13 @@
     "orientation": "portrait",
     "scheme": "budgetmanager",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.batistaerick.budgetmanager"
     },
     "android": {
       "package": "com.batistaerick.budgetmanager",
-      "adaptiveIcon": { "backgroundColor": "#111827" },
-      "edgeToEdgeEnabled": true
+      "adaptiveIcon": { "backgroundColor": "#111827" }
     },
     "plugins": ["expo-router"],
     "experiments": { "typedRoutes": true }

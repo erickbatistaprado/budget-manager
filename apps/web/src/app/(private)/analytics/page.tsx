@@ -324,6 +324,7 @@ export default function AnalyticsPage(): JSX.Element {
                   ({ balance }: MonthlyTrend): number => balance
                 ),
                 label: 'Balance',
+                showMark: true,
               },
             ]}
             height={260}

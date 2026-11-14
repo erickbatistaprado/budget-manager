@@ -120,13 +120,11 @@ export default function NewTransaction({
     currentTarget: { value },
   }: ChangeEvent<HTMLSelectElement>): void {
     setTransactionType(value as TransactionType);
-    setForm(
-      (prevForm: Partial<Transaction>): Partial<Transaction> => ({
-        ...prevForm,
-        category: undefined,
-        installmentNumbers: undefined,
-      })
-    );
+    setForm((prevForm: Partial<Transaction>): Partial<Transaction> => ({
+      ...prevForm,
+      category: undefined,
+      installmentNumbers: undefined,
+    }));
   }
 
   function handleOnClose(): void {

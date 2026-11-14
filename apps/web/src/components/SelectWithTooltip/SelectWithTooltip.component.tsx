@@ -36,13 +36,11 @@ export default function SelectWithTooltip({
           onChange={onChange}
           disabled={disabled}
         >
-          {options.map(
-            ({ value, label }: Option): JSX.Element => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            )
-          )}
+          {options.map(({ value, label }: Option): JSX.Element => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
       </Tooltip>
     </div>

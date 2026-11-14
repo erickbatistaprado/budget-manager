@@ -263,45 +263,43 @@ export default function SavingsPage(): JSX.Element {
               Saved money
             </h2>
             <div className="space-y-2">
-              {savingsList.map(
-                (saving: Saving): JSX.Element => (
-                  <div
-                    key={saving.id}
-                    className="grid grid-cols-[1fr_auto] items-center gap-3 rounded border border-[var(--ctp-surface1)] p-3"
-                  >
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-[var(--ctp-text)]">
-                        {saving.name}
-                      </div>
-                      <div className="text-xs text-[var(--ctp-subtext0)]">
-                        {savingLocationLabels[saving.location]}
-                      </div>
+              {savingsList.map((saving: Saving): JSX.Element => (
+                <div
+                  key={saving.id}
+                  className="grid grid-cols-[1fr_auto] items-center gap-3 rounded border border-[var(--ctp-surface1)] p-3"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-[var(--ctp-text)]">
+                      {saving.name}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Money
-                        className="text-sm font-semibold"
-                        value={saving.amount}
-                      />
-                      <button
-                        type="button"
-                        onClick={(): void => handleEdit(saving)}
-                        className="cursor-pointer rounded p-2 text-[var(--ctp-text)] hover:bg-[var(--ctp-surface1)]"
-                        title="Edit"
-                      >
-                        <FiEdit2 />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(): Promise<void> => handleDelete(saving.id)}
-                        className="cursor-pointer rounded p-2 text-[var(--ctp-red)] hover:bg-[var(--ctp-red)]/25"
-                        title="Delete"
-                      >
-                        <FiTrash2 />
-                      </button>
+                    <div className="text-xs text-[var(--ctp-subtext0)]">
+                      {savingLocationLabels[saving.location]}
                     </div>
                   </div>
-                )
-              )}
+                  <div className="flex items-center gap-3">
+                    <Money
+                      className="text-sm font-semibold"
+                      value={saving.amount}
+                    />
+                    <button
+                      type="button"
+                      onClick={(): void => handleEdit(saving)}
+                      className="cursor-pointer rounded p-2 text-[var(--ctp-text)] hover:bg-[var(--ctp-surface1)]"
+                      title="Edit"
+                    >
+                      <FiEdit2 />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(): Promise<void> => handleDelete(saving.id)}
+                      className="cursor-pointer rounded p-2 text-[var(--ctp-red)] hover:bg-[var(--ctp-red)]/25"
+                      title="Delete"
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </div>
+                </div>
+              ))}
               {!savingsList.length && (
                 <span className="text-sm text-[var(--ctp-subtext1)]">
                   No saved money added yet.
