@@ -11,7 +11,13 @@ export default function proxy({
   const accessToken: string | undefined = cookies.get('access_token')?.value;
   const token: string | undefined =
     accessToken ?? cookies.get('refresh_token')?.value;
-  const protectedRoutes: string[] = ['/', '/profile', '/analytics'];
+  const protectedRoutes: string[] = [
+    '/',
+    '/profile',
+    '/analytics',
+    '/savings',
+    '/import',
+  ];
 
   if (
     !token &&
@@ -29,5 +35,12 @@ export default function proxy({
 }
 
 export const config = {
-  matcher: ['/', '/profile/:path*', '/analytics/:path*', '/auth'],
+  matcher: [
+    '/',
+    '/profile/:path*',
+    '/analytics/:path*',
+    '/savings/:path*',
+    '/import/:path*',
+    '/auth',
+  ],
 };

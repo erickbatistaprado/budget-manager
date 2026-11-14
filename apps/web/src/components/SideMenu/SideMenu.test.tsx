@@ -27,6 +27,7 @@ describe('SideMenu', (): void => {
 
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('Analytics')).toBeInTheDocument();
+    expect(screen.getByText('Import')).toBeInTheDocument();
     expect(screen.getByText('Profile')).toBeInTheDocument();
     expect(screen.getByText('Sign Out')).toBeInTheDocument();
   });

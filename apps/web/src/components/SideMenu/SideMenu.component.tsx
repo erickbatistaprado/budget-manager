@@ -5,6 +5,7 @@ import { authenticationService } from '@/services';
 import { usePathname, useRouter } from 'next/navigation';
 import type { JSX } from 'react';
 import { CgProfile } from 'react-icons/cg';
+import { FiUpload } from 'react-icons/fi';
 import { FaHome } from 'react-icons/fa';
 import { PiSignOutBold } from 'react-icons/pi';
 import { RiSafe2Line } from 'react-icons/ri';
@@ -50,6 +51,13 @@ export default function SideMenu({
         >
           <RiSafe2Line size={22} />
           Savings
+        </MenuButton>
+        <MenuButton
+          active={isActive('/import')}
+          onClick={(): void => onClick('/import')}
+        >
+          <FiUpload size={22} />
+          Import
         </MenuButton>
         <MenuButton
           active={isActive('/profile')}
