@@ -1,6 +1,7 @@
 package com.budgetmanager.bm.ledger.infrastructure.http;
 
 import com.budgetmanager.bm.ledger.domain.Transaction;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,11 +20,16 @@ public final class TransactionConverter {
         .category(CategoryConverter.entityToDto(entity.getCategory()))
         .installments(
             Optional.ofNullable(entity.getInstallments()).orElse(List.of()).stream()
+                .sorted(
+                    Comparator.comparing(
+                        installment -> installment.getInstallmentNumber(),
+                        Comparator.nullsLast(Comparator.naturalOrder())))
                 .map(InstallmentConverter::entityToDto)
                 .toList())
         .build();
   }
 
+  /** Category and installments are left out: the service resolves and schedules them. */
   public static Transaction dtoToEntity(TransactionDto dto) {
     return Transaction.builder()
         .id(dto.id())
@@ -32,11 +38,6 @@ public final class TransactionConverter {
         .date(dto.date())
         .totalValue(dto.totalValue())
         .installmentNumbers(dto.installmentNumbers())
-        .category(CategoryConverter.dtoToEntity(dto.category()))
-        .installments(
-            Optional.ofNullable(dto.installments()).orElse(List.of()).stream()
-                .map(InstallmentConverter::dtoToEntity)
-                .toList())
         .build();
   }
 }

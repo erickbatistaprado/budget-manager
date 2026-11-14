@@ -1,18 +1,17 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:bm-test;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
-    username: sa
-    password:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
   flyway:
-    enabled: false
+    placeholders:
+      seed_user_email: ""
+      seed_user_name: ""
+      seed_user_password_hash: ""
 
 jwt:
   secret: test-secret-must-be-at-least-32-bytes
-  access-expiration: 86400000
+  access-expiration: 900000
   refresh-expiration: 604800000
 
 cors:

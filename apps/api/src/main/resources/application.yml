@@ -33,14 +33,14 @@ server:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-expiration: ${JWT_ACCESS_EXPIRATION:86400000}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:900000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 cors:
   frontend: ${CORS_FRONTEND:http://localhost:3000}
 
 cookies:
-  secure: ${COOKIE_SECURE:false}
+  secure: ${COOKIE_SECURE:true}
 
 app:
   uploads:

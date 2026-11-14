@@ -1,7 +1,5 @@
 package com.budgetmanager.bm.ledger.domain;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -25,18 +23,17 @@ public class Installment {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "transaction_id", nullable = false)
-  @JsonBackReference
   private Transaction transaction;
 
   @NotNull private Integer installmentNumber;
 
   @NotNull private Integer totalInstallments;
 
-  @NotNull private BigDecimal amount;
-
   @NotNull
-  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
-  private LocalDate dueDate;
+  @Column(precision = 19, scale = 2)
+  private BigDecimal amount;
+
+  @NotNull private LocalDate dueDate;
 
   @CreationTimestamp
   @Column(updatable = false)

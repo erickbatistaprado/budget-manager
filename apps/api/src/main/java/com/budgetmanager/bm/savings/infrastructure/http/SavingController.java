@@ -27,7 +27,7 @@ public class SavingController {
 
   @PostMapping
   public ResponseEntity<SavingDto> save(@Valid @RequestBody SavingDto dto) {
-    Saving saving = service.save(dto);
+    Saving saving = service.save(SavingConverter.dtoToEntity(dto));
     URI uri =
         ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")
@@ -39,7 +39,7 @@ public class SavingController {
 
   @PutMapping
   public ResponseEntity<SavingDto> update(@Valid @RequestBody SavingDto dto) {
-    return ok(SavingConverter.entityToDto(service.update(dto)));
+    return ok(SavingConverter.entityToDto(service.update(SavingConverter.dtoToEntity(dto))));
   }
 
   @DeleteMapping("/{id}")

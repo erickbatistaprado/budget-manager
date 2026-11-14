@@ -25,7 +25,7 @@ public class RoleController {
 
   @PostMapping
   public ResponseEntity<RoleDto> save(@Valid @RequestBody RoleDto roleDto) {
-    Role role = service.save(roleDto);
+    Role role = service.save(RoleConverter.dtoToEntity(roleDto));
 
     URI uri =
         ServletUriComponentsBuilder.fromCurrentRequest()

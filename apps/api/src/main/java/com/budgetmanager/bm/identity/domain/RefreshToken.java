@@ -18,11 +18,11 @@ public class RefreshToken {
 
   @Id @GeneratedValue private UUID id;
 
-  @Column(nullable = false, unique = true)
-  private String token;
+  @Column(name = "token_hash", nullable = false, unique = true, length = 64)
+  private String tokenHash;
 
-  @OneToOne
-  @JoinColumn(name = "user_id", referencedColumnName = "id")
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
   @Column(nullable = false)

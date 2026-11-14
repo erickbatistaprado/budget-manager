@@ -1,16 +1,18 @@
 package com.budgetmanager.bm.ledger.application;
 
+import com.budgetmanager.bm.identity.application.UserService;
+import com.budgetmanager.bm.identity.domain.User;
 import com.budgetmanager.bm.ledger.domain.Category;
 import com.budgetmanager.bm.ledger.domain.TransactionType;
-import com.budgetmanager.bm.ledger.infrastructure.http.CategoryConverter;
-import com.budgetmanager.bm.ledger.infrastructure.http.CategoryDto;
 import com.budgetmanager.bm.ledger.infrastructure.persistence.CategoryRepository;
-import com.budgetmanager.bm.shared.infrastructure.http.GlobalException;
+import com.budgetmanager.bm.shared.application.ApplicationError;
+import com.budgetmanager.bm.shared.application.ApplicationException;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,24 +21,60 @@ import org.springframework.transaction.annotation.Transactional;
 public class CategoryService {
 
   private final CategoryRepository repository;
+  private final UserService userService;
 
-  public Category save(CategoryDto dto) {
-    return repository.save(CategoryConverter.dtoToEntity(dto));
+  @Transactional
+  public Category save(Category draft) {
+    return saveAll(List.of(draft)).getFirst();
   }
 
   @Transactional
-  public List<Category> saveAll(List<CategoryDto> dtos) {
-    if (dtos == null || dtos.isEmpty()) {
-      throw new GlobalException(HttpStatus.BAD_REQUEST, "At least one category is required");
+  public List<Category> saveAll(List<Category> drafts) {
+    if (drafts == null || drafts.isEmpty()) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST, "At least one category is required");
     }
-    return repository.saveAll(dtos.stream().map(CategoryConverter::dtoToEntity).toList());
+    User user = userService.requireCurrentUser();
+    Set<String> namesInRequest = new HashSet<>();
+    List<Category> categories =
+        drafts.stream()
+            .map(draft -> {
+              String name = draft.getName() == null ? "" : draft.getName().trim();
+              if (name.isEmpty()) {
+                throw new ApplicationException(
+                    ApplicationError.BAD_REQUEST, "Category name is required");
+              }
+              String key = draft.getTransactionType() + ":" + name.toLowerCase(Locale.ROOT);
+              if (!namesInRequest.add(key)
+                  || repository.existsByUserIdAndTransactionTypeAndNameIgnoreCase(
+                      user.getId(), draft.getTransactionType(), name)) {
+                throw new ApplicationException(
+                    ApplicationError.CONFLICT, "Category {} already exists", name);
+              }
+              return Category.builder()
+                  .user(user)
+                  .name(name)
+                  .transactionType(draft.getTransactionType())
+                  .build();
+            })
+            .toList();
+    return repository.saveAll(categories);
   }
 
+  @Transactional(readOnly = true)
   public List<Category> findByTransactionType(TransactionType transactionType) {
-    return repository.findByTransactionType(transactionType);
+    return repository.findByUserIdAndTransactionTypeOrderByNameAsc(
+        userService.requireCurrentUser().getId(), transactionType);
   }
 
-  public Optional<Category> findById(UUID id) {
-    return repository.findById(id);
+  public Category requireOwned(UUID categoryId, User owner) {
+    if (categoryId == null) {
+      throw new ApplicationException(ApplicationError.BAD_REQUEST, "Category id is required");
+    }
+    return repository
+        .findByIdAndUserId(categoryId, owner.getId())
+        .orElseThrow(() ->
+            new ApplicationException(
+                ApplicationError.NOT_FOUND, "Category not found for {}", categoryId));
   }
 }

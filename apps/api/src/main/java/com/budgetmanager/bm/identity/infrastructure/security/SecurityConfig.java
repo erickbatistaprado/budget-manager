@@ -8,13 +8,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
@@ -50,34 +53,39 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     return http.cors(withDefaults())
-        .csrf(
-            csrf ->
-                csrf.csrfTokenRepository(csrfTokenRepository())
-                    .ignoringRequestMatchers(
-                        PathPatternRequestMatcher.pathPattern("/auth/login"),
-                        PathPatternRequestMatcher.pathPattern("/auth/refresh"),
-                        PathPatternRequestMatcher.pathPattern("/auth/logout"),
-                        PathPatternRequestMatcher.pathPattern("/auth/csrf"),
-                        PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/users")))
+        .csrf(csrf ->
+            csrf.csrfTokenRepository(csrfTokenRepository())
+                .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy())
+                .ignoringRequestMatchers(
+                    PathPatternRequestMatcher.pathPattern("/auth/login"),
+                    PathPatternRequestMatcher.pathPattern("/auth/refresh"),
+                    PathPatternRequestMatcher.pathPattern("/auth/logout"),
+                    PathPatternRequestMatcher.pathPattern("/auth/csrf"),
+                    PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/users")))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(
-            authorization ->
-                authorization
-                    .requestMatchers(HttpMethod.OPTIONS, "/**")
-                    .permitAll()
-                    .requestMatchers("/auth/login")
-                    .permitAll()
-                    .requestMatchers("/auth/refresh")
-                    .permitAll()
-                    .requestMatchers("/auth/logout")
-                    .permitAll()
-                    .requestMatchers("/auth/csrf")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.POST, "/users")
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated())
+        .exceptionHandling(exceptions ->
+            exceptions.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+        .authorizeHttpRequests(authorization ->
+            authorization
+                .requestMatchers(HttpMethod.OPTIONS, "/**")
+                .permitAll()
+                .requestMatchers("/auth/login")
+                .permitAll()
+                .requestMatchers("/auth/refresh")
+                .permitAll()
+                .requestMatchers("/auth/logout")
+                .permitAll()
+                .requestMatchers("/auth/csrf")
+                .permitAll()
+                .requestMatchers(HttpMethod.POST, "/users")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**")
+                .permitAll()
+                .requestMatchers("/error")
+                .permitAll()
+                .anyRequest()
+                .authenticated())
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
         .build();
   }

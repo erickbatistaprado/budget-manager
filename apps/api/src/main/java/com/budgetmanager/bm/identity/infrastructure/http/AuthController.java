@@ -1,25 +1,16 @@
 package com.budgetmanager.bm.identity.infrastructure.http;
 
 import static org.springframework.http.ResponseEntity.ok;
-import static org.springframework.http.ResponseEntity.status;
 
 import com.budgetmanager.bm.identity.application.AuthService;
-import com.budgetmanager.bm.identity.application.UserService;
-import com.budgetmanager.bm.identity.domain.RefreshToken;
-import com.budgetmanager.bm.identity.domain.User;
-import com.budgetmanager.bm.identity.infrastructure.security.JwtUtil;
-import com.budgetmanager.bm.shared.infrastructure.http.GlobalException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.time.Duration;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -27,86 +18,48 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
-@Log4j2
 public class AuthController {
 
-  private static final String REFRESH_COOKIE_NAME = "refresh_token";
-  private static final String ACCESS_COOKIE_NAME = "access_token";
+  static final String REFRESH_COOKIE_NAME = "refresh_token";
+  static final String ACCESS_COOKIE_NAME = "access_token";
+
   private final AuthService authService;
-  private final UserService userService;
-  private final JwtUtil jwtUtil;
+  private final long refreshExpiration;
+  private final long accessExpiration;
+  private final boolean secureCookies;
 
-  @Value("${jwt.refresh-expiration}")
-  private long refreshExpiration;
-
-  @Value("${jwt.access-expiration}")
-  private long accessExpiration;
-
-  @Value("${cookies.secure:true}")
-  private boolean secureCookies;
+  public AuthController(
+      AuthService authService,
+      @Value("${jwt.refresh-expiration}") long refreshExpiration,
+      @Value("${jwt.access-expiration}") long accessExpiration,
+      @Value("${cookies.secure}") boolean secureCookies) {
+    this.authService = authService;
+    this.refreshExpiration = refreshExpiration;
+    this.accessExpiration = accessExpiration;
+    this.secureCookies = secureCookies;
+  }
 
   @PostMapping("/login")
   public ResponseEntity<Map<String, String>> login(
       @Valid @RequestBody AuthRequest authRequest, HttpServletResponse response) {
-    String accessToken =
-        authService.loginAndCreateAccessToken(authRequest.email(), authRequest.password());
-    RefreshToken refreshToken =
-        userService
-            .findByEmail(authRequest.email())
-            .map(authService::createRefreshToken)
-            .orElseThrow(
-                () ->
-                    new GlobalException(
-                        HttpStatus.NOT_FOUND, "User not found for {}", authRequest.email()));
-
-    cookieHelper(response, REFRESH_COOKIE_NAME, refreshToken.getToken(), refreshExpiration);
-    cookieHelper(response, ACCESS_COOKIE_NAME, accessToken, accessExpiration);
+    writeSession(response, authService.login(authRequest.email(), authRequest.password()));
     return ok(Map.of("message", "Logged in"));
   }
 
   @PostMapping("/refresh")
-  public ResponseEntity<?> refresh(HttpServletRequest request, HttpServletResponse response) {
-    String refreshToken = null;
-
-    if (request.getCookies() != null) {
-      for (Cookie cookie : request.getCookies()) {
-        if (REFRESH_COOKIE_NAME.equals(cookie.getName())) {
-          refreshToken = cookie.getValue();
-          break;
-        }
-      }
-    }
-    if (refreshToken == null) {
-      return status(HttpStatus.UNAUTHORIZED).body("No refresh token");
-    }
-    if (!authService.validateRefreshToken(refreshToken)) {
-      return status(HttpStatus.UNAUTHORIZED).body("Invalid/expired refresh token");
-    }
-    RefreshToken newRefreshToken = authService.rotateRefreshToken(refreshToken);
-    User user = newRefreshToken.getUser();
-    String newAccess =
-        jwtUtil.generateAccessToken(
-            user.getEmail(),
-            user.getRoles().stream().map(role -> role.getRoleName().toString()).toList());
-
-    cookieHelper(response, REFRESH_COOKIE_NAME, newRefreshToken.getToken(), refreshExpiration);
-    cookieHelper(response, ACCESS_COOKIE_NAME, newAccess, accessExpiration);
-
+  public ResponseEntity<Map<String, String>> refresh(
+      HttpServletRequest request, HttpServletResponse response) {
+    // A failed refresh leaves the cookies alone: another tab may have just rotated the same token,
+    // and clearing here would erase the session it received.
+    writeSession(response, authService.refresh(getCookieValue(request, REFRESH_COOKIE_NAME)));
     return ok(Map.of("message", "Refreshed"));
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-    String refreshToken = getCookieValue(request, REFRESH_COOKIE_NAME);
-
-    if (refreshToken != null) {
-      authService.revokeRefreshToken(refreshToken);
-    }
-
-    cookieHelper(response, REFRESH_COOKIE_NAME, "", 0);
-    cookieHelper(response, ACCESS_COOKIE_NAME, "", 0);
-
+  public ResponseEntity<Map<String, String>> logout(
+      HttpServletRequest request, HttpServletResponse response) {
+    authService.logout(getCookieValue(request, REFRESH_COOKIE_NAME));
+    clearSession(response);
     return ok(Map.of("message", "Logged out"));
   }
 
@@ -115,7 +68,17 @@ public class AuthController {
     return ok(Map.of("token", csrfToken.getToken()));
   }
 
-  private void cookieHelper(HttpServletResponse response, String name, String value, long maxAge) {
+  private void writeSession(HttpServletResponse response, AuthService.Session session) {
+    writeCookie(response, REFRESH_COOKIE_NAME, session.refreshToken(), refreshExpiration);
+    writeCookie(response, ACCESS_COOKIE_NAME, session.accessToken(), accessExpiration);
+  }
+
+  private void clearSession(HttpServletResponse response) {
+    writeCookie(response, REFRESH_COOKIE_NAME, "", 0);
+    writeCookie(response, ACCESS_COOKIE_NAME, "", 0);
+  }
+
+  private void writeCookie(HttpServletResponse response, String name, String value, long maxAge) {
     ResponseCookie cookie =
         ResponseCookie.from(name, value)
             .httpOnly(true)
@@ -128,7 +91,7 @@ public class AuthController {
     response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
   }
 
-  private String getCookieValue(HttpServletRequest request, String name) {
+  private static String getCookieValue(HttpServletRequest request, String name) {
     if (request.getCookies() == null) {
       return null;
     }

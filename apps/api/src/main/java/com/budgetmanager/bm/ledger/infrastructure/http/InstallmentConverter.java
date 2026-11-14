@@ -15,14 +15,4 @@ public final class InstallmentConverter {
         .dueDate(entity.getDueDate())
         .build();
   }
-
-  public static Installment dtoToEntity(InstallmentDto dto) {
-    return Installment.builder()
-        .id(dto.id())
-        .installmentNumber(dto.installmentNumber())
-        .totalInstallments(dto.totalInstallments())
-        .amount(dto.amount())
-        .dueDate(dto.dueDate())
-        .build();
-  }
 }

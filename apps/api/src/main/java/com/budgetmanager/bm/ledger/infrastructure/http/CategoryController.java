@@ -25,7 +25,7 @@ public class CategoryController {
 
   @PostMapping
   public ResponseEntity<CategoryDto> save(@Valid @RequestBody CategoryDto dto) {
-    Category category = service.save(dto);
+    Category category = service.save(CategoryConverter.dtoToEntity(dto));
 
     URI uri =
         ServletUriComponentsBuilder.fromCurrentRequest()
@@ -40,14 +40,19 @@ public class CategoryController {
   public ResponseEntity<List<CategoryDto>> saveAll(
       @Valid @RequestBody List<@Valid CategoryDto> dtos) {
     List<CategoryDto> categories =
-        service.saveAll(dtos).stream().map(CategoryConverter::entityToDto).toList();
+        service.saveAll(dtos.stream().map(CategoryConverter::dtoToEntity).toList()).stream()
+            .map(CategoryConverter::entityToDto)
+            .toList();
 
     return status(HttpStatus.CREATED).body(categories);
   }
 
   @GetMapping("/type/{transactionType}")
-  public ResponseEntity<List<Category>> findByTransactionType(
+  public ResponseEntity<List<CategoryDto>> findByTransactionType(
       @PathVariable TransactionType transactionType) {
-    return ok(service.findByTransactionType(transactionType));
+    return ok(
+        service.findByTransactionType(transactionType).stream()
+            .map(CategoryConverter::entityToDto)
+            .toList());
   }
 }

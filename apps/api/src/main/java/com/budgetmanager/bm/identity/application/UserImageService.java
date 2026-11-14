@@ -2,7 +2,8 @@ package com.budgetmanager.bm.identity.application;
 
 import com.budgetmanager.bm.identity.domain.UserImage;
 import com.budgetmanager.bm.identity.infrastructure.persistence.UserImageRepository;
-import com.budgetmanager.bm.shared.infrastructure.http.GlobalException;
+import com.budgetmanager.bm.shared.application.ApplicationError;
+import com.budgetmanager.bm.shared.application.ApplicationException;
 import java.io.IOException;
 import java.sql.Blob;
 import java.sql.SQLException;
@@ -10,7 +11,6 @@ import java.util.Set;
 import javax.sql.rowset.serial.SerialBlob;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -41,8 +41,8 @@ public class UserImageService {
       Blob blob = new SerialBlob(file.getBytes());
       image.setProfileImage(blob);
     } catch (IOException | SQLException exception) {
-      throw new GlobalException(
-          exception, HttpStatus.INTERNAL_SERVER_ERROR, "Invalid image {}", exception.getMessage());
+      throw new ApplicationException(
+          exception, ApplicationError.INTERNAL, "Invalid image {}", exception.getMessage());
     }
     image.setName(file.getOriginalFilename());
     image.setType(file.getContentType());
@@ -59,12 +59,12 @@ public class UserImageService {
     UserImage image =
         repository
             .findByUserEmail(userService.getCurrentUsername())
-            .orElseThrow(() -> new GlobalException(HttpStatus.NOT_FOUND, "Not found."));
+            .orElseThrow(() -> new ApplicationException(ApplicationError.NOT_FOUND, "Not found."));
     try {
       return image.getProfileImage().getBytes(1, (int) image.getProfileImage().length());
     } catch (Exception exception) {
-      throw new GlobalException(
-          exception, HttpStatus.INTERNAL_SERVER_ERROR, "Error getting profile image {}", exception);
+      throw new ApplicationException(
+          exception, ApplicationError.INTERNAL, "Error getting profile image {}", exception);
     }
   }
 
@@ -82,15 +82,15 @@ public class UserImageService {
 
   private void validateImage(MultipartFile file) {
     if (file == null || file.isEmpty()) {
-      throw new GlobalException(HttpStatus.BAD_REQUEST, "Image file is required");
+      throw new ApplicationException(ApplicationError.BAD_REQUEST, "Image file is required");
     }
     if (file.getSize() > maxProfileImageBytes) {
-      throw new GlobalException(
-          HttpStatus.PAYLOAD_TOO_LARGE, "Image exceeds the maximum allowed size");
+      throw new ApplicationException(
+          ApplicationError.PAYLOAD_TOO_LARGE, "Image exceeds the maximum allowed size");
     }
     if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-      throw new GlobalException(
-          HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Only JPEG, PNG, and WEBP images are supported");
+      throw new ApplicationException(
+          ApplicationError.UNSUPPORTED_MEDIA_TYPE, "Only JPEG, PNG, and WEBP images are supported");
     }
   }
 }

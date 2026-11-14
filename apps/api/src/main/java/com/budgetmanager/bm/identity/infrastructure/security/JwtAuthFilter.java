@@ -1,5 +1,6 @@
 package com.budgetmanager.bm.identity.infrastructure.security;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.budgetmanager.bm.identity.application.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
@@ -14,6 +15,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -71,11 +73,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
           context.setAuthentication(authentication);
           SecurityContextHolder.setContext(context);
         }
-      } catch (Exception exception) {
+      } catch (JWTVerificationException | UsernameNotFoundException exception) {
+        // Continue unauthenticated: public endpoints still work with a stale cookie, and
+        // protected ones answer 401 through the authentication entry point.
         SecurityContextHolder.clearContext();
-        log.warn("Token invalid/expired: {}", exception.getMessage());
-        res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired access token");
-        return;
+        log.debug("Ignoring invalid access token: {}", exception.getMessage());
       }
     }
     chain.doFilter(req, res);

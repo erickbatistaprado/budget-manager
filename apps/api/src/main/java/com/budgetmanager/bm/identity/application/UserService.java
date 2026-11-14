@@ -2,21 +2,20 @@ package com.budgetmanager.bm.identity.application;
 
 import com.budgetmanager.bm.identity.domain.User;
 import com.budgetmanager.bm.identity.domain.UserRole;
-import com.budgetmanager.bm.identity.infrastructure.http.UserConverter;
-import com.budgetmanager.bm.identity.infrastructure.http.UserDto;
 import com.budgetmanager.bm.identity.infrastructure.persistence.UserRepository;
-import com.budgetmanager.bm.shared.infrastructure.http.GlobalException;
+import com.budgetmanager.bm.shared.application.ApplicationError;
+import com.budgetmanager.bm.shared.application.ApplicationException;
 import com.budgetmanager.bm.utils.Checkers;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,45 +24,43 @@ public class UserService {
   private final UserRepository repository;
   private final PasswordEncoder encoder;
   private final RoleService roleService;
+  private final RefreshTokenService refreshTokenService;
 
-  public User save(UserDto userDto) {
+  @Transactional
+  public User register(String name, String email, String password) {
     repository
-        .findByEmail(userDto.email())
-        .ifPresent(
-            existing -> {
-              throw new GlobalException(HttpStatus.CONFLICT, "Email already registered");
-            });
-    if (!Checkers.isPasswordCorrect(userDto.password())) {
-      throw new GlobalException(
-          HttpStatus.BAD_REQUEST,
-          "Password must be 8-20 characters, include uppercase, lowercase, digit, and special character");
-    }
-    User user = UserConverter.dtoToEntity(userDto);
+        .findByEmail(email)
+        .ifPresent(existing -> {
+          throw new ApplicationException(ApplicationError.CONFLICT, "Email already registered");
+        });
+    requireValidPassword(password);
 
-    user.setRoles(Collections.singleton(roleService.findByRoleName(UserRole.ROLE_USER)));
-    user.setPassword(encoder.encode(user.getPassword()));
-
+    User user =
+        User.builder()
+            .name(name)
+            .email(email)
+            .password(encoder.encode(password))
+            .roles(Collections.singleton(roleService.findByRoleName(UserRole.ROLE_USER)))
+            .build();
     return repository.save(user);
   }
 
-  public void updateUser(UserDto dto) {
-    User updatedUser =
-        getCurrentUser().orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    if (dto.name() != null && !dto.name().isBlank()) {
-      updatedUser.setName(dto.name());
+  @Transactional
+  public void updateProfile(String name, String password) {
+    User user = requireCurrentUser();
+    if (name != null && !name.isBlank()) {
+      user.setName(name);
     }
-    if (dto.password() != null && !dto.password().isBlank()) {
-      if (!Checkers.isPasswordCorrect(dto.password())) {
-        throw new GlobalException(
-            HttpStatus.BAD_REQUEST,
-            "Password must be 8-20 characters, include uppercase, lowercase, digit, and special character");
+    if (password != null && !password.isBlank()) {
+      requireValidPassword(password);
+      if (encoder.matches(password, user.getPassword())) {
+        throw new ApplicationException(
+            ApplicationError.BAD_REQUEST, "Password must be different from before");
       }
-      if (encoder.matches(dto.password(), updatedUser.getPassword())) {
-        throw new GlobalException(HttpStatus.BAD_REQUEST, "Password must be different from before");
-      }
-      updatedUser.setPassword(encoder.encode(dto.password()));
+      user.setPassword(encoder.encode(password));
+      refreshTokenService.revokeAll(user.getId());
     }
-    repository.save(updatedUser);
+    repository.save(user);
   }
 
   public Optional<User> findByEmail(String email) {
@@ -73,11 +70,16 @@ public class UserService {
   public User findById(UUID id) {
     return repository
         .findById(id)
-        .orElseThrow(() -> new GlobalException(HttpStatus.NOT_FOUND, "User not found for {}", id));
+        .orElseThrow(() ->
+            new ApplicationException(ApplicationError.NOT_FOUND, "User not found for {}", id));
   }
 
   public Optional<User> getCurrentUser() {
     return repository.findByEmail(getCurrentUsername());
+  }
+
+  public User requireCurrentUser() {
+    return getCurrentUser().orElseThrow(() -> new UsernameNotFoundException("User not found"));
   }
 
   public String getCurrentUsername() {
@@ -87,5 +89,11 @@ public class UserService {
       throw new UsernameNotFoundException("User not authenticated");
     }
     return auth.getName();
+  }
+
+  private static void requireValidPassword(String password) {
+    if (!Checkers.isPasswordCorrect(password)) {
+      throw new ApplicationException(ApplicationError.BAD_REQUEST, Checkers.PASSWORD_RULE);
+    }
   }
 }

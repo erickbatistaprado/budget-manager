@@ -27,7 +27,8 @@ public class TransactionController {
 
   @PostMapping
   public ResponseEntity<TransactionDto> save(@Valid @RequestBody TransactionDto dto) {
-    Transaction transaction = service.save(dto);
+    Transaction transaction =
+        service.save(TransactionConverter.dtoToEntity(dto), dto.category().id());
 
     URI uri =
         ServletUriComponentsBuilder.fromCurrentRequest()
@@ -55,7 +56,9 @@ public class TransactionController {
 
   @PutMapping
   public ResponseEntity<TransactionDto> update(@Valid @RequestBody TransactionDto dto) {
-    return ok(TransactionConverter.entityToDto(service.update(dto)));
+    return ok(
+        TransactionConverter.entityToDto(
+            service.update(TransactionConverter.dtoToEntity(dto), dto.category().id())));
   }
 
   @DeleteMapping("/{id}")

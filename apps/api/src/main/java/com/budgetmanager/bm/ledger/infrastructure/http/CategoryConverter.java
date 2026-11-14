@@ -15,10 +15,6 @@ public final class CategoryConverter {
   }
 
   public static Category dtoToEntity(CategoryDto dto) {
-    return Category.builder()
-        .id(dto.id())
-        .name(dto.name())
-        .transactionType(dto.transactionType())
-        .build();
+    return Category.builder().name(dto.name()).transactionType(dto.transactionType()).build();
   }
 }
