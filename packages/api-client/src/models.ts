@@ -81,10 +81,58 @@ export const pageSchema = <T extends z.ZodType>(item: T) =>
     totalPages: z.number(),
   });
 
+export const statementSourceSchema = z.enum([
+  'BRADESCO_CARD_PDF',
+  'NUBANK_CARD_PDF',
+  'NUBANK_CARD_CSV',
+]);
+
+export const statementPreviewLineSchema = z.object({
+  index: z.number(),
+  date: z.string(),
+  description: z.string(),
+  amount: z.coerce.number(),
+  credit: z.boolean(),
+  installmentNumber: z.number().nullish(),
+  installmentTotal: z.number().nullish(),
+  cardholder: z.string().nullish(),
+  suggestedCategoryId: z.string().nullish(),
+  duplicate: z.boolean(),
+  duplicateOfTransactionId: z.string().nullish(),
+  duplicateOfLine: z.number().nullish(),
+  selected: z.boolean(),
+});
+
+export const statementPreviewSchema = z.object({
+  source: statementSourceSchema,
+  printedTotal: z.coerce.number().nullish(),
+  parsedTotal: z.coerce.number().nullish(),
+  totalsMatch: z.boolean(),
+  lines: z.array(statementPreviewLineSchema),
+});
+
+export const statementImportResultSchema = z.object({
+  imported: z.number(),
+  skippedAsDuplicates: z.number(),
+});
+
 export type Category = z.infer<typeof categorySchema>;
 export type Installment = z.infer<typeof installmentSchema>;
 export type Transaction = z.infer<typeof transactionSchema>;
 export type Saving = z.infer<typeof savingSchema>;
+export type StatementSource = z.infer<typeof statementSourceSchema>;
+export type StatementPreviewLine = z.infer<typeof statementPreviewLineSchema>;
+export type StatementPreview = z.infer<typeof statementPreviewSchema>;
+export type StatementImportResult = z.infer<typeof statementImportResultSchema>;
+export interface StatementImportLine {
+  readonly date: string;
+  readonly description: string;
+  readonly amount: number;
+  readonly credit: boolean;
+  readonly installmentNumber?: number | null;
+  readonly installmentTotal?: number | null;
+  readonly categoryId: string;
+}
 export type Role = z.infer<typeof roleSchema>;
 export type User = z.infer<typeof userSchema>;
 export type Page<T> = {

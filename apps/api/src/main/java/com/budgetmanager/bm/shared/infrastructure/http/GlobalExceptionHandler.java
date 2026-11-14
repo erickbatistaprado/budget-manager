@@ -54,6 +54,8 @@ public class GlobalExceptionHandler {
       case CONFLICT -> HttpStatus.CONFLICT;
       case PAYLOAD_TOO_LARGE -> HttpStatus.CONTENT_TOO_LARGE;
       case UNSUPPORTED_MEDIA_TYPE -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
+      case PASSWORD_REQUIRED -> HttpStatus.LOCKED;
+      case UNPROCESSABLE -> HttpStatus.UNPROCESSABLE_CONTENT;
       case INTERNAL -> HttpStatus.INTERNAL_SERVER_ERROR;
     };
   }

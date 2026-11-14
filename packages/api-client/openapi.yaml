@@ -267,6 +267,49 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Id' }]
       responses:
         '204': { description: Deleted }
+  /statement-imports/preview:
+    post:
+      operationId: previewStatementImport
+      description: Reads a Bradesco card PDF, NuBank card PDF or NuBank card CSV and shows what would be imported. Nothing is saved.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+                password: { type: string, description: Only for protected PDFs }
+      responses:
+        '200':
+          description: Statement lines
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StatementPreview' }
+        '415': { description: Not a supported statement }
+        '422':
+          {
+            description: Supported bank but unreadable content,
+            such as a scanned PDF,
+          }
+        '423':
+          { description: The PDF needs a password, or the password is wrong }
+  /statement-imports:
+    post:
+      operationId: importStatementLines
+      description: Saves the chosen lines. Lines matching a saved transaction by date, amount, description and category (installments by description, count, amount and category) are skipped.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StatementImportRequest' }
+      responses:
+        '200':
+          description: Import result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StatementImportResult' }
 components:
   parameters:
     Id:
@@ -408,3 +451,63 @@ components:
         - type: object
           required: [id]
           properties: { id: { type: string, format: uuid } }
+    StatementPreview:
+      type: object
+      required: [source, totalsMatch, lines]
+      properties:
+        source:
+          {
+            type: string,
+            enum: [BRADESCO_CARD_PDF, NUBANK_CARD_PDF, NUBANK_CARD_CSV],
+          }
+        printedTotal: { type: [number, 'null'] }
+        parsedTotal: { type: [number, 'null'] }
+        totalsMatch: { type: boolean }
+        lines:
+          {
+            type: array,
+            items: { $ref: '#/components/schemas/StatementPreviewLine' },
+          }
+    StatementPreviewLine:
+      type: object
+      required: [index, date, description, amount, credit, duplicate, selected]
+      properties:
+        index: { type: integer }
+        date: { type: string, examples: ['2026/11/14'] }
+        description: { type: string }
+        amount: { type: number }
+        credit: { type: boolean }
+        installmentNumber: { type: [integer, 'null'] }
+        installmentTotal: { type: [integer, 'null'] }
+        cardholder: { type: [string, 'null'] }
+        suggestedCategoryId: { type: [string, 'null'], format: uuid }
+        duplicate: { type: boolean }
+        duplicateOfTransactionId: { type: [string, 'null'], format: uuid }
+        duplicateOfLine: { type: [integer, 'null'] }
+        selected: { type: boolean }
+    StatementImportRequest:
+      type: object
+      required: [lines]
+      properties:
+        lines:
+          {
+            type: array,
+            items: { $ref: '#/components/schemas/StatementImportLine' },
+          }
+    StatementImportLine:
+      type: object
+      required: [date, description, amount, credit, categoryId]
+      properties:
+        date: { type: string, examples: ['2026/11/14'] }
+        description: { type: string }
+        amount: { type: number }
+        credit: { type: boolean }
+        installmentNumber: { type: [integer, 'null'] }
+        installmentTotal: { type: [integer, 'null'] }
+        categoryId: { type: string, format: uuid }
+    StatementImportResult:
+      type: object
+      required: [imported, skippedAsDuplicates]
+      properties:
+        imported: { type: integer }
+        skippedAsDuplicates: { type: integer }

@@ -1,5 +1,6 @@
 package com.budgetmanager.bm.ledger.infrastructure.persistence;
 
+import com.budgetmanager.bm.ledger.application.ExistingTransaction;
 import com.budgetmanager.bm.ledger.domain.Transaction;
 import com.budgetmanager.bm.ledger.domain.TransactionType;
 import java.time.LocalDate;
@@ -14,6 +15,16 @@ import org.springframework.data.repository.query.Param;
 
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
   Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
+
+  @Query(
+      """
+          SELECT new com.budgetmanager.bm.ledger.application.ExistingTransaction(
+            t.id, t.notes, t.date, t.totalValue, t.installmentNumbers, c.id, c.transactionType)
+          FROM Transaction t
+          JOIN t.category c
+          WHERE t.user.id = :userId AND t.notes IS NOT NULL
+      """)
+  List<ExistingTransaction> findImportCandidates(@Param("userId") UUID userId);
 
   @Query(
       value =

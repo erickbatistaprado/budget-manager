@@ -99,6 +99,49 @@ export type Saving = SavingWrite & {
     id: string;
 };
 
+export type StatementPreview = {
+    source: 'BRADESCO_CARD_PDF' | 'NUBANK_CARD_PDF' | 'NUBANK_CARD_CSV';
+    printedTotal?: number | null;
+    parsedTotal?: number | null;
+    totalsMatch: boolean;
+    lines: Array<StatementPreviewLine>;
+};
+
+export type StatementPreviewLine = {
+    index: number;
+    date: string;
+    description: string;
+    amount: number;
+    credit: boolean;
+    installmentNumber?: number | null;
+    installmentTotal?: number | null;
+    cardholder?: string | null;
+    suggestedCategoryId?: string | null;
+    duplicate: boolean;
+    duplicateOfTransactionId?: string | null;
+    duplicateOfLine?: number | null;
+    selected: boolean;
+};
+
+export type StatementImportRequest = {
+    lines: Array<StatementImportLine>;
+};
+
+export type StatementImportLine = {
+    date: string;
+    description: string;
+    amount: number;
+    credit: boolean;
+    installmentNumber?: number | null;
+    installmentTotal?: number | null;
+    categoryId: string;
+};
+
+export type StatementImportResult = {
+    imported: number;
+    skippedAsDuplicates: number;
+};
+
 export type Id = string;
 
 export type GetCsrfTokenData = {
@@ -346,3 +389,56 @@ export type DeleteSavingResponses = {
 };
 
 export type DeleteSavingResponse = DeleteSavingResponses[keyof DeleteSavingResponses];
+
+export type PreviewStatementImportData = {
+    body: {
+        file: Blob | File;
+        /**
+         * Only for protected PDFs
+         */
+        password?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/statement-imports/preview';
+};
+
+export type PreviewStatementImportErrors = {
+    /**
+     * Not a supported statement
+     */
+    415: unknown;
+    /**
+     * Supported bank but unreadable content
+     */
+    422: unknown;
+    /**
+     * The PDF needs a password
+     */
+    423: unknown;
+};
+
+export type PreviewStatementImportResponses = {
+    /**
+     * Statement lines
+     */
+    200: StatementPreview;
+};
+
+export type PreviewStatementImportResponse = PreviewStatementImportResponses[keyof PreviewStatementImportResponses];
+
+export type ImportStatementLinesData = {
+    body: StatementImportRequest;
+    path?: never;
+    query?: never;
+    url: '/statement-imports';
+};
+
+export type ImportStatementLinesResponses = {
+    /**
+     * Import result
+     */
+    200: StatementImportResult;
+};
+
+export type ImportStatementLinesResponse = ImportStatementLinesResponses[keyof ImportStatementLinesResponses];
