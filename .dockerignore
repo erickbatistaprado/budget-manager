@@ -8,3 +8,9 @@
 **/storybook-static
 **/.env*
 *.log
+apps/mobile
+docs
+infrastructure
+postman
+statements
+*.pdf
