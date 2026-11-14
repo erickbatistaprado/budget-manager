@@ -1,6 +1,7 @@
 package com.budgetmanager.bm.identity.application;
 
 import com.budgetmanager.bm.identity.domain.User;
+import com.budgetmanager.bm.identity.domain.UserRegistered;
 import com.budgetmanager.bm.identity.domain.UserRole;
 import com.budgetmanager.bm.identity.infrastructure.persistence.UserRepository;
 import com.budgetmanager.bm.shared.application.ApplicationError;
@@ -10,6 +11,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,6 +27,7 @@ public class UserService {
   private final PasswordEncoder encoder;
   private final RoleService roleService;
   private final RefreshTokenService refreshTokenService;
+  private final ApplicationEventPublisher events;
 
   @Transactional
   public User register(String name, String email, String password) {
@@ -42,7 +45,9 @@ public class UserService {
             .password(encoder.encode(password))
             .roles(Collections.singleton(roleService.findByRoleName(UserRole.ROLE_USER)))
             .build();
-    return repository.save(user);
+    User saved = repository.save(user);
+    events.publishEvent(new UserRegistered(saved.getId()));
+    return saved;
   }
 
   @Transactional

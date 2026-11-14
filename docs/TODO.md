@@ -79,23 +79,25 @@ Work tracked for Budget Manager. Tick items off as they land on `main`.
 Import expenses from the PDF statements that NuBank and Bradesco provide, so no
 paid bank-connection service is needed.
 
-- [ ] Collect sample PDFs: NuBank credit-card bill, NuBank account statement,
-      Bradesco credit-card bill, Bradesco account statement.
-- [ ] Build anonymized test fixtures from them. Real statements never enter the
-      repository (see `.gitignore`).
-- [ ] Upload endpoint: accepts a PDF, detects the bank and document type, and
-      extracts its text (Apache PDFBox), with no data sent to third parties.
-- [ ] One parser per bank and document type, returning date, description, amount,
-      installment info (for example `Parcela 3/10`) and whether it is a refund or
-      payment.
-- [ ] Review screen before saving: the user sees every parsed line, picks or
-      corrects categories, and can drop lines.
-- [ ] Duplicate detection, so importing the same bill twice or overlapping
-      statements does not double-count expenses.
-- [ ] Category suggestions learned from past imports (same description, same
-      category).
-- [ ] Credit-card installments map to the existing installment model instead of
-      creating separate transactions.
-- [ ] Clear error when a PDF is password-protected, scanned (image only) or from
-      an unsupported bank.
-- [ ] Import from the web and mobile apps.
+- [x] Sample statements: Bradesco card PDF, NuBank card bill PDF and NuBank card
+      CSV, kept in the git-ignored `statements/` folder. `LocalStatementsTest`
+      checks each one against its printed total when the folder exists.
+- [x] Synthetic test fixtures; real statements never enter the repository.
+- [x] Preview endpoint: detects bank and format, reads PDFs with PDFBox (asking
+      for the password when needed), nothing sent to third parties.
+- [x] Parsers per bank and format: date, description, amount, installments
+      (`Parcela 3/10`, `3/10`), credits (refunds, discounts, IOF returns) and
+      cardholder. Payments and previous balances are skipped.
+- [x] Review screen: select lines, pick or bulk-set categories, add categories,
+      hide what is already saved.
+- [x] Duplicates: same date, amount, description and category, counted rather
+      than collapsed; installment purchases match by description, count,
+      installment amount and category, so next month's bill does not repeat
+      them. The import checks again on the server.
+- [x] Category suggestions from the last transaction with the same description.
+- [x] Installments create the whole purchase with its schedule.
+- [x] Clear errors for protected PDFs (asks for the password), scans and
+      unsupported files.
+- [ ] Bradesco and NuBank account (checking) statements, not only cards.
+- [ ] Two identical installment purchases in one bill are treated as one.
+- [ ] Import from the mobile app.

@@ -49,7 +49,7 @@ class CategoryOwnershipMigrationTest {
               .formatted(ALICE, BOB, SHARED_FOOD, UNUSED));
     }
 
-    flyway(null).migrate();
+    flyway("3").migrate();
 
     try (Connection connection = connect();
         Statement statement = connection.createStatement()) {

@@ -51,6 +51,20 @@ DTOs on the way out. Services report failures with `ApplicationException` and an
 - An invalid access token never blocks public endpoints; protected endpoints
   answer 401.
 
+## Seed data
+
+Flyway migrations seed everything the app needs; there is no other seed step.
+
+| Data                    | Where                                                                                                                       | When                                                                                                         |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Roles                   | `V1__create_initial_schema.sql`                                                                                             | Once                                                                                                         |
+| A first user (optional) | `V2__seed_configured_user.sql`, from `APP_SEED_USER_EMAIL`, `APP_SEED_USER_NAME` and `APP_SEED_USER_PASSWORD_HASH` (BCrypt) | Once, on an empty database                                                                                   |
+| Default categories      | `t_default_category`, filled by `V4__seed_default_categories.sql`                                                           | V4 gives them to existing users; registration gives them to each new user through the `UserRegistered` event |
+
+To change the default categories, add a migration that edits
+`t_default_category`. Existing users keep their categories; only new users and a
+backfill you write into that migration see the change.
+
 ## Tests
 
 API tests run against PostgreSQL in Testcontainers with the real Flyway

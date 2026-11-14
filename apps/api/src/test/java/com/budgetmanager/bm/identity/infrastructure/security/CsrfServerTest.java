@@ -65,7 +65,7 @@ class CsrfServerTest {
   void aMissingCsrfTokenIsForbiddenNotUnauthorized() throws Exception {
     csrfToken();
 
-    assertThat(createCategory("Travel", null).statusCode()).isEqualTo(403);
+    assertThat(createCategory("Trips", null).statusCode()).isEqualTo(403);
   }
 
   private HttpResponse<String> createCategory(String name, String csrfToken) throws Exception {

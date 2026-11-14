@@ -38,6 +38,19 @@ class LedgerIntegrationTest extends IntegrationTest {
   }
 
   @Test
+  void newUsersStartWithTheDefaultCategories() {
+    signIn(alice);
+
+    assertThat(categoryService.findByTransactionType(TransactionType.EXPENSE))
+        .extracting(Category::getName)
+        .contains("Groceries", "Restaurants", "Subscriptions", "Other")
+        .hasSize(18);
+    assertThat(categoryService.findByTransactionType(TransactionType.INCOME))
+        .extracting(Category::getName)
+        .containsExactlyInAnyOrder("Salary", "Freelance", "Investments", "Refunds", "Other");
+  }
+
+  @Test
   void categoriesAreVisibleOnlyToTheirOwner() {
     signIn(alice);
     Category food = categoryService.save(category("Food", TransactionType.EXPENSE));
@@ -62,10 +75,10 @@ class LedgerIntegrationTest extends IntegrationTest {
   @Test
   void duplicateCategoryNamesAreRejectedIgnoringCase() {
     signIn(alice);
-    categoryService.save(category("Groceries", TransactionType.EXPENSE));
+    categoryService.save(category("Bakery", TransactionType.EXPENSE));
 
     assertError(
-        () -> categoryService.save(category("  groceries ", TransactionType.EXPENSE)),
+        () -> categoryService.save(category("  bakery ", TransactionType.EXPENSE)),
         ApplicationError.CONFLICT);
     assertError(
         () ->
@@ -79,9 +92,9 @@ class LedgerIntegrationTest extends IntegrationTest {
   @Test
   void sameNameIsAllowedForIncomeAndExpense() {
     signIn(alice);
-    categoryService.save(category("Freelance", TransactionType.EXPENSE));
+    categoryService.save(category("Consulting", TransactionType.EXPENSE));
 
-    Category income = categoryService.save(category("Freelance", TransactionType.INCOME));
+    Category income = categoryService.save(category("Consulting", TransactionType.INCOME));
 
     assertThat(income.getId()).isNotNull();
   }
@@ -89,7 +102,7 @@ class LedgerIntegrationTest extends IntegrationTest {
   @Test
   void transactionsCannotUseAnotherUsersCategory() {
     signIn(alice);
-    Category aliceCategory = categoryService.save(category("Travel", TransactionType.EXPENSE));
+    Category aliceCategory = categoryService.save(category("Trips", TransactionType.EXPENSE));
 
     signIn(bob);
     assertError(
@@ -162,11 +175,11 @@ class LedgerIntegrationTest extends IntegrationTest {
   @Test
   void usersCannotChangeOrDeleteAnotherUsersTransactions() {
     signIn(alice);
-    Category category = categoryService.save(category("Car", TransactionType.EXPENSE));
+    Category category = categoryService.save(category("Car wash", TransactionType.EXPENSE));
     Transaction saved = transactionService.save(draft("10.00", null), category.getId());
 
     signIn(bob);
-    Category bobCategory = categoryService.save(category("Car", TransactionType.EXPENSE));
+    Category bobCategory = categoryService.save(category("Car wash", TransactionType.EXPENSE));
     Transaction changes = draft("1.00", null);
     changes.setId(saved.getId());
 
