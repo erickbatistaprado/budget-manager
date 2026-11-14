@@ -8,7 +8,9 @@
     "moduleResolution": "Bundler",
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
   },
   "include": ["src/**/*.ts"]
 }

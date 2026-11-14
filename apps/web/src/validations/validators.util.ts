@@ -1,9 +1,30 @@
 import { z, type ZodString } from 'zod';
 
+/** The API stores passwords with BCrypt, which accepts at most 72 bytes. */
+function utf8ByteLength(value: string): number {
+  let bytes = 0;
+  for (const character of value) {
+    const codePoint: number = character.codePointAt(0) ?? 0;
+    if (codePoint < 0x80) {
+      bytes += 1;
+    } else if (codePoint < 0x800) {
+      bytes += 2;
+    } else if (codePoint < 0x10000) {
+      bytes += 3;
+    } else {
+      bytes += 4;
+    }
+  }
+  return bytes;
+}
+
 export const passwordSchema: ZodString = z
   .string()
   .min(8, 'Password must be at least 8 characters long')
-  .max(64, 'Password must not exceed 64 characters')
+  .refine(
+    (password: string): boolean => utf8ByteLength(password) <= 72,
+    'Password must not exceed 72 bytes'
+  )
   .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
   .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
   .regex(/\d/, 'Password must contain at least one number')

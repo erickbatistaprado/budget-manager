@@ -8,6 +8,62 @@ function getBaseUrl(): string {
 }
 
 let csrfToken: string | undefined;
+let pendingRefresh: Promise<boolean> | undefined;
+
+const SESSION_PATHS: ReadonlySet<string> = new Set([
+  '/auth/login',
+  '/auth/logout',
+  '/auth/refresh',
+  '/auth/csrf',
+]);
+
+/**
+ * Swaps the refresh token cookie for a new session. Concurrent callers share a
+ * single request, because each refresh token works only once.
+ */
+function refreshSession(): Promise<boolean> {
+  pendingRefresh ??= fetch(`${getBaseUrl()}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+  })
+    .then((response: Response): boolean => response.ok)
+    .catch((): boolean => false)
+    .finally((): void => {
+      pendingRefresh = undefined;
+    });
+  return pendingRefresh;
+}
+
+function redirectToSignIn(): void {
+  if (
+    typeof window !== 'undefined' &&
+    !window.location.pathname.startsWith('/auth')
+  ) {
+    window.location.assign(new URL('/auth', window.location.origin));
+  }
+}
+
+/**
+ * Sends a request and, when the access token has expired, refreshes the
+ * session and retries once. The retry also runs when the refresh fails,
+ * because another tab may have rotated the shared cookies a moment earlier.
+ * Only a second 401 ends the session and goes back to the sign-in page.
+ */
+async function sendWithSession(
+  path: string,
+  send: () => Promise<Response>
+): Promise<Response> {
+  const response: Response = await send();
+  if (response.status !== 401 || SESSION_PATHS.has(path)) {
+    return response;
+  }
+  await refreshSession();
+  const retried: Response = await send();
+  if (retried.status === 401) {
+    redirectToSignIn();
+  }
+  return retried;
+}
 
 function getCookieValue(name: string): string | undefined {
   if (typeof document === 'undefined') {
@@ -80,7 +136,9 @@ async function fetcher<T>(
     headers: headersInit,
     ...config,
   };
-  let response = await fetch(getBaseUrl() + path, request);
+  let response: Response = await sendWithSession(path, (): Promise<Response> =>
+    fetch(getBaseUrl() + path, request)
+  );
 
   if (response.status === 403 && isUnsafeMethod(method)) {
     csrfToken = undefined;
@@ -99,10 +157,11 @@ async function fetcher<T>(
 }
 
 export async function getBlobFetcher(path: string): Promise<Blob> {
-  const response = await fetch(getBaseUrl() + path, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const response: Response = await sendWithSession(
+    path,
+    (): Promise<Response> =>
+      fetch(getBaseUrl() + path, { method: 'GET', credentials: 'include' })
+  );
   if (!response.ok) {
     const text: string = await response.text();
     throw new Error(`HTTP ${response.status}: ${text}`);
@@ -113,10 +172,11 @@ export async function getBlobFetcher(path: string): Promise<Blob> {
 export async function getOptionalBlobFetcher(
   path: string
 ): Promise<Blob | undefined> {
-  const response = await fetch(getBaseUrl() + path, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const response: Response = await sendWithSession(
+    path,
+    (): Promise<Response> =>
+      fetch(getBaseUrl() + path, { method: 'GET', credentials: 'include' })
+  );
   if (response.status === 404) {
     return undefined;
   }

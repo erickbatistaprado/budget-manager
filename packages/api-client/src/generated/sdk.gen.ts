@@ -3,7 +3,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, UpdateUserData, UpdateUserResponses } from './types.gen';
+import type { CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, UpdateUserData, UpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -29,6 +29,11 @@ export const login = <ThrowOnError extends boolean = false>(options: Options<Log
         ...options.headers
     }
 });
+
+/**
+ * Swaps the refresh_token cookie for a new one and issues a new access_token cookie. Each refresh token works once.
+ */
+export const refreshSession = <ThrowOnError extends boolean = false>(options?: Options<RefreshSessionData, ThrowOnError>): RequestResult<RefreshSessionResponses, RefreshSessionErrors, ThrowOnError> => (options?.client ?? client).post<RefreshSessionResponses, RefreshSessionErrors, ThrowOnError>({ url: '/auth/refresh', ...options });
 
 export const logout = <ThrowOnError extends boolean = false>(options?: Options<LogoutData, ThrowOnError>): RequestResult<LogoutResponses, unknown, ThrowOnError> => (options?.client ?? client).post<LogoutResponses, unknown, ThrowOnError>({ url: '/auth/logout', ...options });
 

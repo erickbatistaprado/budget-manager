@@ -4,7 +4,13 @@ export default function proxy({
   cookies,
   nextUrl: { pathname, origin },
 }: NextRequest): NextResponse<unknown> {
-  const token: string | undefined = cookies.get('access_token')?.value;
+  // The access token lives 15 minutes; the refresh token keeps the session
+  // alive, and the client swaps it for a new access token on the first 401.
+  // Only a live access token skips the sign-in page: a refresh token alone may
+  // be expired, and treating it as a session would loop between / and /auth.
+  const accessToken: string | undefined = cookies.get('access_token')?.value;
+  const token: string | undefined =
+    accessToken ?? cookies.get('refresh_token')?.value;
   const protectedRoutes: string[] = ['/', '/profile', '/analytics'];
 
   if (
@@ -16,7 +22,7 @@ export default function proxy({
   ) {
     return NextResponse.redirect(new URL('/auth', origin));
   }
-  if (token && pathname === '/auth') {
+  if (accessToken && pathname === '/auth') {
     return NextResponse.redirect(new URL('/', origin));
   }
   return NextResponse.next();

@@ -17,6 +17,12 @@ export type Message = {
     message: string;
 };
 
+export type ErrorResponse = {
+    status: string;
+    title: string;
+    message: string;
+};
+
 export type CsrfToken = {
     token: string;
 };
@@ -126,6 +132,31 @@ export type LoginResponses = {
 };
 
 export type LoginResponse = LoginResponses[keyof LoginResponses];
+
+export type RefreshSessionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/refresh';
+};
+
+export type RefreshSessionErrors = {
+    /**
+     * Refresh token missing
+     */
+    401: ErrorResponse;
+};
+
+export type RefreshSessionError = RefreshSessionErrors[keyof RefreshSessionErrors];
+
+export type RefreshSessionResponses = {
+    /**
+     * Session refreshed
+     */
+    200: Message;
+};
+
+export type RefreshSessionResponse = RefreshSessionResponses[keyof RefreshSessionResponses];
 
 export type LogoutData = {
     body?: never;

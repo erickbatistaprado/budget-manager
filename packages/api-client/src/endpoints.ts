@@ -13,7 +13,11 @@ import { BudgetManagerClient } from './client';
 import { z } from 'zod';
 
 export class BudgetManagerApi {
-  constructor(private readonly client: BudgetManagerClient) {}
+  private readonly client: BudgetManagerClient;
+
+  constructor(client: BudgetManagerClient) {
+    this.client = client;
+  }
 
   login(email: string, password: string) {
     return this.client.request(

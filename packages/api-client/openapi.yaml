@@ -40,6 +40,30 @@ paths:
                   { schema: { $ref: '#/components/schemas/Message' } },
               },
           }
+  /auth/refresh:
+    post:
+      operationId: refreshSession
+      description: Swaps the refresh_token cookie for a new one and issues a new access_token cookie. Each refresh token works once.
+      responses:
+        '200':
+          {
+            description: Session refreshed,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: '#/components/schemas/Message' } },
+              },
+          }
+        '401':
+          {
+            description: Refresh token missing,
+            expired or already used. The cookies are left as they are; another tab may have rotated them.,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: '#/components/schemas/ErrorResponse' } },
+              },
+          }
   /auth/logout:
     post:
       operationId: logout
@@ -266,6 +290,15 @@ components:
       type: object
       required: [message]
       properties: { message: { type: string } }
+    ErrorResponse:
+      type: object
+      required: [status, title, message]
+      properties:
+        {
+          status: { type: string, examples: [UNAUTHORIZED] },
+          title: { type: string, examples: [Unauthorized] },
+          message: { type: string },
+        }
     CsrfToken:
       type: object
       required: [token]

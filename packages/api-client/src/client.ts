@@ -9,22 +9,33 @@ interface RequestOptions {
 }
 
 export class ApiClientError extends Error {
-  constructor(
-    message: string,
-    readonly status: number
-  ) {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
     super(message);
     this.name = 'ApiClientError';
+    this.status = status;
   }
 }
 
+const SESSION_PATHS = new Set([
+  '/auth/login',
+  '/auth/logout',
+  '/auth/refresh',
+  '/auth/csrf',
+]);
+
 export class BudgetManagerClient {
   private csrfToken: string | undefined;
+  private pendingRefresh: Promise<boolean> | undefined;
 
-  constructor(private readonly baseUrl: string) {
+  private readonly baseUrl: string;
+
+  constructor(baseUrl: string) {
     if (!baseUrl) {
       throw new Error('A Budget Manager API base URL is required.');
     }
+    this.baseUrl = baseUrl;
   }
 
   async request<T>(
@@ -56,10 +67,39 @@ export class BudgetManagerClient {
     }
   }
 
+  /**
+   * Sends the request and, when the access token has expired, swaps the refresh
+   * token for a new session once and retries. Concurrent requests share a single
+   * refresh call, because each refresh token works only once.
+   */
   private async fetch(
     path: string,
     options: RequestOptions
   ): Promise<Response> {
+    const response = await this.send(path, options);
+    if (response.status !== 401 || SESSION_PATHS.has(path)) {
+      return response;
+    }
+    // Retry even when the refresh failed: another client sharing the cookie
+    // jar may have rotated the token a moment earlier.
+    await this.refreshSession();
+    return this.send(path, options);
+  }
+
+  private refreshSession(): Promise<boolean> {
+    this.pendingRefresh ??= fetch(`${this.baseUrl}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+      .then((response) => response.ok)
+      .catch(() => false)
+      .finally(() => {
+        this.pendingRefresh = undefined;
+      });
+    return this.pendingRefresh;
+  }
+
+  private async send(path: string, options: RequestOptions): Promise<Response> {
     const method = options.method ?? 'GET';
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
       await this.ensureCsrfToken();
