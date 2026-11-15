@@ -10,6 +10,7 @@ import type { Category, Transaction } from '@/types';
 import { getApiDate, parseApiDate } from '@/utils/globalFormats.util';
 import clsx from 'clsx';
 import {
+  useId,
   useState,
   useSyncExternalStore,
   type ChangeEvent,
@@ -50,6 +51,7 @@ export default function NewTransaction({
   onClose,
 }: Readonly<NewTransactionProps>): JSX.Element {
   const { t } = useI18n();
+  const fieldId: string = useId();
   const [form, setForm] = useState<Partial<Transaction>>(
     transaction ?? { repeats: RepeatInterval.NONE }
   );
@@ -135,13 +137,13 @@ export default function NewTransaction({
   }
 
   function handleChange({
-    currentTarget: { value, id },
+    currentTarget: { value, name },
   }: ChangeEvent<HTMLInputElement | HTMLSelectElement>): void {
     setForm(
       (prevForm: Partial<Transaction> | undefined): Partial<Transaction> => ({
         ...prevForm,
-        [id]:
-          id === 'category'
+        [name]:
+          name === 'category'
             ? categories?.find(
                 (categoryItem: Category): boolean => categoryItem.id === value
               )
@@ -187,11 +189,12 @@ export default function NewTransaction({
       </div>
       <form
         className="flex h-full w-full flex-col gap-5 rounded-lg"
-        id="newTransactionForm"
+        id={`${fieldId}-form`}
         onSubmit={onSubmit}
       >
         <SelectWithTooltip
-          id="repeats"
+          id={`${fieldId}-repeats`}
+          name="repeats"
           tooltip={t.transactions.repeatsTooltip}
           icon={
             <MdEventRepeat className="text-[var(--ctp-yellow)]" size={25} />
@@ -207,7 +210,8 @@ export default function NewTransaction({
           ]}
         />
         <SelectWithTooltip
-          id="transactionType"
+          id={`${fieldId}-transactionType`}
+          name="transactionType"
           tooltip={t.transactions.typeTooltip}
           icon={<GrTransaction className="text-[var(--ctp-green)]" size={25} />}
           value={transactionType}
@@ -219,7 +223,8 @@ export default function NewTransaction({
           ]}
         />
         <SelectWithTooltip
-          id="category"
+          id={`${fieldId}-category`}
+          name="category"
           tooltip={t.transactions.categoryTooltip}
           icon={<FcIdea size={25} />}
           value={form.category?.id || ''}
@@ -248,7 +253,8 @@ export default function NewTransaction({
               size={25}
             />
             <Input
-              id="installmentNumbers"
+              id={`${fieldId}-installmentNumbers`}
+              name="installmentNumbers"
               label={t.transactions.numberOfInstallments}
               type="number"
               min={2}
@@ -261,7 +267,8 @@ export default function NewTransaction({
         <div className="flex flex-col gap-1">
           <FcSurvey size={25} />
           <Input
-            id="notes"
+            id={`${fieldId}-notes`}
+            name="notes"
             label={t.common.notes}
             type="text"
             value={form.notes ?? ''}
@@ -272,7 +279,8 @@ export default function NewTransaction({
           <FcCurrencyExchange size={25} />
           <Input
             className="no-spinner"
-            id="totalValue"
+            id={`${fieldId}-totalValue`}
+            name="totalValue"
             label={t.common.value}
             type="number"
             min={0.01}
@@ -300,7 +308,6 @@ export default function NewTransaction({
                 : 'cursor-pointer bg-[var(--ctp-blue)] text-[var(--ctp-crust)] hover:bg-[var(--ctp-lavender)]'
             )}
             type="submit"
-            form="newTransactionForm"
             disabled={isSaveDisabled || isSubmitting}
           >
             {isSubmitting ? t.common.saving : t.common.save}

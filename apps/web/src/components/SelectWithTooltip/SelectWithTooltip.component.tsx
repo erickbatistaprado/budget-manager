@@ -8,6 +8,7 @@ interface Option {
 
 interface SelectWithTooltipProps {
   id: string;
+  name?: string;
   tooltip: string;
   icon: React.ReactNode;
   value?: string | number;
@@ -18,6 +19,7 @@ interface SelectWithTooltipProps {
 
 export default function SelectWithTooltip({
   id,
+  name,
   tooltip,
   icon,
   value,
@@ -31,6 +33,7 @@ export default function SelectWithTooltip({
       <Tooltip placement="top" tooltip={tooltip}>
         <select
           id={id}
+          name={name}
           className="w-full rounded-md border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-3 text-[var(--ctp-text)] shadow-sm transition-colors focus:border-[var(--ctp-blue)] focus:ring-2 focus:ring-[var(--ctp-blue)]/25 focus:outline-none disabled:opacity-50"
           value={value}
           onChange={onChange}

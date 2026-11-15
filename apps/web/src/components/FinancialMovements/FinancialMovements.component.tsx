@@ -176,7 +176,9 @@ export default function FinancialMovements({
             : 'pointer-events-none translate-x-full'
         )}
       >
-        <NewTransaction onClose={onEditOrClose} transaction={transaction} />
+        {isEditOpen && (
+          <NewTransaction onClose={onEditOrClose} transaction={transaction} />
+        )}
       </div>
       {isPrepaying && (
         <InstallmentPrepayment
