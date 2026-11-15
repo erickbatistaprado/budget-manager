@@ -1,5 +1,6 @@
 package com.budgetmanager.bm.ledger.infrastructure.http;
 
+import com.budgetmanager.bm.ledger.domain.PaymentMethod;
 import com.budgetmanager.bm.ledger.domain.RepeatInterval;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.Valid;
@@ -17,6 +18,9 @@ import lombok.Builder;
 public record TransactionDto(
     UUID id,
     UUID cardId,
+    PaymentMethod paymentMethod,
+    UUID accountId,
+    AccountDto account,
     CardSummaryDto card,
     @JsonFormat(pattern = "yyyy/MM/dd") LocalDate billDueDate,
     @Valid @NotNull CategoryDto category,

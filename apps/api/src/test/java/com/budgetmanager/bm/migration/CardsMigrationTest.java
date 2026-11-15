@@ -38,7 +38,7 @@ class CardsMigrationTest {
           """
               .formatted(USER));
     }
-    flyway(null).migrate();
+    flyway("10").migrate();
     try (Connection connection = connect();
         Statement statement = connection.createStatement()) {
       assertThat(value(statement, "SELECT card_id FROM t_transaction")).isNull();

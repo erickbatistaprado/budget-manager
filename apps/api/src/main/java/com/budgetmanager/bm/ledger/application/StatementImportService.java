@@ -4,6 +4,7 @@ import com.budgetmanager.bm.identity.application.UserService;
 import com.budgetmanager.bm.identity.domain.User;
 import com.budgetmanager.bm.ledger.domain.Card;
 import com.budgetmanager.bm.ledger.domain.Category;
+import com.budgetmanager.bm.ledger.domain.PaymentMethod;
 import com.budgetmanager.bm.ledger.domain.RepeatInterval;
 import com.budgetmanager.bm.ledger.domain.Transaction;
 import com.budgetmanager.bm.ledger.domain.TransactionType;
@@ -270,6 +271,7 @@ public class StatementImportService {
       StatementLine line, LocalDate date, UUID categoryId, Card card, LocalDate billDueDate) {
     Transaction draft = toTransaction(line, date);
     draft.setCard(card);
+    draft.setPaymentMethod(card == null ? null : PaymentMethod.CREDIT_CARD);
     Transaction saved = transactionService.save(draft, categoryId);
     if (billDueDate != null) {
       saved.assignBillDueDate(firstBill(line, billDueDate));
@@ -286,6 +288,8 @@ public class StatementImportService {
     saved.assignBillDueDate(firstBill(line, billDueDate));
     if (saved.getCard() == null && card != null) {
       saved.setCard(card);
+      saved.setAccount(null);
+      saved.setPaymentMethod(PaymentMethod.CREDIT_CARD);
     }
     return true;
   }

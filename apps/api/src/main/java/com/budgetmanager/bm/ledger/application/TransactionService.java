@@ -32,6 +32,7 @@ public class TransactionService {
   private final UserService userService;
   private final CategoryService categoryService;
   private final CardService cardService;
+  private final AccountService accountService;
 
   @Transactional(readOnly = true)
   public Page<Transaction> findByTransactionTypeAndDateBetween(
@@ -243,6 +244,11 @@ public class TransactionService {
         source.getCard() == null
             ? null
             : cardService.requireOwned(source.getCard().getId(), target.getUser());
+    target.setPaymentMethod(source.getPaymentMethod());
+    target.setAccount(
+        source.getAccount() == null
+            ? null
+            : accountService.requireOwned(source.getAccount().getId(), target.getUser()));
     target.setCard(card);
     target.assignBillDueDate(card == null ? null : card.billDueDate(source.getDate()));
     target.setNotes(source.getNotes());
@@ -250,6 +256,7 @@ public class TransactionService {
     target.setDate(source.getDate());
     target.setRepeats(repeats);
     target.setInstallmentNumbers(source.getInstallmentNumbers());
+    monthlyChange(target::validatePayment);
     target.scheduleInstallments();
   }
 

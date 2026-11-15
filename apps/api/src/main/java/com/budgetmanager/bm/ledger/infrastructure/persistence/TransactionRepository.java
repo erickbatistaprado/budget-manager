@@ -139,6 +139,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
           SELECT DISTINCT t
           FROM Transaction t
           JOIN FETCH t.category c
+          LEFT JOIN FETCH t.account
           LEFT JOIN FETCH t.card
           LEFT JOIN FETCH t.installments i
           WHERE t.id IN :ids

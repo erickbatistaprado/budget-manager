@@ -38,11 +38,13 @@ class CardBillIntegrationTest extends IntegrationTest {
   void manualSaveComputesBillAndListingUsesBillMonthIncludingTheCountQuery() {
     Transaction draft = draft(null);
     draft.setCard(card);
+    draft.setPaymentMethod(PaymentMethod.CREDIT_CARD);
     draft.setBillDueDate(LocalDate.of(2000, 1, 1));
     Transaction saved = transactions.save(draft, category.getId());
     assertThat(saved.getBillDueDate()).isEqualTo(LocalDate.of(2027, 1, 5));
     Transaction second = draft(null);
     second.setCard(card);
+    second.setPaymentMethod(PaymentMethod.CREDIT_CARD);
     transactions.save(second, category.getId());
     var december = list(2026, 12);
     var january = list(2027, 1);
@@ -51,6 +53,7 @@ class CardBillIntegrationTest extends IntegrationTest {
     assertThat(january.getContent().getFirst().getDate()).isEqualTo(LocalDate.of(2026, 12, 12));
     draft.setId(saved.getId());
     draft.setCard(null);
+    draft.setPaymentMethod(null);
     assertThat(transactions.update(draft, category.getId()).getBillDueDate()).isNull();
     assertThat(list(2026, 12).getTotalElements()).isEqualTo(1);
   }
@@ -59,6 +62,7 @@ class CardBillIntegrationTest extends IntegrationTest {
   void rejectsMonthlyCardAndAnotherOwnersCard() {
     Transaction draft = draft(null);
     draft.setCard(card);
+    draft.setPaymentMethod(PaymentMethod.CREDIT_CARD);
     draft.setRepeats(RepeatInterval.MONTHLY);
     assertThatThrownBy(() -> transactions.save(draft, category.getId()))
         .isInstanceOf(ApplicationException.class);

@@ -2,6 +2,7 @@ package com.budgetmanager.bm.ledger.application;
 
 import com.budgetmanager.bm.identity.application.UserService;
 import com.budgetmanager.bm.identity.domain.User;
+import com.budgetmanager.bm.ledger.domain.Bank;
 import com.budgetmanager.bm.ledger.domain.Card;
 import com.budgetmanager.bm.ledger.infrastructure.persistence.CardRepository;
 import com.budgetmanager.bm.shared.application.ApplicationError;
@@ -31,6 +32,11 @@ public class CardService {
 
   @Transactional
   public Card save(UUID id, String name, int closingDay, int dueDay) {
+    return save(id, name, closingDay, dueDay, Bank.OTHER);
+  }
+
+  @Transactional
+  public Card save(UUID id, String name, int closingDay, int dueDay, Bank bank) {
     User user = userService.requireCurrentUser();
     Card card = id == null ? Card.builder().user(user).build() : requireOwned(id, user);
     if (name == null
@@ -51,6 +57,10 @@ public class CardService {
                 ApplicationError.BAD_REQUEST, "A card with this name already exists");
           }
         });
+    if (bank == null) {
+      throw new ApplicationException(ApplicationError.BAD_REQUEST, "Bank is required");
+    }
+    card.setBank(bank);
     card.setName(name.trim());
     card.setClosingDay(closingDay);
     card.setDueDay(dueDay);

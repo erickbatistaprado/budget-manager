@@ -45,6 +45,42 @@ public class Transaction {
   @JoinColumn(name = "card_id")
   private Card card;
 
+  @Enumerated(EnumType.STRING)
+  @Column(length = 32)
+  private PaymentMethod paymentMethod;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "account_id")
+  private Account account;
+
+  public void validatePayment() {
+    if ((card != null) != (paymentMethod == PaymentMethod.CREDIT_CARD)) {
+      throw new IllegalArgumentException(
+          "Credit card payment requires a card; a card requires credit card payment");
+    }
+    if (paymentMethod == PaymentMethod.CREDIT_CARD
+        && (account != null || repeats == RepeatInterval.MONTHLY)) {
+      throw new IllegalArgumentException(
+          "Credit card payment cannot have an account or repeat monthly");
+    }
+    boolean income = category != null && category.getTransactionType() == TransactionType.INCOME;
+    if (income
+        && paymentMethod != null
+        && paymentMethod != PaymentMethod.PIX
+        && paymentMethod != PaymentMethod.BANK_TRANSFER
+        && paymentMethod != PaymentMethod.CASH
+        && paymentMethod != PaymentMethod.OTHER) {
+      throw new IllegalArgumentException("Income supports Pix, bank transfer, cash or other");
+    }
+    if (account != null
+        && (paymentMethod == null
+            || (!income
+                && (paymentMethod == PaymentMethod.CASH
+                    || paymentMethod == PaymentMethod.OTHER)))) {
+      throw new IllegalArgumentException("Choose a payment method that supports an account");
+    }
+  }
+
   private LocalDate billDueDate;
 
   public void assignBillDueDate(LocalDate dueDate) {

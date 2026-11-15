@@ -16,7 +16,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class CardEndpointsTest extends IntegrationTest {
   @Autowired private MockMvc mvc;
   @Autowired private CardService cards;
-  private static final String CARD = "{\"name\":\"Visa\",\"closingDay\":25,\"dueDay\":5}";
+  private static final String CARD =
+      "{\"bank\":\"BRADESCO\",\"name\":\"Visa\",\"closingDay\":25,\"dueDay\":5}";
 
   @Test
   void cardsAreOwnedAndCanBeCreatedUpdatedAndDeleted() throws Exception {
@@ -43,7 +44,8 @@ class CardEndpointsTest extends IntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(CARD))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.name").value("Visa"));
+        .andExpect(jsonPath("$.name").value("Visa"))
+        .andExpect(jsonPath("$.bank").value("BRADESCO"));
     mvc.perform(
             put("/cards/{id}", card.getId())
                 .with(user(owner.getEmail()))
