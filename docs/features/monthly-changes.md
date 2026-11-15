@@ -40,3 +40,6 @@ range.
 Home asks for the scope before editing and during inline deletion. The selected
 month supplies the edit form values; a single-month change keeps its category.
 The month and following option allows a category change of the same type.
+
+Cards and bill dates apply only to non-repeating purchases; monthly series keep
+these rules. See [Cards and bill months](cards-and-bills.md).
