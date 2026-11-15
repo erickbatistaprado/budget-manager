@@ -21,12 +21,74 @@ final class PdfTextExtractor {
   private PdfTextExtractor() {}
 
   static List<TextLine> extract(byte[] pdf, String password) {
-    try (PDDocument document = load(pdf, password)) {
-      List<TextLine> lines = new ArrayList<>();
-      for (int page = 1; page <= document.getNumberOfPages(); page++) {
-        lines.addAll(extractPage(document, page));
+    List<TextLine> lines = new ArrayList<>();
+    forEachPage(
+        pdf,
+        password,
+        (page, positions) -> {
+          for (List<TextPosition> row : groupRows(positions)) {
+            lines.add(new TextLine(page, top(page, row), rowText(row)));
+          }
+        });
+    return lines;
+  }
+
+  /**
+   * Splits every line into columns by horizontal position: a character whose left edge is at or
+   * after {@code boundaries[i]} and before {@code boundaries[i + 1]} belongs to column {@code i}.
+   * Text left of the first boundary or from the last one on (a sidebar) is dropped.
+   */
+  static List<TextRow> extractColumns(byte[] pdf, String password, float... boundaries) {
+    List<TextRow> rows = new ArrayList<>();
+    forEachPage(
+        pdf,
+        password,
+        (page, positions) -> {
+          for (List<TextPosition> row : groupRows(positions)) {
+            List<List<TextPosition>> columns = new ArrayList<>();
+            for (int column = 0; column < boundaries.length - 1; column++) {
+              columns.add(new ArrayList<>());
+            }
+            for (TextPosition position : row) {
+              int column = columnOf(position.getXDirAdj(), boundaries);
+              if (column >= 0) {
+                columns.get(column).add(position);
+              }
+            }
+            if (columns.stream().anyMatch(cell -> !rowText(cell).isBlank())) {
+              rows.add(
+                  new TextRow(
+                      page,
+                      top(page, row),
+                      columns.stream().map(cell -> rowText(cell).strip()).toList()));
+            }
+          }
+        });
+    return rows;
+  }
+
+  private static int columnOf(float x, float[] boundaries) {
+    for (int column = 0; column < boundaries.length - 1; column++) {
+      if (x >= boundaries[column] && x < boundaries[column + 1]) {
+        return column;
       }
-      return lines;
+    }
+    return -1;
+  }
+
+  private interface PageConsumer {
+    void accept(int page, List<TextPosition> positions);
+  }
+
+  private static void forEachPage(byte[] pdf, String password, PageConsumer consumer) {
+    try (PDDocument document = load(pdf, password)) {
+      for (int page = 1; page <= document.getNumberOfPages(); page++) {
+        PositionCollector collector = new PositionCollector();
+        collector.setStartPage(page);
+        collector.setEndPage(page);
+        collector.getText(document);
+        consumer.accept(page, collector.positions);
+      }
     } catch (InvalidPasswordException exception) {
       throw new ApplicationException(
           exception,
@@ -46,15 +108,8 @@ final class PdfTextExtractor {
         : Loader.loadPDF(pdf, password);
   }
 
-  private static List<TextLine> extractPage(PDDocument document, int page) throws IOException {
-    PositionCollector collector = new PositionCollector();
-    collector.setStartPage(page);
-    collector.setEndPage(page);
-    collector.getText(document);
-    return toLines(collector.positions, page);
-  }
-
-  private static List<TextLine> toLines(List<TextPosition> positions, int page) {
+  /** Groups characters into visual lines, each sorted left to right. */
+  private static List<List<TextPosition>> groupRows(List<TextPosition> positions) {
     List<TextPosition> sorted = new ArrayList<>(positions);
     sorted.sort(
         Comparator.comparingDouble(TextPosition::getYDirAdj)
@@ -77,13 +132,14 @@ final class PdfTextExtractor {
     if (!current.isEmpty()) {
       rows.add(current);
     }
-
-    List<TextLine> lines = new ArrayList<>();
     for (List<TextPosition> row : rows) {
       row.sort(Comparator.comparingDouble(TextPosition::getXDirAdj));
-      lines.add(new TextLine(page, page * PAGE_OFFSET + row.getFirst().getYDirAdj(), rowText(row)));
     }
-    return lines;
+    return rows;
+  }
+
+  private static float top(int page, List<TextPosition> row) {
+    return page * PAGE_OFFSET + row.getFirst().getYDirAdj();
   }
 
   private static String rowText(List<TextPosition> row) {

@@ -111,6 +111,9 @@ paid bank-connection service is needed.
 - [x] Parsers per bank and format: date, description, amount, installments
       (`Parcela 3/10`, `3/10`), credits (refunds, discounts, IOF returns) and
       cardholder. Payments and previous balances are skipped.
+- [x] Bradesco in both formats: the open bill exported from the Bradesco
+      Cartões app and the monthly bill (`Fatura Mensal`), read by column so
+      the sidebar of limits and rates beside the purchases is ignored.
 - [x] Review screen: select lines, pick or bulk-set categories, add categories,
       hide what is already saved.
 - [x] Duplicates: same date, amount, description and category, counted rather

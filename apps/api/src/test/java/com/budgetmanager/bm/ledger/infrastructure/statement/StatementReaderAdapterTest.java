@@ -44,6 +44,101 @@ class StatementReaderAdapterTest {
     {520, 240, "R$ 105,00"},
   };
 
+  /**
+   * The monthly bill: fixed columns at the positions of the real layout (date 45, description 67,
+   * city 204, R$ ending before 358) next to a sidebar from x 364 that shares their lines.
+   */
+  private static final Object[][] BRADESCO_INVOICE_PAGE = {
+    {67, 30, "Fatura Mensal"},
+    {420, 50, "Total da fatura"},
+    {420, 60, "R$ 1.069,10"},
+    {500, 60, "05/11/2026"},
+    {45, 100, "Data"},
+    {67, 100, "Historico de Lancamentos"},
+    {204, 100, "Cidade"},
+    {332, 100, "R$"},
+    {45, 115, "05/10"},
+    {67, 115, "PAGTO. POR DEB EM C/C"},
+    {315, 115, "900,00 -"},
+    {45, 130, "ALEX SAMPLE"},
+    {150, 130, "Cartão 4066 XXXX XXXX 1111"},
+    {364, 130, "Saque Parcelado 9,99% 213,50%"},
+    {45, 145, "27/12"},
+    {67, 145, "PET CLINIC"},
+    {150, 145, "10/10"},
+    {204, 145, "CURITIBA"},
+    {320, 145, "469,43"},
+    {364, 145, "Compras R$ 42.600,00 R$ 16.585,44"},
+    {45, 160, "05/02"},
+    {67, 160, "LANGUAGE SCHOOL I09/11"},
+    {204, 160, "SAO JOSE DOS"},
+    {320, 160, "692,67"},
+    {204, 168, "PINHAIS"},
+    {45, 183, "Total para ALEX SAMPLE"},
+    {315, 183, "1.162,10"},
+    {45, 198, "SAM EXAMPLE"},
+    {150, 198, "Cartão 4066 XXXX XXXX 2222"},
+    {45, 213, "11/10"},
+    {67, 213, "CINEMA CHAIN EC"},
+    {204, 213, "SAO PAULO"},
+    {315, 213, "147,60 -"},
+    {45, 228, "21/10"},
+    {67, 228, "FUEL STATION"},
+    {204, 228, "OSASCO"},
+    {320, 228, "54,60"},
+    {364, 228, "Rotativo 14,99% 434,46%"},
+    {45, 243, "Total para SAM EXAMPLE"},
+    {320, 243, "93,00 -"},
+    {45, 258, "Total da fatura em real"},
+    {315, 258, "1.069,10"},
+  };
+
+  @Test
+  void readsTheMonthlyBradescoBillByColumns() throws IOException {
+    ParsedStatement statement = reader.read(pdf(BRADESCO_INVOICE_PAGE, null), null);
+
+    assertThat(statement.source()).isEqualTo(StatementSource.BRADESCO_CARD_PDF);
+    assertThat(statement.printedTotal()).isEqualByComparingTo("1069.10");
+    assertThat(statement.totalsMatch()).isTrue();
+    assertThat(statement.lines())
+        .extracting(
+            StatementLine::date,
+            StatementLine::description,
+            StatementLine::amount,
+            StatementLine::credit,
+            StatementLine::installmentNumber,
+            StatementLine::cardholder)
+        .containsExactly(
+            org.assertj.core.groups.Tuple.tuple(
+                java.time.LocalDate.of(2025, 12, 27),
+                "PET CLINIC",
+                new java.math.BigDecimal("469.43"),
+                false,
+                10,
+                "ALEX SAMPLE ••1111"),
+            org.assertj.core.groups.Tuple.tuple(
+                java.time.LocalDate.of(2026, 2, 5),
+                "LANGUAGE SCHOOL I",
+                new java.math.BigDecimal("692.67"),
+                false,
+                9,
+                "ALEX SAMPLE ••1111"),
+            org.assertj.core.groups.Tuple.tuple(
+                java.time.LocalDate.of(2026, 10, 11),
+                "CINEMA CHAIN EC",
+                new java.math.BigDecimal("147.60"),
+                true,
+                null,
+                "SAM EXAMPLE ••2222"),
+            org.assertj.core.groups.Tuple.tuple(
+                java.time.LocalDate.of(2026, 10, 21),
+                "FUEL STATION",
+                new java.math.BigDecimal("54.60"),
+                false,
+                null,
+                "SAM EXAMPLE ••2222"));
+  }
+
   @Test
   void readsAGeneratedBradescoPdfIncludingWrappedText() throws IOException {
     ParsedStatement statement = reader.read(pdf(BRADESCO_PAGE, null), null);

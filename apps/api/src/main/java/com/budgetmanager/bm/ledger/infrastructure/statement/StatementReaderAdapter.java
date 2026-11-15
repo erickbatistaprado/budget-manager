@@ -36,6 +36,11 @@ public class StatementReaderAdapter implements StatementReader {
           ApplicationError.UNPROCESSABLE,
           "This PDF has no text, probably a scan; export it again from the bank's app");
     }
+    if (BradescoInvoicePdfParser.accepts(lines)) {
+      return BradescoInvoicePdfParser.parse(
+          lines,
+          PdfTextExtractor.extractColumns(content, password, BradescoInvoicePdfParser.COLUMNS));
+    }
     if (BradescoCardPdfParser.accepts(lines)) {
       return BradescoCardPdfParser.parse(lines);
     }
