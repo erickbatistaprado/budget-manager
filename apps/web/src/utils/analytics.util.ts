@@ -1,3 +1,4 @@
+import { transactionBudgetDate } from '@/utils/cardBill.util';
 import { monthlyOccurrence } from '@/utils/monthlyTransaction.util';
 import { RepeatInterval, SavingLocation } from '@/enums';
 import type { Saving, Transaction } from '@/types';
@@ -185,7 +186,8 @@ export function projectOccurrences(
       merchant: transaction.notes?.trim() ?? '',
       committed:
         transaction.repeats !== RepeatInterval.NONE ||
-        Boolean(transaction.installments?.length),
+        Boolean(transaction.installments?.length) ||
+        Boolean(transaction.billDueDate),
       installment: Boolean(transaction.installments?.length),
     };
     if (transaction.installments?.length) {
@@ -225,7 +227,7 @@ export function projectOccurrences(
       }
       continue;
     }
-    const origin = parseApiDate(transaction.date);
+    const origin = transactionBudgetDate(transaction);
     if (transaction.repeats === RepeatInterval.NONE) {
       if (origin >= range.startDate && origin <= range.endDate) {
         results.push({

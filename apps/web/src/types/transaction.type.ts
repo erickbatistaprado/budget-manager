@@ -4,6 +4,9 @@ import type { Category, Installment } from '@/types';
 export interface Transaction {
   id: string;
   category: Category;
+  cardId?: string | null;
+  card?: { id: string; name: string } | null;
+  billDueDate?: string | null;
   notes?: string | null;
   totalValue: number;
   installmentNumbers?: number | null;

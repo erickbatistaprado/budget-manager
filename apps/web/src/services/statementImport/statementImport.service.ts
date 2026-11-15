@@ -68,12 +68,14 @@ class StatementImportService {
   }
 
   async importLines(
-    lines: readonly StatementImportLine[]
+    lines: readonly StatementImportLine[],
+    cardId?: string,
+    billDueDate?: string
   ): Promise<StatementImportResult> {
     try {
       return statementImportResultSchema.parse(
         await postFetcher<unknown>('/statement-imports', {
-          body: JSON.stringify({ lines }),
+          body: JSON.stringify({ lines, cardId, billDueDate }),
         })
       );
     } catch (error: unknown) {

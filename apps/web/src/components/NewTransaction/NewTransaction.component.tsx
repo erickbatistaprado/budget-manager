@@ -3,6 +3,8 @@
 import { DatePickerDialog, Input, SelectWithTooltip } from '@/components';
 import { RepeatInterval, TransactionType } from '@/enums';
 import { useCategories } from '@/hooks';
+import useCards from '@/hooks/useCards.hook';
+import { cardBillDueDate } from '@/utils/cardBill.util';
 import { useI18n } from '@/i18n/useI18n';
 import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import { postFetcher, putFetcher } from '@/libs/fetchers.lib';
@@ -54,6 +56,7 @@ export default function NewTransaction({
   onClose,
 }: Readonly<NewTransactionProps>): JSX.Element {
   const { t, language } = useI18n();
+  const { data: cards } = useCards();
   const monthly = transaction?.repeats === RepeatInterval.MONTHLY;
   const month =
     selectedDate ?? (transaction ? parseApiDate(transaction.date) : new Date());
@@ -141,6 +144,9 @@ export default function NewTransaction({
       installments: form.installments ?? null,
       repeats: form.repeats ?? RepeatInterval.NONE,
       category: form.category,
+      cardId: isInstallmentsEnabled
+        ? (form.cardId ?? form.card?.id ?? null) || null
+        : null,
       date: getApiDate(date ?? new Date()),
     });
 
@@ -218,6 +224,11 @@ export default function NewTransaction({
     form.repeats === RepeatInterval.NONE &&
     transactionType === TransactionType.EXPENSE
   );
+  const selectedCard = cards?.find(
+    (card): boolean => card.id === (form.cardId ?? form.card?.id)
+  );
+  const billDate =
+    selectedCard && date ? cardBillDueDate(date, selectedCard) : undefined;
   const totalValue: number = Number(form.totalValue);
   const isSaveDisabled: boolean = Boolean(
     !Number.isFinite(totalValue) || totalValue <= 0 || !form.category?.id
@@ -225,15 +236,55 @@ export default function NewTransaction({
 
   if (monthly && !scope) {
     return (
-      <div className="flex h-full flex-col justify-center gap-4 p-5">
-        <p>{t.transactions.earlierUnchanged}</p>
-        <button type="button" onClick={(): void => setScope('month')}>
-          {t.transactions.onlyMonth(monthLabel)}
-        </button>
-        <button type="button" onClick={(): void => setScope('following')}>
-          {t.transactions.fromMonth(monthLabel)}
-        </button>
-        <button type="button" onClick={onClose}>
+      <div className="flex h-full w-full flex-col justify-center gap-5 bg-[var(--ctp-surface0)]/55 p-5 text-[var(--ctp-text)] backdrop-blur-xs">
+        <div className="flex flex-col gap-1">
+          <MdEventRepeat className="text-[var(--ctp-yellow)]" size={25} />
+          <h2 className="text-lg font-semibold">
+            {t.transactions.monthlyScopeTitle}
+          </h2>
+          <p className="text-sm text-[var(--ctp-subtext1)]">
+            {transaction?.notes || transaction?.category?.name}
+          </p>
+        </div>
+        {(
+          [
+            [
+              'month',
+              t.transactions.onlyMonth(monthLabel),
+              t.transactions.onlyMonthHint,
+            ],
+            [
+              'following',
+              t.transactions.fromMonth(monthLabel),
+              t.transactions.fromMonthHint,
+            ],
+          ] as const
+        ).map(([value, label, hint]): JSX.Element => (
+          <button
+            key={value}
+            type="button"
+            onClick={(): void => setScope(value)}
+            aria-label={label}
+            aria-describedby={`${fieldId}-${value}-hint`}
+            className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-md border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-4 text-left shadow-sm transition-colors hover:border-[var(--ctp-blue)] focus:border-[var(--ctp-blue)] focus:ring-2 focus:ring-[var(--ctp-blue)]/25 focus:outline-none"
+          >
+            <span className="font-semibold">{label}</span>
+            <span
+              id={`${fieldId}-${value}-hint`}
+              className="text-sm text-[var(--ctp-subtext1)]"
+            >
+              {hint}
+            </span>
+          </button>
+        ))}
+        <p className="text-sm text-[var(--ctp-subtext0)]">
+          {t.transactions.earlierUnchanged}
+        </p>
+        <button
+          className="h-12 w-full cursor-pointer rounded-md bg-[var(--ctp-surface1)] font-bold text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)]"
+          type="button"
+          onClick={onClose}
+        >
           {t.common.cancel}
         </button>
       </div>
@@ -310,6 +361,29 @@ export default function NewTransaction({
           ]}
           disabled={!categories?.length || (monthly && scope === 'month')}
         />
+        {isInstallmentsEnabled && (
+          <div className="flex flex-col gap-2">
+            <label htmlFor={`${fieldId}-card`}>{t.cards.paidWith}</label>
+            <select
+              id={`${fieldId}-card`}
+              name="cardId"
+              value={form.cardId ?? form.card?.id ?? ''}
+              onChange={handleChange}
+            >
+              <option value="">{t.cards.noCard}</option>
+              {cards?.map((card): JSX.Element => (
+                <option key={card.id} value={card.id}>
+                  {card.name}
+                </option>
+              ))}
+            </select>
+            {billDate && (
+              <p className="text-sm">
+                {t.cards.billDue(billDate.toLocaleDateString('pt-BR'))}
+              </p>
+            )}
+          </div>
+        )}
         {isInstallmentsEnabled && (
           <div className="flex flex-col gap-1">
             <BsFillCreditCard2BackFill

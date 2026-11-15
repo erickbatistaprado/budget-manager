@@ -3,6 +3,9 @@
 import { Input, Money } from '@/components';
 import { TransactionType } from '@/enums';
 import { useCategories } from '@/hooks';
+import useCards from '@/hooks/useCards.hook';
+import { nextCardDueDate } from '@/utils/cardBill.util';
+import { getApiDate, parseApiDate } from '@/utils/globalFormats.util';
 import { useI18n } from '@/i18n/useI18n';
 import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import {
@@ -64,6 +67,29 @@ function buttonState(disabled: boolean): string {
 
 export default function ImportPage(): JSX.Element {
   const { t } = useI18n();
+  const { data: cards } = useCards();
+  const [cardId, setCardId] = useState('');
+  const [billDueDate, setBillDueDate] = useState('');
+
+  function defaultBillDate(
+    statement: StatementPreview,
+    selectedCardId: string
+  ): string {
+    if (statement.billDueDate) {
+      return statement.billDueDate.replaceAll('/', '-');
+    }
+    const card = cards?.find(
+      (candidate): boolean => candidate.id === selectedCardId
+    );
+    const dates = statement.lines.map((line): string => line.date).sort();
+    const statementDate = statement.statementDate ?? dates.at(-1);
+    if (!card || !statementDate) {
+      return '';
+    }
+    return getApiDate(
+      nextCardDueDate(parseApiDate(statementDate), card.dueDay)
+    ).replaceAll('/', '-');
+  }
   const { data: expenseCategories, mutate: reloadExpenses } = useCategories(
     TransactionType.EXPENSE
   );
@@ -94,7 +120,22 @@ export default function ImportPage(): JSX.Element {
     ? rows.filter((row: ImportRow): boolean => !row.line.duplicate)
     : rows;
   const canImport: boolean =
-    summary.selected > 0 && summary.missingCategory === 0 && !isBusy;
+    (summary.selected > 0 ||
+      Boolean(
+        billDueDate &&
+        rows.some(
+          (row): boolean => row.line.duplicate && Boolean(row.categoryId)
+        )
+      )) &&
+    summary.missingCategory === 0 &&
+    !isBusy;
+
+  function importButtonLabel(): string {
+    if (summary.selected === 0 && billDueDate) {
+      return t.cards.applyBillDates;
+    }
+    return t.import.importCount(summary.selected);
+  }
 
   function categoriesFor(credit: boolean): Category[] {
     return (credit ? incomeCategories : expenseCategories) ?? [];
@@ -126,6 +167,7 @@ export default function ImportPage(): JSX.Element {
         password || undefined
       );
       setPreview(statement);
+      setBillDueDate(defaultBillDate(statement, cardId));
       setRows(toRows(statement));
       setNeedsPassword(false);
     } catch (error: unknown) {
@@ -187,7 +229,11 @@ export default function ImportPage(): JSX.Element {
     setErrorMessage('');
     try {
       const imported: StatementImportResult =
-        await statementImportService.importLines(toImportLines(rows));
+        await statementImportService.importLines(
+          toImportLines(rows, Boolean(billDueDate)),
+          cardId || undefined,
+          billDueDate ? billDueDate.replaceAll('-', '/') : undefined
+        );
       setResult(imported);
       await refreshTransactions();
       if (file) {
@@ -375,6 +421,46 @@ export default function ImportPage(): JSX.Element {
               </select>
             </div>
 
+            <div className="flex flex-wrap gap-3">
+              <label>
+                {t.cards.card}
+                <select
+                  aria-label={t.cards.card}
+                  className={field}
+                  value={cardId}
+                  onChange={(event): void => {
+                    setCardId(event.currentTarget.value);
+                    setBillDueDate(
+                      defaultBillDate(preview, event.currentTarget.value)
+                    );
+                  }}
+                >
+                  <option value="">{t.cards.noCard}</option>
+                  {cards?.map((card): JSX.Element => (
+                    <option key={card.id} value={card.id}>
+                      {card.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t.cards.billDueDate}
+                <input
+                  aria-label={t.cards.billDueDate}
+                  className={field}
+                  type="date"
+                  value={billDueDate}
+                  onChange={(event): void =>
+                    setBillDueDate(event.currentTarget.value)
+                  }
+                />
+              </label>
+            </div>
+            {billDueDate && (
+              <p className="text-sm text-[var(--ctp-subtext1)]">
+                {t.cards.reimportHint}
+              </p>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left text-sm">
                 <thead className="text-[var(--ctp-subtext1)]">
@@ -490,6 +576,9 @@ export default function ImportPage(): JSX.Element {
                   className="shrink-0 text-lg text-[var(--ctp-green)]"
                 />
                 <span className="min-w-0 flex-1 font-medium">
+                  {result.billDatesSet > 0 && (
+                    <span>{t.cards.moved(result.billDatesSet)}. </span>
+                  )}
                   {t.import.importSuccess(
                     result.imported,
                     result.skippedAsDuplicates,
@@ -526,9 +615,7 @@ export default function ImportPage(): JSX.Element {
                   className={clsx(primaryButton, buttonState(!canImport))}
                 >
                   <FiCheck />
-                  {isBusy
-                    ? t.import.importing
-                    : t.import.importCount(summary.selected)}
+                  {isBusy ? t.import.importing : importButtonLabel()}
                 </button>
               </div>
             </div>

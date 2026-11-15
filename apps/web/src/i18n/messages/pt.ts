@@ -2,6 +2,29 @@ import { SavingLocation } from '@/enums';
 import type { Messages } from './en';
 
 export const pt: Messages = {
+  cards: {
+    applyBillDates: 'Aplicar vencimento às compras salvas',
+    reimportHint:
+      'Compras já salvas sem vencimento também serão movidas para o mês desta fatura.',
+
+    title: 'Cartões',
+    add: 'Adicionar cartão',
+    closingDay: 'Dia do fechamento',
+    dueDay: 'Dia do vencimento',
+    paidWith: 'Pago com',
+    noCard: 'Sem cartão (Pix, débito, dinheiro)',
+    card: 'Cartão',
+    billDueDate: 'Vencimento da fatura',
+    validation: 'Informe um nome e dias inteiros entre 1 e 31.',
+    deleteConfirmation: (name: string): string =>
+      `Excluir ${name}? As compras mantêm as datas das faturas.`,
+    schedule: (closing: number, due: number): string =>
+      `Fecha dia ${closing}, vence dia ${due}`,
+    billDue: (date: string): string => `Fatura com vencimento em ${date}`,
+    billMonth: (month: string): string => `Fatura ${month}`,
+    moved: (count: number): string =>
+      `${count} compras movidas para o mês da fatura`,
+  },
   common: {
     cancel: 'Cancelar',
     save: 'Salvar',
@@ -67,6 +90,9 @@ export const pt: Messages = {
   transactions: {
     onlyMonth: (month: string): string => `Só em ${month}`,
     fromMonth: (month: string): string => `De ${month} em diante`,
+    monthlyScopeTitle: 'Quais meses devem mudar?',
+    onlyMonthHint: 'Altera só o valor, a data ou as notas deste mês.',
+    fromMonthHint: 'Usa os novos valores deste mês em diante.',
     earlierUnchanged: 'Os meses anteriores não mudam.',
     changedThisMonth: 'alterado neste mês',
     dateInMonth: 'Escolha uma data dentro do mês selecionado.',

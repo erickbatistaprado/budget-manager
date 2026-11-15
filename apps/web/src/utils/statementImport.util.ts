@@ -68,11 +68,14 @@ export function summarize(rows: readonly ImportRow[]): ImportSummary {
 
 /** The selected rows, ready for `POST /statement-imports`. */
 export function toImportLines(
-  rows: readonly ImportRow[]
+  rows: readonly ImportRow[],
+  includeDuplicates = false
 ): StatementImportLine[] {
   return rows
     .filter(
-      (row: ImportRow): boolean => row.selected && Boolean(row.categoryId)
+      (row: ImportRow): boolean =>
+        (row.selected || (includeDuplicates && row.line.duplicate)) &&
+        Boolean(row.categoryId)
     )
     .map((row: ImportRow): StatementImportLine => ({
       date: row.line.date,

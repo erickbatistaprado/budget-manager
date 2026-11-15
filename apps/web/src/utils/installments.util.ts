@@ -1,3 +1,4 @@
+import { transactionBudgetDate } from '@/utils/cardBill.util';
 import { monthlyOccurrence } from '@/utils/monthlyTransaction.util';
 import type { Installment, Transaction } from '@/types';
 import { parseApiDate, roundNumbersUp } from '@/utils/globalFormats.util';
@@ -42,6 +43,12 @@ export function amountInMonth(transaction: Transaction, date: Date): number {
       transaction.totalValue,
       transaction.installmentNumbers
     );
+  }
+  if (
+    transaction.repeats === 'NONE' &&
+    !sameMonth(transactionBudgetDate(transaction), date)
+  ) {
+    return 0;
   }
   return transaction.totalValue;
 }

@@ -34,6 +34,7 @@ export default function SelectWithTooltip({
         <select
           id={id}
           name={name}
+          aria-label={tooltip}
           className="w-full rounded-md border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-3 text-[var(--ctp-text)] shadow-sm transition-colors focus:border-[var(--ctp-blue)] focus:ring-2 focus:ring-[var(--ctp-blue)]/25 focus:outline-none disabled:opacity-50"
           value={value}
           onChange={onChange}

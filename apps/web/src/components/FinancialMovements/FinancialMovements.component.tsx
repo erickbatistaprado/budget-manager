@@ -168,7 +168,25 @@ export default function FinancialMovements({
       <div className="truncate">
         {occurrence ? occurrence.notes : transaction.notes}
       </div>
-      <div className="truncate">{getDate()}</div>
+      <div className="truncate">
+        {getDate()}
+        {transaction.billDueDate && (
+          <span className="ml-1 rounded bg-[var(--ctp-blue)]/15 px-1 text-xs">
+            {t.cards.billMonth(
+              parseApiDate(transaction.billDueDate)
+                .toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
+                  month: 'short',
+                })
+                .replace('.', '')
+            )}
+          </span>
+        )}
+        {transaction.card && transaction.installmentNumbers && (
+          <span className="block text-xs">
+            {formatDate(transaction.date, language)}
+          </span>
+        )}
+      </div>
       <div className="flex items-center justify-end gap-1">
         <Money className="truncate" value={calculateInstallmentAmount} />
         {errorMessage && (

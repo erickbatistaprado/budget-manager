@@ -57,6 +57,13 @@ export default function SideMenu({
           {t.menu.savings}
         </MenuButton>
         <MenuButton
+          active={isActive('/cards')}
+          onClick={(): void => onClick('/cards')}
+        >
+          <RiSafe2Line size={22} />
+          {t.cards.title}
+        </MenuButton>
+        <MenuButton
           active={isActive('/import')}
           onClick={(): void => onClick('/import')}
         >

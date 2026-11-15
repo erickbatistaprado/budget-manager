@@ -1,3 +1,4 @@
+import { transactionBudgetDate } from '@/utils/cardBill.util';
 import { monthlyOccurrence } from '@/utils/monthlyTransaction.util';
 import { RepeatInterval } from '@/enums';
 import type { Installment, Transaction } from '@/types';
@@ -43,7 +44,7 @@ export function getProjectedTransactionTotal(
     );
   }
 
-  const transactionDate = parseApiDate(transaction.date);
+  const transactionDate = transactionBudgetDate(transaction);
 
   if (transaction.repeats === RepeatInterval.MONTHLY) {
     let total = 0;

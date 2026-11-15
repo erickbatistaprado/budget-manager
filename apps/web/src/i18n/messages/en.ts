@@ -1,6 +1,28 @@
 import { SavingLocation } from '@/enums';
 
 export const en = {
+  cards: {
+    applyBillDates: 'Apply bill date to saved purchases',
+    reimportHint:
+      'Saved purchases without a bill date will also move to this bill month.',
+
+    title: 'Cards',
+    add: 'Add card',
+    closingDay: 'Closing day',
+    dueDay: 'Due day',
+    paidWith: 'Paid with',
+    noCard: 'No card (Pix, debit, cash)',
+    card: 'Card',
+    billDueDate: 'Bill due date',
+    validation: 'Enter a name and whole days between 1 and 31.',
+    deleteConfirmation: (name: string): string =>
+      `Delete ${name}? Purchases keep their bill dates.`,
+    schedule: (closing: number, due: number): string =>
+      `Closes on day ${closing}, due on day ${due}`,
+    billDue: (date: string): string => `Bill due ${date}`,
+    billMonth: (month: string): string => `Bill ${month}`,
+    moved: (count: number): string => `moved ${count} to their bill month`,
+  },
   common: {
     cancel: 'Cancel',
     save: 'Save',
@@ -65,6 +87,9 @@ export const en = {
   transactions: {
     onlyMonth: (month: string): string => `Only ${month}`,
     fromMonth: (month: string): string => `${month} and the following months`,
+    monthlyScopeTitle: 'Which months should change?',
+    onlyMonthHint: "Change only this month's amount, date or notes.",
+    fromMonthHint: 'Use the new values from this month on.',
     earlierUnchanged: 'Earlier months stay as they are.',
     changedThisMonth: 'changed this month',
     dateInMonth: 'Choose a date inside the selected month.',

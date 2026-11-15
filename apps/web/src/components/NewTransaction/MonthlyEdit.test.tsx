@@ -5,6 +5,11 @@ import { postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import NewTransaction from './NewTransaction.component';
 
+jest.mock('@/hooks/useCards.hook', (): object => ({
+  __esModule: true,
+  default: (): object => ({ data: [] }),
+}));
+
 jest.mock('@/hooks', (): object => ({
   useCategories: (): object => ({ data: [] }),
 }));
