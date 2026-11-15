@@ -2,6 +2,7 @@
 
 import { InstallmentPrepayment, Money, NewTransaction } from '@/components';
 import { useI18n } from '@/i18n/useI18n';
+import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import { deleteFetcher } from '@/libs/fetchers.lib';
 import type { Installment, Transaction } from '@/types';
 import { formatDate, parseApiDate } from '@/utils/globalFormats.util';
@@ -18,13 +19,11 @@ import { FiFastForward } from 'react-icons/fi';
 
 export interface FinancialMovementsProps {
   transaction: Transaction;
-  mutateOnDelete: () => Promise<unknown>;
   selectedDate: Date;
 }
 
 export default function FinancialMovements({
   transaction,
-  mutateOnDelete,
   selectedDate,
 }: Readonly<FinancialMovementsProps>): JSX.Element {
   const { language, t } = useI18n();
@@ -45,7 +44,7 @@ export default function FinancialMovements({
     try {
       setIsDeleting(true);
       await deleteFetcher(`/transactions/${transaction.id}`);
-      await mutateOnDelete();
+      await refreshTransactions();
     } catch (error: unknown) {
       console.error(error);
       setErrorMessage(t.transactions.deleteError);
@@ -182,7 +181,7 @@ export default function FinancialMovements({
       {isPrepaying && (
         <InstallmentPrepayment
           transaction={transaction}
-          onChanged={mutateOnDelete}
+          onChanged={refreshTransactions}
           onClose={(): void => setIsPrepaying(false)}
         />
       )}

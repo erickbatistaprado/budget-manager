@@ -16,7 +16,6 @@ interface SingleTransactionProps {
   sortKey: TransactionSortKey;
   sortOrder: TransactionSortOrder;
   transactions?: Transaction[];
-  transactionsMutate: () => Promise<unknown>;
   selectedDate: Date;
   title: string;
   toggleSort: (key: TransactionSortKey) => void;
@@ -29,7 +28,6 @@ export default function Transactions({
   sortKey,
   sortOrder,
   transactions,
-  transactionsMutate,
   selectedDate,
   title,
   toggleSort,
@@ -102,7 +100,6 @@ export default function Transactions({
           <FinancialMovements
             key={transaction.id}
             transaction={transaction}
-            mutateOnDelete={transactionsMutate}
             selectedDate={selectedDate}
           />
         ))}

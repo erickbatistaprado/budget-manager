@@ -4,6 +4,7 @@ import { DatePickerDialog, Input, SelectWithTooltip } from '@/components';
 import { RepeatInterval, TransactionType } from '@/enums';
 import { useCategories } from '@/hooks';
 import { useI18n } from '@/i18n/useI18n';
+import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import { postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import type { Category, Transaction } from '@/types';
 import { getApiDate, parseApiDate } from '@/utils/globalFormats.util';
@@ -21,7 +22,6 @@ import { BsFillCreditCard2BackFill } from 'react-icons/bs';
 import { FcCurrencyExchange, FcIdea, FcSurvey } from 'react-icons/fc';
 import { GrTransaction } from 'react-icons/gr';
 import { MdEventRepeat } from 'react-icons/md';
-import { useSWRConfig } from 'swr';
 
 function subscribeToNothing(): () => void {
   return (): void => {};
@@ -71,7 +71,6 @@ export default function NewTransaction({
   const { data: categories } = useCategories(
     transactionType as TransactionType
   );
-  const { mutate } = useSWRConfig();
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -123,10 +122,7 @@ export default function NewTransaction({
       } else {
         await postFetcher<Transaction>('/transactions', { body });
       }
-      await mutate(
-        (key: unknown): boolean =>
-          typeof key === 'string' && key.startsWith('/transactions')
-      );
+      await refreshTransactions();
       setForm({ repeats: RepeatInterval.NONE });
       setTransactionType('');
       onClose();

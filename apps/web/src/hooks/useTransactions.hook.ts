@@ -1,5 +1,6 @@
 import type { TransactionType } from '@/enums';
 import { getFetcher } from '@/libs/fetchers.lib';
+import { registerTransactionsList } from '@/libs/transactionsCache.lib';
 import type {
   Page,
   Transaction,
@@ -66,12 +67,19 @@ export default function useTransactions(
     getFetcher<Page<Transaction>>,
     {
       revalidateFirstPage: false,
-      revalidateIfStale: false,
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
     }
   );
   const { data: pages, error, mutate, setSize, size } = response;
+
+  useEffect(
+    (): (() => void) =>
+      registerTransactionsList((): Promise<Page<Transaction>[] | undefined> =>
+        mutate()
+      ),
+    [mutate]
+  );
   const lastPage = pages?.at(-1);
   const isLoadingInitialData = !pages && !error;
   const isLoadingMore = Boolean(

@@ -37,7 +37,6 @@ export default function Body(): JSX.Element {
     hasMore: hasMoreIncomes,
     isLoadingMore: isLoadingMoreIncomes,
     loadMore: loadMoreIncomes,
-    mutate: incomesMutate,
   } = useTransactions(TransactionType.INCOME, monthRange, {
     sortKey: incomeSort.key,
     sortOrder: incomeSort.order,
@@ -47,7 +46,6 @@ export default function Body(): JSX.Element {
     hasMore: hasMoreExpenses,
     isLoadingMore: isLoadingMoreExpenses,
     loadMore: loadMoreExpenses,
-    mutate: expensesMutate,
   } = useTransactions(TransactionType.EXPENSE, monthRange, {
     sortKey: expenseSort.key,
     sortOrder: expenseSort.order,
@@ -92,7 +90,6 @@ export default function Body(): JSX.Element {
           sortKey={incomeSort.key}
           sortOrder={incomeSort.order}
           transactions={incomes}
-          transactionsMutate={incomesMutate}
           title={t.home.incomes}
           selectedDate={date}
           toggleSort={(key: TransactionSortKey): void =>
@@ -106,7 +103,6 @@ export default function Body(): JSX.Element {
           sortKey={expenseSort.key}
           sortOrder={expenseSort.order}
           transactions={expenses}
-          transactionsMutate={expensesMutate}
           title={t.home.expenses}
           selectedDate={date}
           toggleSort={(key: TransactionSortKey): void =>
