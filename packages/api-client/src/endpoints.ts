@@ -1,5 +1,7 @@
 import {
   categorySchema,
+  cardSchema,
+  type Card,
   pageSchema,
   savingSchema,
   transactionSchema,
@@ -130,6 +132,19 @@ export class BudgetManagerApi {
     return this.client.command(`/transactions/${id}/from/${month}`, {
       method: 'DELETE',
     });
+  }
+
+  cards(): Promise<Card[]> {
+    return this.client.request('/cards', z.array(cardSchema));
+  }
+  saveCard(card: Omit<Card, 'id'>, id?: string): Promise<Card> {
+    return this.client.request(id ? `/cards/${id}` : '/cards', cardSchema, {
+      method: id ? 'PUT' : 'POST',
+      body: card,
+    });
+  }
+  deleteCard(id: string): Promise<void> {
+    return this.client.command(`/cards/${id}`, { method: 'DELETE' });
   }
 
   savings() {

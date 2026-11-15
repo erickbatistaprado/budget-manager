@@ -76,6 +76,7 @@ export type Installment = {
 
 export type TransactionWrite = {
     category: Category;
+    cardId?: string | null;
     notes?: string | null;
     totalValue: number;
     installmentNumbers?: number | null;
@@ -83,8 +84,28 @@ export type TransactionWrite = {
     date: string;
 };
 
+export type CardWrite = {
+    name: string;
+    closingDay: number;
+    dueDay: number;
+};
+
+export type Card = CardWrite & {
+    id: string;
+};
+
+export type CardSummary = {
+    id: string;
+    name: string;
+};
+
 export type Transaction = TransactionWrite & {
     id: string;
+    readonly card?: CardSummary | null;
+    /**
+     * yyyy/MM/dd; first installment bill or purchase bill
+     */
+    readonly billDueDate?: string | null;
     /**
      * Last month, as yyyy/MM/01
      */
@@ -143,6 +164,14 @@ export type Saving = SavingWrite & {
 
 export type StatementPreview = {
     source: 'BRADESCO_CARD_PDF' | 'NUBANK_CARD_PDF' | 'NUBANK_CARD_CSV';
+    /**
+     * yyyy/MM/dd
+     */
+    billDueDate?: string | null;
+    /**
+     * yyyy/MM/dd; open bill export date
+     */
+    statementDate?: string | null;
     printedTotal?: number | null;
     parsedTotal?: number | null;
     totalsMatch: boolean;
@@ -194,6 +223,11 @@ export type StatementPreviewLine = {
 };
 
 export type StatementImportRequest = {
+    cardId?: string | null;
+    /**
+     * yyyy/MM/dd
+     */
+    billDueDate?: string | null;
     lines: Array<StatementImportLine>;
 };
 
@@ -209,6 +243,10 @@ export type StatementImportLine = {
 };
 
 export type StatementImportResult = {
+    /**
+     * Saved purchases moved to their bill month without duplicating them
+     */
+    billDatesSet?: number;
     imported: number;
     skippedAsDuplicates: number;
     /**
@@ -225,11 +263,124 @@ export type InstallmentChange = {
     paidOn?: string;
 };
 
+export type TransactionWritable = TransactionWrite & {
+    id: string;
+    /**
+     * Last month, as yyyy/MM/01
+     */
+    repeatUntil?: string | null;
+    months?: Array<TransactionMonth>;
+    installments?: Array<Installment> | null;
+};
+
+export type TransactionPageWritable = {
+    content: Array<TransactionWritable>;
+    first: boolean;
+    last: boolean;
+    number: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+};
+
 export type SavingWritable = SavingWrite & {
     id: string;
 };
 
 export type Id = string;
+
+export type ListCardsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/cards';
+};
+
+export type ListCardsResponses = {
+    /**
+     * The current user's cards
+     */
+    200: Array<Card>;
+};
+
+export type ListCardsResponse = ListCardsResponses[keyof ListCardsResponses];
+
+export type CreateCardData = {
+    body: CardWrite;
+    path?: never;
+    query?: never;
+    url: '/cards';
+};
+
+export type CreateCardErrors = {
+    /**
+     * Invalid name or days
+     */
+    400: unknown;
+};
+
+export type CreateCardResponses = {
+    /**
+     * Created card
+     */
+    201: Card;
+};
+
+export type CreateCardResponse = CreateCardResponses[keyof CreateCardResponses];
+
+export type DeleteCardData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/cards/{id}';
+};
+
+export type DeleteCardErrors = {
+    /**
+     * Card not found for this owner
+     */
+    404: unknown;
+};
+
+export type DeleteCardResponses = {
+    /**
+     * Deleted; purchases retain their bill dates
+     */
+    204: void;
+};
+
+export type DeleteCardResponse = DeleteCardResponses[keyof DeleteCardResponses];
+
+export type UpdateCardData = {
+    body: CardWrite;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/cards/{id}';
+};
+
+export type UpdateCardErrors = {
+    /**
+     * Invalid name or days
+     */
+    400: unknown;
+    /**
+     * Card not found for this owner
+     */
+    404: unknown;
+};
+
+export type UpdateCardResponses = {
+    /**
+     * Updated card
+     */
+    200: Card;
+};
+
+export type UpdateCardResponse = UpdateCardResponses[keyof UpdateCardResponses];
 
 export type GetCsrfTokenData = {
     body?: never;

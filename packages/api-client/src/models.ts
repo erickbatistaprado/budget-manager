@@ -48,6 +48,14 @@ export const categorySchema = z.object({
   transactionType: z.enum(TransactionType),
 });
 
+export const cardSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  closingDay: z.number(),
+  dueDay: z.number(),
+});
+export type Card = z.infer<typeof cardSchema>;
+
 export const installmentSchema = z.object({
   id: z.string(),
   installmentNumber: z.number(),
@@ -68,6 +76,9 @@ export const transactionMonthSchema = z.object({
 export const transactionSchema = z.object({
   id: z.string(),
   category: categorySchema,
+  cardId: z.string().nullish(),
+  card: z.object({ id: z.string(), name: z.string() }).nullish(),
+  billDueDate: z.string().nullish(),
   notes: z.string().nullish(),
   totalValue: z.coerce.number(),
   installmentNumbers: z.number().nullish(),
@@ -143,6 +154,8 @@ export const statementPreviewLineSchema = z.object({
 
 export const statementPreviewSchema = z.object({
   source: statementSourceSchema,
+  statementDate: z.string().nullish(),
+  billDueDate: z.string().nullish(),
   printedTotal: z.coerce.number().nullish(),
   parsedTotal: z.coerce.number().nullish(),
   totalsMatch: z.boolean(),
@@ -153,6 +166,7 @@ export const statementImportResultSchema = z.object({
   imported: z.number(),
   skippedAsDuplicates: z.number(),
   movedInstallments: z.number().default(0),
+  billDatesSet: z.number().default(0),
 });
 
 export type Category = z.infer<typeof categorySchema>;

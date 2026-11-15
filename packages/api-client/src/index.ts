@@ -7,6 +7,7 @@ export {
   TransactionType,
   UserRole,
   categorySchema,
+  cardSchema,
   installmentSchema,
   pageSchema,
   roleSchema,
@@ -23,6 +24,7 @@ export * from './generated/sdk.gen';
 export * as OpenApi from './generated/types.gen';
 export type {
   Category,
+  Card,
   Installment,
   Page,
   Role,

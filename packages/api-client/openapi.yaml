@@ -5,6 +5,56 @@ info:
 servers:
   - url: http://localhost:8080
 paths:
+  /cards:
+    get:
+      operationId: listCards
+      responses:
+        '200':
+          description: The current user's cards
+          content:
+            application/json:
+              schema:
+                { type: array, items: { $ref: '#/components/schemas/Card' } }
+    post:
+      operationId: createCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CardWrite' }
+      responses:
+        '201':
+          description: Created card
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Card' }
+        '400': { description: Invalid name or days, or name already in use }
+  /cards/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      operationId: updateCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CardWrite' }
+      responses:
+        '200':
+          description: Updated card
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Card' }
+        '400': { description: Invalid name or days, or name already in use }
+        '404': { description: Card not found for this owner }
+    delete:
+      operationId: deleteCard
+      responses:
+        '204': { description: Deleted; purchases retain their bill dates }
+        '404': { description: Card not found for this owner }
   /auth/csrf:
     get:
       operationId: getCsrfToken
@@ -543,11 +593,32 @@ components:
       required: [category, totalValue, repeats, date]
       properties:
         category: { $ref: '#/components/schemas/Category' }
+        cardId: { type: [string, 'null'], format: uuid }
         notes: { type: [string, 'null'] }
         totalValue: { type: number }
         installmentNumbers: { type: [integer, 'null'] }
         repeats: { $ref: '#/components/schemas/RepeatInterval' }
         date: { type: string }
+    CardWrite:
+      type: object
+      required: [name, closingDay, dueDay]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        closingDay: { type: integer, minimum: 1, maximum: 31 }
+        dueDay: { type: integer, minimum: 1, maximum: 31 }
+    Card:
+      allOf:
+        - { $ref: '#/components/schemas/CardWrite' }
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
+    CardSummary:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
     Transaction:
       allOf:
         - { $ref: '#/components/schemas/TransactionWrite' }
@@ -556,6 +627,21 @@ components:
           properties:
             {
               id: { type: string, format: uuid },
+              card:
+                {
+                  anyOf:
+                    [
+                      { $ref: '#/components/schemas/CardSummary' },
+                      { type: 'null' },
+                    ],
+                  readOnly: true,
+                },
+              billDueDate:
+                {
+                  type: [string, 'null'],
+                  readOnly: true,
+                  description: 'yyyy/MM/dd; first installment bill or purchase bill',
+                },
               repeatUntil:
                 {
                   type: [string, 'null'],
@@ -645,6 +731,12 @@ components:
             type: string,
             enum: [BRADESCO_CARD_PDF, NUBANK_CARD_PDF, NUBANK_CARD_CSV],
           }
+        billDueDate: { type: [string, 'null'], description: yyyy/MM/dd }
+        statementDate:
+          {
+            type: [string, 'null'],
+            description: 'yyyy/MM/dd; open bill export date',
+          }
         printedTotal: { type: [number, 'null'] }
         parsedTotal: { type: [number, 'null'] }
         totalsMatch: { type: boolean }
@@ -705,6 +797,8 @@ components:
       type: object
       required: [lines]
       properties:
+        cardId: { type: [string, 'null'], format: uuid }
+        billDueDate: { type: [string, 'null'], description: yyyy/MM/dd }
         lines:
           {
             type: array,
@@ -726,6 +820,11 @@ components:
       type: object
       required: [imported, skippedAsDuplicates, movedInstallments]
       properties:
+        billDatesSet:
+          {
+            type: integer,
+            description: Saved purchases moved to their bill month without duplicating them,
+          }
         imported: { type: integer }
         skippedAsDuplicates: { type: integer }
         movedInstallments:

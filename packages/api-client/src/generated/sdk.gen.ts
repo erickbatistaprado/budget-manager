@@ -3,7 +3,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { ChangeTransactionMonthData, ChangeTransactionMonthErrors, ChangeTransactionMonthResponses, CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionFromData, DeleteTransactionFromErrors, DeleteTransactionFromResponses, DeleteTransactionResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, RestoreTransactionMonthData, RestoreTransactionMonthErrors, RestoreTransactionMonthResponses, SkipTransactionMonthData, SkipTransactionMonthErrors, SkipTransactionMonthResponses, SplitTransactionData, SplitTransactionErrors, SplitTransactionResponses, UpdateUserData, UpdateUserResponses } from './types.gen';
+import type { ChangeTransactionMonthData, ChangeTransactionMonthErrors, ChangeTransactionMonthResponses, CreateCardData, CreateCardErrors, CreateCardResponses, CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteCardData, DeleteCardErrors, DeleteCardResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionFromData, DeleteTransactionFromErrors, DeleteTransactionFromResponses, DeleteTransactionResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListCardsData, ListCardsResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, RestoreTransactionMonthData, RestoreTransactionMonthErrors, RestoreTransactionMonthResponses, SkipTransactionMonthData, SkipTransactionMonthErrors, SkipTransactionMonthResponses, SplitTransactionData, SplitTransactionErrors, SplitTransactionResponses, UpdateCardData, UpdateCardErrors, UpdateCardResponses, UpdateUserData, UpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -18,6 +18,28 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+export const listCards = <ThrowOnError extends boolean = false>(options?: Options<ListCardsData, ThrowOnError>): RequestResult<ListCardsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListCardsResponses, unknown, ThrowOnError>({ url: '/cards', ...options });
+
+export const createCard = <ThrowOnError extends boolean = false>(options: Options<CreateCardData, ThrowOnError>): RequestResult<CreateCardResponses, CreateCardErrors, ThrowOnError> => (options.client ?? client).post<CreateCardResponses, CreateCardErrors, ThrowOnError>({
+    url: '/cards',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteCard = <ThrowOnError extends boolean = false>(options: Options<DeleteCardData, ThrowOnError>): RequestResult<DeleteCardResponses, DeleteCardErrors, ThrowOnError> => (options.client ?? client).delete<DeleteCardResponses, DeleteCardErrors, ThrowOnError>({ url: '/cards/{id}', ...options });
+
+export const updateCard = <ThrowOnError extends boolean = false>(options: Options<UpdateCardData, ThrowOnError>): RequestResult<UpdateCardResponses, UpdateCardErrors, ThrowOnError> => (options.client ?? client).put<UpdateCardResponses, UpdateCardErrors, ThrowOnError>({
+    url: '/cards/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 export const getCsrfToken = <ThrowOnError extends boolean = false>(options?: Options<GetCsrfTokenData, ThrowOnError>): RequestResult<GetCsrfTokenResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetCsrfTokenResponses, unknown, ThrowOnError>({ url: '/auth/csrf', ...options });
 
