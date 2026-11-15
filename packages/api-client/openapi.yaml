@@ -355,6 +355,25 @@ components:
     TransactionType: { type: string, enum: [INCOME, EXPENSE] }
     RepeatInterval:
       { type: string, enum: [DAILY, WEEKLY, MONTHLY, YEARLY, NONE] }
+    InvestmentType:
+      type: string
+      description: The kind of investment; set exactly when the location is INVESTMENT.
+      enum:
+        [
+          TESOURO_DIRETO,
+          CDB,
+          LCI_LCA,
+          CREDIT_BONDS,
+          STOCKS,
+          REAL_ESTATE_FUNDS,
+          ETFS,
+          BDRS,
+          CRYPTO,
+          INVESTMENT_FUNDS,
+          PRIVATE_PENSION,
+          FOREIGN,
+          OTHER_INVESTMENT,
+        ]
     SavingLocation:
       {
         type: string,
@@ -481,13 +500,33 @@ components:
           name: { type: string },
           amount: { type: number },
           location: { $ref: '#/components/schemas/SavingLocation' },
+          investmentType:
+            {
+              oneOf:
+                [
+                  { $ref: '#/components/schemas/InvestmentType' },
+                  { type: 'null' },
+                ],
+              description: Required for INVESTMENT,
+              absent otherwise.,
+            },
         }
     Saving:
       allOf:
         - { $ref: '#/components/schemas/SavingWrite' }
         - type: object
           required: [id]
-          properties: { id: { type: string, format: uuid } }
+          properties:
+            {
+              id: { type: string, format: uuid },
+              updatedAt:
+                {
+                  type: string,
+                  format: date-time,
+                  readOnly: true,
+                  description: When the balance last changed.,
+                },
+            }
     StatementPreview:
       type: object
       required: [source, totalsMatch, lines]

@@ -9,6 +9,11 @@ export type TransactionType = 'INCOME' | 'EXPENSE';
 
 export type RepeatInterval = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | 'NONE';
 
+/**
+ * The kind of investment; set exactly when the location is INVESTMENT.
+ */
+export type InvestmentType = 'TESOURO_DIRETO' | 'CDB' | 'LCI_LCA' | 'CREDIT_BONDS' | 'STOCKS' | 'REAL_ESTATE_FUNDS' | 'ETFS' | 'BDRS' | 'CRYPTO' | 'INVESTMENT_FUNDS' | 'PRIVATE_PENSION' | 'FOREIGN' | 'OTHER_INVESTMENT';
+
 export type SavingLocation = 'CASH' | 'CHECKING_ACCOUNT' | 'SAVINGS_ACCOUNT' | 'INVESTMENT' | 'OTHER';
 
 export type UserRole = 'ADMIN' | 'USER';
@@ -97,10 +102,18 @@ export type SavingWrite = {
     name: string;
     amount: number;
     location: SavingLocation;
+    /**
+     * Required for INVESTMENT
+     */
+    investmentType?: InvestmentType | null;
 };
 
 export type Saving = SavingWrite & {
     id: string;
+    /**
+     * When the balance last changed.
+     */
+    readonly updatedAt?: string;
 };
 
 export type StatementPreview = {
@@ -185,6 +198,10 @@ export type InstallmentChange = {
      * Required to pay early.
      */
     paidOn?: string;
+};
+
+export type SavingWritable = SavingWrite & {
+    id: string;
 };
 
 export type Id = string;

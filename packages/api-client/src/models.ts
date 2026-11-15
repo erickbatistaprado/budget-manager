@@ -16,6 +16,22 @@ export enum SavingLocation {
   OTHER = 'OTHER',
 }
 
+export enum InvestmentType {
+  TESOURO_DIRETO = 'TESOURO_DIRETO',
+  CDB = 'CDB',
+  LCI_LCA = 'LCI_LCA',
+  CREDIT_BONDS = 'CREDIT_BONDS',
+  STOCKS = 'STOCKS',
+  REAL_ESTATE_FUNDS = 'REAL_ESTATE_FUNDS',
+  ETFS = 'ETFS',
+  BDRS = 'BDRS',
+  CRYPTO = 'CRYPTO',
+  INVESTMENT_FUNDS = 'INVESTMENT_FUNDS',
+  PRIVATE_PENSION = 'PRIVATE_PENSION',
+  FOREIGN = 'FOREIGN',
+  OTHER_INVESTMENT = 'OTHER_INVESTMENT',
+}
+
 export enum TransactionType {
   INCOME = 'INCOME',
   EXPENSE = 'EXPENSE',
@@ -57,6 +73,8 @@ export const savingSchema = z.object({
   name: z.string(),
   amount: z.coerce.number(),
   location: z.enum(SavingLocation),
+  investmentType: z.enum(InvestmentType).nullish(),
+  updatedAt: z.string().nullish(),
 });
 
 export const roleSchema = z.object({

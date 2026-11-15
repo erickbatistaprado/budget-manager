@@ -1,6 +1,7 @@
 export { ApiClientError, BudgetManagerClient } from './client';
 export { BudgetManagerApi } from './endpoints';
 export {
+  InvestmentType,
   RepeatInterval,
   SavingLocation,
   TransactionType,
