@@ -264,6 +264,7 @@ export const pt: Messages = {
     },
     importCount: (count: number): string => `Importar ${count}`,
     importing: 'Importando...',
+    seeOnHome: 'Ver no Início',
     emptyPreview:
       'Selecione uma fatura ou extrato para visualizar as linhas aqui.',
     importRow: (description: string): string => `Importar ${description}`,

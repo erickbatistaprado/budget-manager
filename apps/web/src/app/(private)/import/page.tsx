@@ -4,6 +4,7 @@ import { Input, Money } from '@/components';
 import { TransactionType } from '@/enums';
 import { useCategories } from '@/hooks';
 import { useI18n } from '@/i18n/useI18n';
+import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import {
   PASSWORD_REQUIRED_STATUS,
   StatementImportError,
@@ -28,14 +29,17 @@ import type {
   StatementPreview,
 } from '@budget-manager/api-client';
 import clsx from 'clsx';
+import Link from 'next/link';
 import {
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
   type JSX,
 } from 'react';
-import { FiCheck, FiPlus, FiUpload } from 'react-icons/fi';
+import { FiCheck, FiCheckCircle, FiPlus, FiUpload } from 'react-icons/fi';
 
 const panel =
   'rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md';
@@ -76,6 +80,7 @@ export default function ImportPage(): JSX.Element {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [result, setResult] = useState<StatementImportResult>();
   const [isBusy, setIsBusy] = useState<boolean>(false);
+  const resultRef = useRef<HTMLDivElement>(null);
   const [newCategoryName, setNewCategoryName] = useState<string>('');
   const [newCategoryType, setNewCategoryType] = useState<TransactionType>(
     TransactionType.EXPENSE
@@ -167,6 +172,16 @@ export default function ImportPage(): JSX.Element {
     }
   }
 
+  useEffect((): void => {
+    if (result) {
+      resultRef.current?.scrollIntoView?.({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+      resultRef.current?.focus({ preventScroll: true });
+    }
+  }, [result]);
+
   async function handleImport(): Promise<void> {
     setIsBusy(true);
     setErrorMessage('');
@@ -174,6 +189,7 @@ export default function ImportPage(): JSX.Element {
       const imported: StatementImportResult =
         await statementImportService.importLines(toImportLines(rows));
       setResult(imported);
+      await refreshTransactions();
       if (file) {
         const refreshed: StatementPreview =
           await statementImportService.preview(file, password || undefined);
@@ -230,15 +246,6 @@ export default function ImportPage(): JSX.Element {
           {errorMessage && (
             <span role="alert" className="text-sm text-[var(--ctp-red)]">
               {errorMessage}
-            </span>
-          )}
-          {result && (
-            <span role="status" className="text-sm text-[var(--ctp-green)]">
-              {t.import.importSuccess(
-                result.imported,
-                result.skippedAsDuplicates,
-                result.movedInstallments
-              )}
             </span>
           )}
 
@@ -470,6 +477,35 @@ export default function ImportPage(): JSX.Element {
                 </tbody>
               </table>
             </div>
+
+            {result && (
+              <div
+                ref={resultRef}
+                role="status"
+                tabIndex={-1}
+                className="flex flex-wrap items-center gap-3 rounded-md border border-[var(--ctp-green)] bg-[var(--ctp-green)]/10 p-3 text-sm text-[var(--ctp-text)] focus:outline-none"
+              >
+                <FiCheckCircle
+                  aria-hidden
+                  className="shrink-0 text-lg text-[var(--ctp-green)]"
+                />
+                <span className="min-w-0 flex-1 font-medium">
+                  {t.import.importSuccess(
+                    result.imported,
+                    result.skippedAsDuplicates,
+                    result.movedInstallments
+                  )}
+                </span>
+                {result.imported > 0 && (
+                  <Link
+                    href="/"
+                    className="font-medium text-[var(--ctp-blue)] underline-offset-2 hover:underline"
+                  >
+                    {t.import.seeOnHome}
+                  </Link>
+                )}
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ctp-surface1)] pt-3">
               <span className="text-sm text-[var(--ctp-subtext1)]">

@@ -241,6 +241,7 @@ export const en = {
       `${selected} selected${missingCategory > 0 ? ` · ${missingCategory} still need a category` : ''}`,
     importCount: (count: number): string => `Import ${count}`,
     importing: 'Importing...',
+    seeOnHome: 'See them on Home',
     emptyPreview: 'Choose a statement to see its lines here.',
     importRow: (description: string): string => `Import ${description}`,
     categoryForRow: (description: string): string =>
