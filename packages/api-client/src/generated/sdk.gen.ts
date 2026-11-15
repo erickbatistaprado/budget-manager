@@ -3,7 +3,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, UpdateUserData, UpdateUserResponses } from './types.gen';
+import type { ChangeTransactionMonthData, ChangeTransactionMonthErrors, ChangeTransactionMonthResponses, CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionFromData, DeleteTransactionFromErrors, DeleteTransactionFromResponses, DeleteTransactionResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, RestoreTransactionMonthData, RestoreTransactionMonthErrors, RestoreTransactionMonthResponses, SkipTransactionMonthData, SkipTransactionMonthErrors, SkipTransactionMonthResponses, SplitTransactionData, SplitTransactionErrors, SplitTransactionResponses, UpdateUserData, UpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -95,6 +95,30 @@ export const restoreInstallments = <ThrowOnError extends boolean = false>(option
         ...options.headers
     }
 });
+
+export const skipTransactionMonth = <ThrowOnError extends boolean = false>(options: Options<SkipTransactionMonthData, ThrowOnError>): RequestResult<SkipTransactionMonthResponses, SkipTransactionMonthErrors, ThrowOnError> => (options.client ?? client).delete<SkipTransactionMonthResponses, SkipTransactionMonthErrors, ThrowOnError>({ url: '/transactions/{id}/months/{month}', ...options });
+
+export const changeTransactionMonth = <ThrowOnError extends boolean = false>(options: Options<ChangeTransactionMonthData, ThrowOnError>): RequestResult<ChangeTransactionMonthResponses, ChangeTransactionMonthErrors, ThrowOnError> => (options.client ?? client).put<ChangeTransactionMonthResponses, ChangeTransactionMonthErrors, ThrowOnError>({
+    url: '/transactions/{id}/months/{month}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const restoreTransactionMonth = <ThrowOnError extends boolean = false>(options: Options<RestoreTransactionMonthData, ThrowOnError>): RequestResult<RestoreTransactionMonthResponses, RestoreTransactionMonthErrors, ThrowOnError> => (options.client ?? client).delete<RestoreTransactionMonthResponses, RestoreTransactionMonthErrors, ThrowOnError>({ url: '/transactions/{id}/months/{month}/override', ...options });
+
+export const splitTransaction = <ThrowOnError extends boolean = false>(options: Options<SplitTransactionData, ThrowOnError>): RequestResult<SplitTransactionResponses, SplitTransactionErrors, ThrowOnError> => (options.client ?? client).post<SplitTransactionResponses, SplitTransactionErrors, ThrowOnError>({
+    url: '/transactions/{id}/split/{month}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteTransactionFrom = <ThrowOnError extends boolean = false>(options: Options<DeleteTransactionFromData, ThrowOnError>): RequestResult<DeleteTransactionFromResponses, DeleteTransactionFromErrors, ThrowOnError> => (options.client ?? client).delete<DeleteTransactionFromResponses, DeleteTransactionFromErrors, ThrowOnError>({ url: '/transactions/{id}/from/{month}', ...options });
 
 export const listSavings = <ThrowOnError extends boolean = false>(options?: Options<ListSavingsData, ThrowOnError>): RequestResult<ListSavingsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListSavingsResponses, unknown, ThrowOnError>({ url: '/savings', ...options });
 

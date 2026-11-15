@@ -90,6 +90,48 @@ export class BudgetManagerApi {
     return this.client.command(`/transactions/${id}`, { method: 'DELETE' });
   }
 
+  changeTransactionMonth(
+    id: string,
+    month: string,
+    change: { amount: number; date: string; notes?: string | null }
+  ): Promise<Transaction> {
+    return this.client.request(
+      `/transactions/${id}/months/${month}`,
+      transactionSchema,
+      { method: 'PUT', body: change }
+    );
+  }
+
+  skipTransactionMonth(id: string, month: string): Promise<void> {
+    return this.client.command(`/transactions/${id}/months/${month}`, {
+      method: 'DELETE',
+    });
+  }
+
+  restoreTransactionMonth(id: string, month: string): Promise<void> {
+    return this.client.command(`/transactions/${id}/months/${month}/override`, {
+      method: 'DELETE',
+    });
+  }
+
+  splitTransaction(
+    id: string,
+    month: string,
+    change: Omit<Transaction, 'id' | 'installments' | 'months' | 'repeatUntil'>
+  ): Promise<Transaction> {
+    return this.client.request(
+      `/transactions/${id}/split/${month}`,
+      transactionSchema,
+      { method: 'POST', body: change }
+    );
+  }
+
+  deleteTransactionFrom(id: string, month: string): Promise<void> {
+    return this.client.command(`/transactions/${id}/from/${month}`, {
+      method: 'DELETE',
+    });
+  }
+
   savings() {
     return this.client.request('/savings', z.array(savingSchema));
   }

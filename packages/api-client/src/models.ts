@@ -57,6 +57,14 @@ export const installmentSchema = z.object({
   paidEarly: z.boolean().default(false),
 });
 
+export const transactionMonthSchema = z.object({
+  month: z.string(),
+  amount: z.coerce.number().nullish(),
+  date: z.string().nullish(),
+  notes: z.string().nullish(),
+  skipped: z.boolean(),
+});
+
 export const transactionSchema = z.object({
   id: z.string(),
   category: categorySchema,
@@ -64,6 +72,8 @@ export const transactionSchema = z.object({
   totalValue: z.coerce.number(),
   installmentNumbers: z.number().nullish(),
   installments: z.array(installmentSchema).nullish(),
+  repeatUntil: z.string().nullish(),
+  months: z.array(transactionMonthSchema).nullish(),
   repeats: z.enum(RepeatInterval),
   date: z.string(),
 });

@@ -85,7 +85,32 @@ export type TransactionWrite = {
 
 export type Transaction = TransactionWrite & {
     id: string;
+    /**
+     * Last month, as yyyy/MM/01
+     */
+    repeatUntil?: string | null;
+    months?: Array<TransactionMonth>;
     installments?: Array<Installment> | null;
+};
+
+export type MonthChange = {
+    amount: number;
+    /**
+     * yyyy/MM/dd inside the selected month
+     */
+    date: string;
+    notes?: string | null;
+};
+
+export type TransactionMonth = {
+    /**
+     * yyyy-MM
+     */
+    month: string;
+    amount?: number | null;
+    date?: string | null;
+    notes?: string | null;
+    skipped: boolean;
 };
 
 export type TransactionPage = {
@@ -437,6 +462,156 @@ export type RestoreInstallmentsResponses = {
 };
 
 export type RestoreInstallmentsResponse = RestoreInstallmentsResponses[keyof RestoreInstallmentsResponses];
+
+export type SkipTransactionMonthData = {
+    body?: never;
+    path: {
+        id: string;
+        month: string;
+    };
+    query?: never;
+    url: '/transactions/{id}/months/{month}';
+};
+
+export type SkipTransactionMonthErrors = {
+    /**
+     * Invalid month or change
+     */
+    400: unknown;
+    /**
+     * Transaction not found for current owner
+     */
+    404: unknown;
+};
+
+export type SkipTransactionMonthResponses = {
+    /**
+     * Updated monthly series
+     */
+    204: void;
+};
+
+export type SkipTransactionMonthResponse = SkipTransactionMonthResponses[keyof SkipTransactionMonthResponses];
+
+export type ChangeTransactionMonthData = {
+    body: MonthChange;
+    path: {
+        id: string;
+        month: string;
+    };
+    query?: never;
+    url: '/transactions/{id}/months/{month}';
+};
+
+export type ChangeTransactionMonthErrors = {
+    /**
+     * Invalid month or change
+     */
+    400: unknown;
+    /**
+     * Transaction not found for current owner
+     */
+    404: unknown;
+};
+
+export type ChangeTransactionMonthResponses = {
+    /**
+     * Updated monthly transaction
+     */
+    200: Transaction;
+};
+
+export type ChangeTransactionMonthResponse = ChangeTransactionMonthResponses[keyof ChangeTransactionMonthResponses];
+
+export type RestoreTransactionMonthData = {
+    body?: never;
+    path: {
+        id: string;
+        month: string;
+    };
+    query?: never;
+    url: '/transactions/{id}/months/{month}/override';
+};
+
+export type RestoreTransactionMonthErrors = {
+    /**
+     * Invalid month or change
+     */
+    400: unknown;
+    /**
+     * Transaction not found for current owner
+     */
+    404: unknown;
+};
+
+export type RestoreTransactionMonthResponses = {
+    /**
+     * Updated monthly series
+     */
+    204: void;
+};
+
+export type RestoreTransactionMonthResponse = RestoreTransactionMonthResponses[keyof RestoreTransactionMonthResponses];
+
+export type SplitTransactionData = {
+    body: TransactionWrite;
+    path: {
+        id: string;
+        month: string;
+    };
+    query?: never;
+    url: '/transactions/{id}/split/{month}';
+};
+
+export type SplitTransactionErrors = {
+    /**
+     * Invalid month or change
+     */
+    400: unknown;
+    /**
+     * Transaction not found for current owner
+     */
+    404: unknown;
+};
+
+export type SplitTransactionResponses = {
+    /**
+     * Updated monthly transaction
+     */
+    200: Transaction;
+};
+
+export type SplitTransactionResponse = SplitTransactionResponses[keyof SplitTransactionResponses];
+
+export type DeleteTransactionFromData = {
+    body?: never;
+    path: {
+        id: string;
+        month: string;
+    };
+    query?: never;
+    url: '/transactions/{id}/from/{month}';
+};
+
+export type DeleteTransactionFromErrors = {
+    /**
+     * Invalid month or change
+     */
+    400: unknown;
+    /**
+     * Transaction not found for current owner
+     */
+    404: unknown;
+};
+
+export type DeleteTransactionFromResponses = {
+    /**
+     * Updated monthly series
+     */
+    204: void;
+};
+
+export type DeleteTransactionFromResponse = DeleteTransactionFromResponses[keyof DeleteTransactionFromResponses];
 
 export type ListSavingsData = {
     body?: never;

@@ -253,6 +253,88 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Transaction' }
+  /transactions/{id}/months/{month}:
+    put:
+      operationId: changeTransactionMonth
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - name: month
+          in: path
+          required: true
+          schema: { type: string, pattern: '^\d{4}-\d{2}$' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MonthChange' }
+      responses:
+        '200':
+          description: Updated monthly transaction
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Transaction' }
+        '400': { description: Invalid month or change }
+        '404': { description: Transaction not found for current owner }
+    delete:
+      operationId: skipTransactionMonth
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - name: month
+          in: path
+          required: true
+          schema: { type: string, pattern: '^\d{4}-\d{2}$' }
+      responses:
+        '204': { description: Updated monthly series }
+        '400': { description: Invalid month or change }
+        '404': { description: Transaction not found for current owner }
+  /transactions/{id}/months/{month}/override:
+    delete:
+      operationId: restoreTransactionMonth
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - name: month
+          in: path
+          required: true
+          schema: { type: string, pattern: '^\d{4}-\d{2}$' }
+      responses:
+        '204': { description: Updated monthly series }
+        '400': { description: Invalid month or change }
+        '404': { description: Transaction not found for current owner }
+  /transactions/{id}/split/{month}:
+    post:
+      operationId: splitTransaction
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - name: month
+          in: path
+          required: true
+          schema: { type: string, pattern: '^\d{4}-\d{2}$' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransactionWrite' }
+      responses:
+        '200':
+          description: Updated monthly transaction
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Transaction' }
+        '400': { description: Invalid month or change }
+        '404': { description: Transaction not found for current owner }
+  /transactions/{id}/from/{month}:
+    delete:
+      operationId: deleteTransactionFrom
+      parameters:
+        - { $ref: '#/components/parameters/Id' }
+        - name: month
+          in: path
+          required: true
+          schema: { type: string, pattern: '^\d{4}-\d{2}$' }
+      responses:
+        '204': { description: Updated monthly series }
+        '400': { description: Invalid month or change }
+        '404': { description: Transaction not found for current owner }
   /savings:
     get:
       operationId: listSavings
@@ -474,12 +556,39 @@ components:
           properties:
             {
               id: { type: string, format: uuid },
+              repeatUntil:
+                {
+                  type: [string, 'null'],
+                  description: 'Last month, as yyyy/MM/01',
+                },
+              months:
+                {
+                  type: array,
+                  items: { $ref: '#/components/schemas/TransactionMonth' },
+                },
               installments:
                 {
                   type: [array, 'null'],
                   items: { $ref: '#/components/schemas/Installment' },
                 },
             }
+    MonthChange:
+      type: object
+      required: [amount, date]
+      properties:
+        amount: { type: number, exclusiveMinimum: 0 }
+        date:
+          { type: string, description: 'yyyy/MM/dd inside the selected month' }
+        notes: { type: [string, 'null'] }
+    TransactionMonth:
+      type: object
+      required: [month, skipped]
+      properties:
+        month: { type: string, description: yyyy-MM }
+        amount: { type: [number, 'null'] }
+        date: { type: [string, 'null'] }
+        notes: { type: [string, 'null'] }
+        skipped: { type: boolean }
     TransactionPage:
       type: object
       required: [content, first, last, number, size, totalElements, totalPages]
