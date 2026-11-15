@@ -221,6 +221,38 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Id' }]
       responses:
         '204': { description: Deleted }
+  /transactions/{id}/installments/pay-early:
+    post:
+      operationId: payInstallmentsEarly
+      description: Moves installments the card prepaid to the day they were paid. The date cannot be after an installment's original due date.
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InstallmentChange' }
+      responses:
+        '200':
+          description: The transaction with its updated installments
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Transaction' }
+  /transactions/{id}/installments/restore:
+    post:
+      operationId: restoreInstallments
+      description: Puts paid-early installments back in their original months.
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InstallmentChange' }
+      responses:
+        '200':
+          description: The transaction with its updated installments
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Transaction' }
   /savings:
     get:
       operationId: listSavings
@@ -399,6 +431,11 @@ components:
           totalInstallments: { type: integer },
           amount: { type: number },
           dueDate: { type: string },
+          paidEarly:
+            {
+              type: boolean,
+              description: Paid before its month; dueDate is then the day it was paid.,
+            },
         }
     TransactionWrite:
       type: object
@@ -479,11 +516,42 @@ components:
         credit: { type: boolean }
         installmentNumber: { type: [integer, 'null'] }
         installmentTotal: { type: [integer, 'null'] }
+        paidEarly:
+          {
+            type: boolean,
+            description: A prepaid installment; it moves the installment instead of adding an expense.,
+          }
         cardholder: { type: [string, 'null'] }
         suggestedCategoryId: { type: [string, 'null'], format: uuid }
+        suggestionSource:
+          type: [string, 'null']
+          enum: [DUPLICATE, PURCHASE, EXACT, MERCHANT, KEYWORD, SIMILAR, null]
+          description: Where the suggested category comes from, strongest first.
+        suggestionBasis:
+          type: [string, 'null']
+          description: The saved description or the keyword behind the suggestion.
+        suggestionCount:
+          type: integer
+          description: How many saved transactions back the suggestion (0 for keywords).
+        merchantKey:
+          type: string
+          description: Lines with the same key are the same merchant.
         duplicate: { type: boolean }
         duplicateOfTransactionId: { type: [string, 'null'], format: uuid }
         duplicateOfLine: { type: [integer, 'null'] }
+        samePurchaseAsLine:
+          {
+            type: [integer, 'null'],
+            description: For a prepaid installment,
+            the line that creates its purchase.,
+          }
+        samePurchaseAsTransactionId:
+          {
+            type: [string, 'null'],
+            format: uuid,
+            description: For a prepaid installment,
+            the saved purchase it moves.,
+          }
         selected: { type: boolean }
     StatementImportRequest:
       type: object
@@ -504,10 +572,27 @@ components:
         credit: { type: boolean }
         installmentNumber: { type: [integer, 'null'] }
         installmentTotal: { type: [integer, 'null'] }
+        paidEarly: { type: boolean }
         categoryId: { type: string, format: uuid }
     StatementImportResult:
       type: object
-      required: [imported, skippedAsDuplicates]
+      required: [imported, skippedAsDuplicates, movedInstallments]
       properties:
         imported: { type: integer }
         skippedAsDuplicates: { type: integer }
+        movedInstallments:
+          {
+            type: integer,
+            description: Installments moved to the day they were prepaid.,
+          }
+    InstallmentChange:
+      type: object
+      required: [installmentNumbers]
+      properties:
+        installmentNumbers: { type: array, items: { type: integer } }
+        paidOn:
+          {
+            type: string,
+            examples: ['2026/10/02'],
+            description: Required to pay early.,
+          }

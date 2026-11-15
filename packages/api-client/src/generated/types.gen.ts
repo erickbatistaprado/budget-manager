@@ -63,6 +63,10 @@ export type Installment = {
     totalInstallments: number;
     amount: number;
     dueDate: string;
+    /**
+     * Paid before its month; dueDate is then the day it was paid.
+     */
+    paidEarly?: boolean;
 };
 
 export type TransactionWrite = {
@@ -115,11 +119,39 @@ export type StatementPreviewLine = {
     credit: boolean;
     installmentNumber?: number | null;
     installmentTotal?: number | null;
+    /**
+     * A prepaid installment; it moves the installment instead of adding an expense.
+     */
+    paidEarly?: boolean;
     cardholder?: string | null;
     suggestedCategoryId?: string | null;
+    /**
+     * Where the suggested category comes from, strongest first.
+     */
+    suggestionSource?: 'DUPLICATE' | 'PURCHASE' | 'EXACT' | 'MERCHANT' | 'KEYWORD' | 'SIMILAR' | null;
+    /**
+     * The saved description or the keyword behind the suggestion.
+     */
+    suggestionBasis?: string | null;
+    /**
+     * How many saved transactions back the suggestion (0 for keywords).
+     */
+    suggestionCount?: number;
+    /**
+     * Lines with the same key are the same merchant.
+     */
+    merchantKey?: string;
     duplicate: boolean;
     duplicateOfTransactionId?: string | null;
     duplicateOfLine?: number | null;
+    /**
+     * For a prepaid installment
+     */
+    samePurchaseAsLine?: number | null;
+    /**
+     * For a prepaid installment
+     */
+    samePurchaseAsTransactionId?: string | null;
     selected: boolean;
 };
 
@@ -134,12 +166,25 @@ export type StatementImportLine = {
     credit: boolean;
     installmentNumber?: number | null;
     installmentTotal?: number | null;
+    paidEarly?: boolean;
     categoryId: string;
 };
 
 export type StatementImportResult = {
     imported: number;
     skippedAsDuplicates: number;
+    /**
+     * Installments moved to the day they were prepaid.
+     */
+    movedInstallments: number;
+};
+
+export type InstallmentChange = {
+    installmentNumbers: Array<number>;
+    /**
+     * Required to pay early.
+     */
+    paidOn?: string;
 };
 
 export type Id = string;
@@ -339,6 +384,42 @@ export type DeleteTransactionResponses = {
 };
 
 export type DeleteTransactionResponse = DeleteTransactionResponses[keyof DeleteTransactionResponses];
+
+export type PayInstallmentsEarlyData = {
+    body: InstallmentChange;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/transactions/{id}/installments/pay-early';
+};
+
+export type PayInstallmentsEarlyResponses = {
+    /**
+     * The transaction with its updated installments
+     */
+    200: Transaction;
+};
+
+export type PayInstallmentsEarlyResponse = PayInstallmentsEarlyResponses[keyof PayInstallmentsEarlyResponses];
+
+export type RestoreInstallmentsData = {
+    body: InstallmentChange;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/transactions/{id}/installments/restore';
+};
+
+export type RestoreInstallmentsResponses = {
+    /**
+     * The transaction with its updated installments
+     */
+    200: Transaction;
+};
+
+export type RestoreInstallmentsResponse = RestoreInstallmentsResponses[keyof RestoreInstallmentsResponses];
 
 export type ListSavingsData = {
     body?: never;

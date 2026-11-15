@@ -38,6 +38,7 @@ export const installmentSchema = z.object({
   totalInstallments: z.number(),
   amount: z.coerce.number(),
   dueDate: z.string(),
+  paidEarly: z.boolean().default(false),
 });
 
 export const transactionSchema = z.object({
@@ -95,11 +96,20 @@ export const statementPreviewLineSchema = z.object({
   credit: z.boolean(),
   installmentNumber: z.number().nullish(),
   installmentTotal: z.number().nullish(),
+  paidEarly: z.boolean().default(false),
   cardholder: z.string().nullish(),
   suggestedCategoryId: z.string().nullish(),
+  suggestionSource: z
+    .enum(['DUPLICATE', 'PURCHASE', 'EXACT', 'MERCHANT', 'KEYWORD', 'SIMILAR'])
+    .nullish(),
+  suggestionBasis: z.string().nullish(),
+  suggestionCount: z.number().default(0),
+  merchantKey: z.string().default(''),
   duplicate: z.boolean(),
   duplicateOfTransactionId: z.string().nullish(),
   duplicateOfLine: z.number().nullish(),
+  samePurchaseAsLine: z.number().nullish(),
+  samePurchaseAsTransactionId: z.string().nullish(),
   selected: z.boolean(),
 });
 
@@ -114,6 +124,7 @@ export const statementPreviewSchema = z.object({
 export const statementImportResultSchema = z.object({
   imported: z.number(),
   skippedAsDuplicates: z.number(),
+  movedInstallments: z.number().default(0),
 });
 
 export type Category = z.infer<typeof categorySchema>;
@@ -131,6 +142,7 @@ export interface StatementImportLine {
   readonly credit: boolean;
   readonly installmentNumber?: number | null;
   readonly installmentTotal?: number | null;
+  readonly paidEarly: boolean;
   readonly categoryId: string;
 }
 export type Role = z.infer<typeof roleSchema>;

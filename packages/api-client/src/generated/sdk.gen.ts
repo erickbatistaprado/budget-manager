@@ -3,7 +3,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, UpdateUserData, UpdateUserResponses } from './types.gen';
+import type { CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, UpdateUserData, UpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -71,6 +71,30 @@ export const createTransaction = <ThrowOnError extends boolean = false>(options:
 });
 
 export const deleteTransaction = <ThrowOnError extends boolean = false>(options: Options<DeleteTransactionData, ThrowOnError>): RequestResult<DeleteTransactionResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteTransactionResponses, unknown, ThrowOnError>({ url: '/transactions/{id}', ...options });
+
+/**
+ * Moves installments the card prepaid to the day they were paid. The date cannot be after an installment's original due date.
+ */
+export const payInstallmentsEarly = <ThrowOnError extends boolean = false>(options: Options<PayInstallmentsEarlyData, ThrowOnError>): RequestResult<PayInstallmentsEarlyResponses, unknown, ThrowOnError> => (options.client ?? client).post<PayInstallmentsEarlyResponses, unknown, ThrowOnError>({
+    url: '/transactions/{id}/installments/pay-early',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Puts paid-early installments back in their original months.
+ */
+export const restoreInstallments = <ThrowOnError extends boolean = false>(options: Options<RestoreInstallmentsData, ThrowOnError>): RequestResult<RestoreInstallmentsResponses, unknown, ThrowOnError> => (options.client ?? client).post<RestoreInstallmentsResponses, unknown, ThrowOnError>({
+    url: '/transactions/{id}/installments/restore',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 export const listSavings = <ThrowOnError extends boolean = false>(options?: Options<ListSavingsData, ThrowOnError>): RequestResult<ListSavingsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListSavingsResponses, unknown, ThrowOnError>({ url: '/savings', ...options });
 
