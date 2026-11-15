@@ -12,6 +12,7 @@ public final class InstallmentConverter {
         .installmentNumber(entity.getInstallmentNumber())
         .totalInstallments(entity.getTotalInstallments())
         .amount(entity.getAmount())
+        .paidEarly(entity.isPaidEarly())
         .dueDate(entity.getDueDate())
         .build();
   }

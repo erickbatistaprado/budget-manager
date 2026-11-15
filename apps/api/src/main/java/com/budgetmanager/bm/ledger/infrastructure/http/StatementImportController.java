@@ -59,11 +59,20 @@ public class StatementImportController {
                         previewLine.line().credit(),
                         previewLine.line().installmentNumber(),
                         previewLine.line().installmentTotal(),
+                        previewLine.line().paidEarly(),
                         previewLine.line().cardholder(),
                         previewLine.suggestedCategoryId(),
+                        previewLine.suggestionSource() == null
+                            ? null
+                            : previewLine.suggestionSource().name(),
+                        previewLine.suggestionBasis(),
+                        previewLine.suggestionCount(),
+                        previewLine.merchantKey(),
                         previewLine.duplicate(),
                         previewLine.duplicateOfTransactionId(),
                         previewLine.duplicateOfLine(),
+                        previewLine.samePurchaseAsLine(),
+                        previewLine.samePurchaseAsTransactionId(),
                         previewLine.selected()))
                 .toList()));
   }
@@ -75,7 +84,9 @@ public class StatementImportController {
     StatementImportService.ImportResult result =
         service.importLines(
             request.lines().stream().map(StatementImportController::toLineToImport).toList());
-    return ok(new StatementImportResultDto(result.imported(), result.skippedAsDuplicates()));
+    return ok(
+        new StatementImportResultDto(
+            result.imported(), result.skippedAsDuplicates(), result.movedInstallments()));
   }
 
   private static StatementImportService.LineToImport toLineToImport(StatementImportLineDto dto) {
@@ -92,7 +103,8 @@ public class StatementImportController {
             dto.credit(),
             installment ? dto.installmentNumber() : null,
             installment ? dto.installmentTotal() : null,
-            null),
+            null,
+            installment && dto.paidEarly()),
         dto.categoryId());
   }
 }

@@ -70,6 +70,16 @@ class NubankCardPdfParserTest {
   }
 
   @Test
+  void keepsThePaymentDateOfPrepaidInstallments() {
+    StatementLine prepaid = NubankCardPdfParser.parse(BILL).lines().get(1);
+
+    assertThat(prepaid.paidEarly()).isTrue();
+    assertThat(prepaid.installmentNumber()).isEqualTo(7);
+    assertThat(prepaid.date()).isEqualTo(LocalDate.of(2026, 12, 2));
+    assertThat(NubankCardPdfParser.parse(BILL).lines().getFirst().paidEarly()).isFalse();
+  }
+
+  @Test
   void placesDecemberInThePreviousYearOfAJanuaryBill() {
     List<StatementLine> lines = NubankCardPdfParser.parse(BILL).lines();
 

@@ -94,6 +94,42 @@ public class TransactionService {
     repository.delete(requireOwned(id, userService.requireCurrentUser()));
   }
 
+  /** Moves the chosen installments to the day they were prepaid. */
+  @Transactional
+  public Transaction payInstallmentsEarly(
+      UUID transactionId, List<Integer> installmentNumbers, LocalDate paidOn) {
+    return changeInstallments(
+        transactionId,
+        installmentNumbers,
+        (transaction, number) -> transaction.payInstallmentEarly(number, paidOn));
+  }
+
+  /** Puts the chosen installments back in their original months. */
+  @Transactional
+  public Transaction restoreInstallments(UUID transactionId, List<Integer> installmentNumbers) {
+    return changeInstallments(transactionId, installmentNumbers, Transaction::restoreInstallment);
+  }
+
+  private Transaction changeInstallments(
+      UUID transactionId,
+      List<Integer> installmentNumbers,
+      java.util.function.ObjIntConsumer<Transaction> change) {
+    if (installmentNumbers == null || installmentNumbers.isEmpty()) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST, "Choose at least one installment");
+    }
+    Transaction transaction = requireOwned(transactionId, userService.requireCurrentUser());
+    try {
+      installmentNumbers.forEach(number -> change.accept(transaction, number));
+    } catch (IllegalArgumentException exception) {
+      throw new ApplicationException(
+          exception, ApplicationError.BAD_REQUEST, exception.getMessage());
+    }
+    repository.saveAndFlush(transaction);
+    // Reload with category and installments, so the caller can render it after the session ends.
+    return repository.findAllWithCategoryAndInstallmentsByIdIn(List.of(transactionId)).getFirst();
+  }
+
   private void apply(Transaction source, Transaction target) {
     RepeatInterval repeats =
         source.getRepeats() == null ? RepeatInterval.NONE : source.getRepeats();

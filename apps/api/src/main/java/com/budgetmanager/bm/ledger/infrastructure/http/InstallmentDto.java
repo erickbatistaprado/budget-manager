@@ -13,4 +13,5 @@ public record InstallmentDto(
     Integer installmentNumber,
     Integer totalInstallments,
     BigDecimal amount,
+    boolean paidEarly,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd") LocalDate dueDate) {}

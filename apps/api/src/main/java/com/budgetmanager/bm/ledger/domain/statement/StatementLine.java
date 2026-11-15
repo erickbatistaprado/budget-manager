@@ -13,6 +13,9 @@ import java.util.Objects;
  * amount} is always positive; {@code credit} tells refunds and discounts apart from expenses. For
  * installments, {@code amount} is one installment and {@code description} is the purchase without
  * the installment suffix.
+ *
+ * <p>A {@code paidEarly} line is an installment the card prepaid; its {@code date} is the day it
+ * was paid, not the purchase's first installment.
  */
 public record StatementLine(
     LocalDate date,
@@ -21,7 +24,19 @@ public record StatementLine(
     boolean credit,
     Integer installmentNumber,
     Integer installmentTotal,
-    String cardholder) {
+    String cardholder,
+    boolean paidEarly) {
+
+  public StatementLine(
+      LocalDate date,
+      String description,
+      BigDecimal amount,
+      boolean credit,
+      Integer installmentNumber,
+      Integer installmentTotal,
+      String cardholder) {
+    this(date, description, amount, credit, installmentNumber, installmentTotal, cardholder, false);
+  }
 
   public StatementLine {
     Objects.requireNonNull(date, "date");

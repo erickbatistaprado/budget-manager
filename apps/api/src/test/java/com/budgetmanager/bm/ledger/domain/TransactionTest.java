@@ -99,6 +99,70 @@ class TransactionTest {
   }
 
   @Test
+  void payingEarlyMovesTheInstallmentToThePaymentDay() {
+    Transaction transaction = transaction(new BigDecimal("80.00"), 8);
+    transaction.scheduleInstallments();
+
+    transaction.payInstallmentEarly(7, LocalDate.of(2026, 3, 2));
+
+    Installment seventh = transaction.getInstallments().get(6);
+    assertThat(seventh.getDueDate()).isEqualTo(LocalDate.of(2026, 3, 2));
+    assertThat(seventh.isPaidEarly()).isTrue();
+    assertThat(transaction.getInstallments().get(7).isPaidEarly()).isFalse();
+  }
+
+  @Test
+  void editingWithoutChangingTheScheduleKeepsEarlyPayments() {
+    Transaction transaction = transaction(new BigDecimal("80.00"), 8);
+    transaction.scheduleInstallments();
+    transaction.payInstallmentEarly(8, LocalDate.of(2026, 3, 2));
+
+    transaction.setNotes("new notes");
+    transaction.scheduleInstallments();
+
+    assertThat(transaction.getInstallments().get(7).getDueDate())
+        .isEqualTo(LocalDate.of(2026, 3, 2));
+  }
+
+  @Test
+  void changingTheScheduleStartsOverWithoutEarlyPayments() {
+    Transaction transaction = transaction(new BigDecimal("80.00"), 8);
+    transaction.scheduleInstallments();
+    transaction.payInstallmentEarly(8, LocalDate.of(2026, 3, 2));
+
+    transaction.setTotalValue(new BigDecimal("96.00"));
+    transaction.scheduleInstallments();
+
+    assertThat(transaction.getInstallments()).noneMatch(Installment::isPaidEarly);
+    assertThat(transaction.getInstallments().get(7).getDueDate())
+        .isEqualTo(transaction.scheduledDueDate(8));
+  }
+
+  @Test
+  void restoringPutsTheInstallmentBackInItsMonth() {
+    Transaction transaction = transaction(new BigDecimal("80.00"), 8);
+    transaction.scheduleInstallments();
+    transaction.payInstallmentEarly(8, LocalDate.of(2026, 3, 2));
+
+    transaction.restoreInstallment(8);
+
+    Installment eighth = transaction.getInstallments().get(7);
+    assertThat(eighth.isPaidEarly()).isFalse();
+    assertThat(eighth.getDueDate()).isEqualTo(LocalDate.of(2026, 8, 31));
+  }
+
+  @Test
+  void anEarlyPaymentCannotBeAfterTheDueDateOrForAMissingInstallment() {
+    Transaction transaction = transaction(new BigDecimal("80.00"), 8);
+    transaction.scheduleInstallments();
+
+    assertThatThrownBy(() -> transaction.payInstallmentEarly(2, LocalDate.of(2026, 5, 1)))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> transaction.payInstallmentEarly(9, LocalDate.of(2026, 2, 1)))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void rejectsInstallmentCountsOutOfRange() {
     assertThatThrownBy(() -> transaction(BigDecimal.TEN, 1).scheduleInstallments())
         .isInstanceOf(IllegalArgumentException.class);

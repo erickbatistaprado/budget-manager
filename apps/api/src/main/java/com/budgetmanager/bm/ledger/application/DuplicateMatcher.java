@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -101,6 +102,23 @@ final class DuplicateMatcher {
       }
     }
     return null;
+  }
+
+  /**
+   * The saved installment purchase a line belongs to, whatever its category. Used for prepaid
+   * installments, which move an installment of an existing purchase instead of adding an expense.
+   */
+  Optional<ExistingTransaction> findPurchase(StatementLine line) {
+    if (!line.isInstallment()) {
+      return Optional.empty();
+    }
+    return installments.getOrDefault(purchaseKey(line), List.of()).stream().findFirst();
+  }
+
+  /** Lines with equal keys are installments of the same purchase. */
+  static Object purchaseKey(StatementLine line) {
+    return new InstallmentKey(
+        StatementText.normalize(line.description()), line.installmentTotal(), money(line.amount()));
   }
 
   private static BigDecimal money(BigDecimal value) {

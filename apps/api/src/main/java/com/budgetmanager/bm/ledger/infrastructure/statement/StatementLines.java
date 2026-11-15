@@ -55,18 +55,21 @@ final class StatementLines {
           cardholder);
     }
     StatementText.Installment parts = installment.get();
-    LocalDate firstInstallment =
-        installmentDate == InstallmentDate.BILLING
-            ? date.minusMonths((long) parts.number() - 1)
-            : date;
+    LocalDate lineDate;
+    if (parts.paidEarly() || installmentDate == InstallmentDate.PURCHASE) {
+      lineDate = date;
+    } else {
+      lineDate = date.minusMonths((long) parts.number() - 1);
+    }
     return new StatementLine(
-        firstInstallment,
+        lineDate,
         StatementText.truncate(parts.purchase()),
         signedAmount,
         false,
         parts.number(),
         parts.total(),
-        cardholder);
+        cardholder,
+        parts.paidEarly());
   }
 
   /** Statements print day and month only; a month after the closing month is last year's. */

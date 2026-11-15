@@ -103,9 +103,54 @@ public class Transaction {
               .installmentNumber(number)
               .totalInstallments(installmentNumbers)
               .amount(number == installmentNumbers ? lastAmount : regularAmount)
-              .dueDate(date.plusMonths((long) number - 1))
+              .dueDate(scheduledDueDate(number))
               .build());
     }
+  }
+
+  /** The month an installment falls in when nothing was paid early. */
+  public LocalDate scheduledDueDate(int number) {
+    return date.plusMonths((long) number - 1);
+  }
+
+  /**
+   * Records that an installment was paid before its month, as when a card lets you prepay the
+   * remaining installments: the installment moves to the day it was paid. A paid-early installment
+   * keeps that day when the transaction is edited, unless its total, date or count change.
+   */
+  public void payInstallmentEarly(int number, LocalDate paidOn) {
+    Installment installment = requireInstallment(number);
+    if (paidOn == null) {
+      throw new IllegalArgumentException("The payment date is required");
+    }
+    if (paidOn.isAfter(scheduledDueDate(number))) {
+      throw new IllegalArgumentException(
+          "Installment "
+              + number
+              + " is due on "
+              + scheduledDueDate(number)
+              + "; a later payment is not an early one");
+    }
+    installment.setDueDate(paidOn);
+    installment.setPaidEarly(true);
+  }
+
+  /** Puts a paid-early installment back in its original month. */
+  public void restoreInstallment(int number) {
+    Installment installment = requireInstallment(number);
+    installment.setDueDate(scheduledDueDate(number));
+    installment.setPaidEarly(false);
+  }
+
+  private Installment requireInstallment(int number) {
+    if (installments == null) {
+      throw new IllegalArgumentException("This transaction has no installments");
+    }
+    return installments.stream()
+        .filter(installment -> Objects.equals(installment.getInstallmentNumber(), number))
+        .findFirst()
+        .orElseThrow(
+            () -> new IllegalArgumentException("This transaction has no installment " + number));
   }
 
   private boolean hasSchedule() {
@@ -120,9 +165,10 @@ public class Transaction {
     return scheduledTotal.compareTo(totalValue) == 0
         && installments.stream()
             .allMatch(installment ->
-                Objects.equals(
-                        installment.getDueDate(),
-                        date.plusMonths((long) installment.getInstallmentNumber() - 1))
+                (installment.isPaidEarly()
+                        || Objects.equals(
+                            installment.getDueDate(),
+                            scheduledDueDate(installment.getInstallmentNumber())))
                     && Objects.equals(installment.getTotalInstallments(), installmentNumbers));
   }
 }

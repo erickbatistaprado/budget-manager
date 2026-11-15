@@ -35,6 +35,11 @@ public class Installment {
 
   @NotNull private LocalDate dueDate;
 
+  /** Paid before its month; {@code dueDate} is then the day it was paid. */
+  @Column(name = "paid_early", nullable = false)
+  @Builder.Default
+  private boolean paidEarly = false;
+
   @CreationTimestamp
   @Column(updatable = false)
   private Instant createdAt;

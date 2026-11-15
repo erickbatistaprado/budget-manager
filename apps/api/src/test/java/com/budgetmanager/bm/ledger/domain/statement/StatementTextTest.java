@@ -14,7 +14,6 @@ class StatementTextTest {
       delimiter = '|',
       value = {
         "Bike Shop - Parcela 6/8 | Bike Shop | 6 | 8",
-        "Antecipada - Bike Shop - Parcela 8/8 | Bike Shop | 8 | 8",
         "GYM STORE LTDA 3/5 | GYM STORE LTDA | 3 | 5",
         "LANGUAGE SCHOOL 10/11 | LANGUAGE SCHOOL | 10 | 11",
         "CINEMA CHAIN EC 2 /6 | CINEMA CHAIN EC | 2 | 6"
@@ -22,6 +21,14 @@ class StatementTextTest {
   void findsInstallments(String description, String purchase, int number, int total) {
     assertThat(StatementText.installment(description))
         .contains(new StatementText.Installment(purchase, number, total));
+  }
+
+  @org.junit.jupiter.api.Test
+  void marksPrepaidInstallments() {
+    assertThat(StatementText.installment("Antecipada - Bike Shop - Parcela 8/8"))
+        .contains(new StatementText.Installment("Bike Shop", 8, 8, true));
+    assertThat(StatementText.installment("Bike Shop - Parcela 6/8"))
+        .contains(new StatementText.Installment("Bike Shop", 6, 8, false));
   }
 
   @ParameterizedTest

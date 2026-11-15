@@ -39,11 +39,18 @@ public final class StatementImportDtos {
       boolean credit,
       Integer installmentNumber,
       Integer installmentTotal,
+      boolean paidEarly,
       String cardholder,
       UUID suggestedCategoryId,
+      String suggestionSource,
+      String suggestionBasis,
+      int suggestionCount,
+      String merchantKey,
       boolean duplicate,
       UUID duplicateOfTransactionId,
       Integer duplicateOfLine,
+      Integer samePurchaseAsLine,
+      UUID samePurchaseAsTransactionId,
       boolean selected) {}
 
   public record StatementImportRequestDto(
@@ -61,7 +68,9 @@ public final class StatementImportDtos {
       boolean credit,
       @Min(1) @Max(500) Integer installmentNumber,
       @Min(2) @Max(500) Integer installmentTotal,
+      boolean paidEarly,
       @NotNull UUID categoryId) {}
 
-  public record StatementImportResultDto(int imported, int skippedAsDuplicates) {}
+  public record StatementImportResultDto(
+      int imported, int skippedAsDuplicates, int movedInstallments) {}
 }

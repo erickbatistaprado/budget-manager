@@ -24,7 +24,15 @@ public final class StatementText {
 
   private StatementText() {}
 
-  public record Installment(String purchase, int number, int total) {}
+  /**
+   * @param paidEarly the card prepaid this installment ({@code "Antecipada - Shop - Parcela 7/8"})
+   */
+  public record Installment(String purchase, int number, int total, boolean paidEarly) {
+
+    public Installment(String purchase, int number, int total) {
+      this(purchase, number, total, false);
+    }
+  }
 
   /**
    * Finds an installment suffix such as {@code "Shop - Parcela 3/10"} (NuBank) or {@code "SHOP
@@ -37,7 +45,12 @@ public final class StatementText {
         int number = Integer.parseInt(matcher.group(2));
         int total = Integer.parseInt(matcher.group(3));
         if (number >= 1 && number <= total && total >= 2) {
-          return Optional.of(new Installment(matcher.group(1).strip(), number, total));
+          return Optional.of(
+              new Installment(
+                  matcher.group(1).strip(),
+                  number,
+                  total,
+                  normalize(description).startsWith("antecipada")));
         }
       }
     }

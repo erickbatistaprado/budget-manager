@@ -1,6 +1,7 @@
 package com.budgetmanager.bm.ledger.infrastructure.persistence;
 
 import com.budgetmanager.bm.ledger.application.ExistingTransaction;
+import com.budgetmanager.bm.ledger.application.PaidEarlyInstallment;
 import com.budgetmanager.bm.ledger.domain.Transaction;
 import com.budgetmanager.bm.ledger.domain.TransactionType;
 import java.time.LocalDate;
@@ -19,12 +20,23 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
   @Query(
       """
           SELECT new com.budgetmanager.bm.ledger.application.ExistingTransaction(
-            t.id, t.notes, t.date, t.totalValue, t.installmentNumbers, c.id, c.transactionType)
+            t.id, t.notes, t.date, t.totalValue, t.installmentNumbers, c.id, c.transactionType,
+            t.createdAt)
           FROM Transaction t
           JOIN t.category c
           WHERE t.user.id = :userId AND t.notes IS NOT NULL
       """)
   List<ExistingTransaction> findImportCandidates(@Param("userId") UUID userId);
+
+  @Query(
+      """
+          SELECT new com.budgetmanager.bm.ledger.application.PaidEarlyInstallment(
+            t.id, i.installmentNumber, i.dueDate)
+          FROM Installment i
+          JOIN i.transaction t
+          WHERE t.user.id = :userId AND i.paidEarly = true
+      """)
+  List<PaidEarlyInstallment> findPaidEarlyInstallments(@Param("userId") UUID userId);
 
   @Query(
       value =

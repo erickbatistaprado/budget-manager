@@ -160,6 +160,64 @@ class LedgerIntegrationTest extends IntegrationTest {
   }
 
   @Test
+  void paidEarlyInstallmentsCountInThePaymentMonthAndCanBeRestored() {
+    signIn(alice);
+    Category category = categoryService.save(category("Clinic", TransactionType.EXPENSE));
+    Transaction saved = transactionService.save(draft("300.00", 3), category.getId());
+
+    transactionService.payInstallmentsEarly(
+        saved.getId(), List.of(2, 3), LocalDate.of(2026, 1, 20));
+
+    var january =
+        transactionService.findByTransactionTypeAndDateBetween(
+            TransactionType.EXPENSE,
+            LocalDate.of(2026, 1, 1),
+            LocalDate.of(2026, 1, 31),
+            "date",
+            "asc",
+            Pageable.ofSize(30));
+    var march =
+        transactionService.findByTransactionTypeAndDateBetween(
+            TransactionType.EXPENSE,
+            LocalDate.of(2026, 3, 1),
+            LocalDate.of(2026, 3, 31),
+            "date",
+            "asc",
+            Pageable.ofSize(30));
+    assertThat(january.getContent()).extracting(Transaction::getId).contains(saved.getId());
+    assertThat(march.getContent()).extracting(Transaction::getId).doesNotContain(saved.getId());
+
+    transactionService.restoreInstallments(saved.getId(), List.of(3));
+
+    assertThat(reload(saved.getId()).getInstallments())
+        .filteredOn(installment -> installment.getInstallmentNumber() == 3)
+        .singleElement()
+        .satisfies(installment -> {
+          assertThat(installment.isPaidEarly()).isFalse();
+          assertThat(installment.getDueDate()).isEqualTo(LocalDate.of(2026, 3, 15));
+        });
+  }
+
+  @Test
+  void anotherUserCannotPayMyInstallmentsEarly() {
+    signIn(alice);
+    Category category = categoryService.save(category("Clinic", TransactionType.EXPENSE));
+    Transaction saved = transactionService.save(draft("300.00", 3), category.getId());
+
+    signIn(bob);
+    assertError(
+        () ->
+            transactionService.payInstallmentsEarly(
+                saved.getId(), List.of(3), LocalDate.of(2026, 1, 20)),
+        ApplicationError.NOT_FOUND);
+    assertError(
+        () ->
+            transactionService.payInstallmentsEarly(
+                saved.getId(), List.of(), LocalDate.of(2026, 1, 20)),
+        ApplicationError.BAD_REQUEST);
+  }
+
+  @Test
   void removingInstallmentsDeletesThem() {
     signIn(alice);
     Category category = categoryService.save(category("Course", TransactionType.EXPENSE));

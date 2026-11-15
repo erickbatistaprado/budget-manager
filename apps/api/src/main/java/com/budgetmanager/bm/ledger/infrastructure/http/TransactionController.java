@@ -5,6 +5,8 @@ import static org.springframework.http.ResponseEntity.*;
 import com.budgetmanager.bm.ledger.application.TransactionService;
 import com.budgetmanager.bm.ledger.domain.Transaction;
 import com.budgetmanager.bm.ledger.domain.TransactionType;
+import com.budgetmanager.bm.shared.application.ApplicationError;
+import com.budgetmanager.bm.shared.application.ApplicationException;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.time.LocalDate;
@@ -59,6 +61,27 @@ public class TransactionController {
     return ok(
         TransactionConverter.entityToDto(
             service.update(TransactionConverter.dtoToEntity(dto), dto.category().id())));
+  }
+
+  /** Moves installments the card prepaid to the day they were paid. */
+  @PostMapping("/{id}/installments/pay-early")
+  public ResponseEntity<TransactionDto> payInstallmentsEarly(
+      @PathVariable UUID id, @Valid @RequestBody InstallmentChangeDto change) {
+    if (change.paidOn() == null) {
+      throw new ApplicationException(ApplicationError.BAD_REQUEST, "paidOn is required");
+    }
+    return ok(
+        TransactionConverter.entityToDto(
+            service.payInstallmentsEarly(id, change.installmentNumbers(), change.paidOn())));
+  }
+
+  /** Puts paid-early installments back in their original months. */
+  @PostMapping("/{id}/installments/restore")
+  public ResponseEntity<TransactionDto> restoreInstallments(
+      @PathVariable UUID id, @Valid @RequestBody InstallmentChangeDto change) {
+    return ok(
+        TransactionConverter.entityToDto(
+            service.restoreInstallments(id, change.installmentNumbers())));
   }
 
   @DeleteMapping("/{id}")
