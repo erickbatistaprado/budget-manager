@@ -5,6 +5,57 @@ info:
 servers:
   - url: http://localhost:8080
 paths:
+  /accounts:
+    get:
+      operationId: listAccounts
+      responses:
+        '200':
+          description: The current user's accounts
+          content:
+            application/json:
+              schema:
+                { type: array, items: { $ref: '#/components/schemas/Account' } }
+    post:
+      operationId: createAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccountWrite' }
+      responses:
+        '201':
+          description: Created account
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '400': { description: Invalid name or bank, or name already in use }
+  /accounts/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      operationId: updateAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccountWrite' }
+      responses:
+        '200':
+          description: Updated account
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '400': { description: Invalid name or bank, or name already in use }
+        '404': { description: Account not found for this owner }
+    delete:
+      operationId: deleteAccount
+      responses:
+        '204':
+          { description: Deleted; transaction account references are cleared }
+        '404': { description: Account not found for this owner }
   /cards:
     get:
       operationId: listCards
@@ -588,12 +639,66 @@ components:
               description: Paid before its month; dueDate is then the day it was paid.,
             },
         }
+    Bank:
+      type: string
+      enum:
+        [
+          NUBANK,
+          ITAU,
+          BRADESCO,
+          BANCO_DO_BRASIL,
+          CAIXA,
+          SANTANDER,
+          INTER,
+          C6,
+          BTG_PACTUAL,
+          XP,
+          PORTO,
+          MERCADO_PAGO,
+          PICPAY,
+          PAGBANK,
+          SICREDI,
+          SICOOB,
+          BANRISUL,
+          NEON,
+          OTHER,
+        ]
+    PaymentMethod:
+      type: string
+      enum:
+        [
+          CREDIT_CARD,
+          DEBIT_CARD,
+          PIX,
+          BANK_TRANSFER,
+          BOLETO,
+          AUTOMATIC_DEBIT,
+          CASH,
+          OTHER,
+        ]
+    AccountWrite:
+      type: object
+      required: [name, bank]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        bank: { $ref: '#/components/schemas/Bank' }
+    Account:
+      allOf:
+        - { $ref: '#/components/schemas/AccountWrite' }
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
     TransactionWrite:
       type: object
       required: [category, totalValue, repeats, date]
       properties:
         category: { $ref: '#/components/schemas/Category' }
         cardId: { type: [string, 'null'], format: uuid }
+        paymentMethod:
+          anyOf:
+            [{ $ref: '#/components/schemas/PaymentMethod' }, { type: 'null' }]
+        accountId: { type: [string, 'null'], format: uuid }
         notes: { type: [string, 'null'] }
         totalValue: { type: number }
         installmentNumbers: { type: [integer, 'null'] }
@@ -601,9 +706,10 @@ components:
         date: { type: string }
     CardWrite:
       type: object
-      required: [name, closingDay, dueDay]
+      required: [name, bank, closingDay, dueDay]
       properties:
         name: { type: string, minLength: 1, maxLength: 255 }
+        bank: { $ref: '#/components/schemas/Bank' }
         closingDay: { type: integer, minimum: 1, maximum: 31 }
         dueDay: { type: integer, minimum: 1, maximum: 31 }
     Card:
@@ -627,6 +733,15 @@ components:
           properties:
             {
               id: { type: string, format: uuid },
+              account:
+                {
+                  anyOf:
+                    [
+                      { $ref: '#/components/schemas/Account' },
+                      { type: 'null' },
+                    ],
+                  readOnly: true,
+                },
               card:
                 {
                   anyOf:

@@ -1,5 +1,60 @@
 import { z } from 'zod';
 
+export enum Bank {
+  NUBANK = 'NUBANK',
+  ITAU = 'ITAU',
+  BRADESCO = 'BRADESCO',
+  BANCO_DO_BRASIL = 'BANCO_DO_BRASIL',
+  CAIXA = 'CAIXA',
+  SANTANDER = 'SANTANDER',
+  INTER = 'INTER',
+  C6 = 'C6',
+  BTG_PACTUAL = 'BTG_PACTUAL',
+  XP = 'XP',
+  PORTO = 'PORTO',
+  MERCADO_PAGO = 'MERCADO_PAGO',
+  PICPAY = 'PICPAY',
+  PAGBANK = 'PAGBANK',
+  SICREDI = 'SICREDI',
+  SICOOB = 'SICOOB',
+  BANRISUL = 'BANRISUL',
+  NEON = 'NEON',
+  OTHER = 'OTHER',
+}
+
+export const bankDisplayNames: Record<Bank, string> = {
+  NUBANK: 'Nubank',
+  ITAU: 'Itaú',
+  BRADESCO: 'Bradesco',
+  BANCO_DO_BRASIL: 'Banco do Brasil',
+  CAIXA: 'Caixa',
+  SANTANDER: 'Santander',
+  INTER: 'Inter',
+  C6: 'C6 Bank',
+  BTG_PACTUAL: 'BTG Pactual',
+  XP: 'XP',
+  PORTO: 'Porto Bank / Porto Seguro',
+  MERCADO_PAGO: 'Mercado Pago',
+  PICPAY: 'PicPay',
+  PAGBANK: 'PagBank',
+  SICREDI: 'Sicredi',
+  SICOOB: 'Sicoob',
+  BANRISUL: 'Banrisul',
+  NEON: 'Neon',
+  OTHER: 'Other',
+};
+
+export enum PaymentMethod {
+  CREDIT_CARD = 'CREDIT_CARD',
+  DEBIT_CARD = 'DEBIT_CARD',
+  PIX = 'PIX',
+  BANK_TRANSFER = 'BANK_TRANSFER',
+  BOLETO = 'BOLETO',
+  AUTOMATIC_DEBIT = 'AUTOMATIC_DEBIT',
+  CASH = 'CASH',
+  OTHER = 'OTHER',
+}
+
 export enum RepeatInterval {
   DAILY = 'DAILY',
   WEEKLY = 'WEEKLY',
@@ -48,9 +103,17 @@ export const categorySchema = z.object({
   transactionType: z.enum(TransactionType),
 });
 
+export const accountSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  bank: z.enum(Bank),
+});
+export type Account = z.infer<typeof accountSchema>;
+
 export const cardSchema = z.object({
   id: z.string(),
   name: z.string(),
+  bank: z.enum(Bank),
   closingDay: z.number(),
   dueDay: z.number(),
 });
@@ -76,6 +139,9 @@ export const transactionMonthSchema = z.object({
 export const transactionSchema = z.object({
   id: z.string(),
   category: categorySchema,
+  paymentMethod: z.enum(PaymentMethod).nullish(),
+  accountId: z.string().nullish(),
+  account: accountSchema.nullish(),
   cardId: z.string().nullish(),
   card: z.object({ id: z.string(), name: z.string() }).nullish(),
   billDueDate: z.string().nullish(),

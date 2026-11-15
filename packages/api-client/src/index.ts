@@ -1,6 +1,10 @@
 export { ApiClientError, BudgetManagerClient } from './client';
 export { BudgetManagerApi } from './endpoints';
 export {
+  Bank,
+  bankDisplayNames,
+  PaymentMethod,
+  accountSchema,
   InvestmentType,
   RepeatInterval,
   SavingLocation,
@@ -23,6 +27,7 @@ export { client as generatedClient } from './generated/client.gen';
 export * from './generated/sdk.gen';
 export * as OpenApi from './generated/types.gen';
 export type {
+  Account,
   Category,
   Card,
   Installment,

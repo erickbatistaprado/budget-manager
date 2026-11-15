@@ -74,9 +74,24 @@ export type Installment = {
     paidEarly?: boolean;
 };
 
+export type Bank = 'NUBANK' | 'ITAU' | 'BRADESCO' | 'BANCO_DO_BRASIL' | 'CAIXA' | 'SANTANDER' | 'INTER' | 'C6' | 'BTG_PACTUAL' | 'XP' | 'PORTO' | 'MERCADO_PAGO' | 'PICPAY' | 'PAGBANK' | 'SICREDI' | 'SICOOB' | 'BANRISUL' | 'NEON' | 'OTHER';
+
+export type PaymentMethod = 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX' | 'BANK_TRANSFER' | 'BOLETO' | 'AUTOMATIC_DEBIT' | 'CASH' | 'OTHER';
+
+export type AccountWrite = {
+    name: string;
+    bank: Bank;
+};
+
+export type Account = AccountWrite & {
+    id: string;
+};
+
 export type TransactionWrite = {
     category: Category;
     cardId?: string | null;
+    paymentMethod?: PaymentMethod | null;
+    accountId?: string | null;
     notes?: string | null;
     totalValue: number;
     installmentNumbers?: number | null;
@@ -86,6 +101,7 @@ export type TransactionWrite = {
 
 export type CardWrite = {
     name: string;
+    bank: Bank;
     closingDay: number;
     dueDay: number;
 };
@@ -101,6 +117,7 @@ export type CardSummary = {
 
 export type Transaction = TransactionWrite & {
     id: string;
+    readonly account?: Account | null;
     readonly card?: CardSummary | null;
     /**
      * yyyy/MM/dd; first installment bill or purchase bill
@@ -288,6 +305,99 @@ export type SavingWritable = SavingWrite & {
 };
 
 export type Id = string;
+
+export type ListAccountsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/accounts';
+};
+
+export type ListAccountsResponses = {
+    /**
+     * The current user's accounts
+     */
+    200: Array<Account>;
+};
+
+export type ListAccountsResponse = ListAccountsResponses[keyof ListAccountsResponses];
+
+export type CreateAccountData = {
+    body: AccountWrite;
+    path?: never;
+    query?: never;
+    url: '/accounts';
+};
+
+export type CreateAccountErrors = {
+    /**
+     * Invalid name or bank
+     */
+    400: unknown;
+};
+
+export type CreateAccountResponses = {
+    /**
+     * Created account
+     */
+    201: Account;
+};
+
+export type CreateAccountResponse = CreateAccountResponses[keyof CreateAccountResponses];
+
+export type DeleteAccountData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/accounts/{id}';
+};
+
+export type DeleteAccountErrors = {
+    /**
+     * Account not found for this owner
+     */
+    404: unknown;
+};
+
+export type DeleteAccountResponses = {
+    /**
+     * Deleted; transaction account references are cleared
+     */
+    204: void;
+};
+
+export type DeleteAccountResponse = DeleteAccountResponses[keyof DeleteAccountResponses];
+
+export type UpdateAccountData = {
+    body: AccountWrite;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/accounts/{id}';
+};
+
+export type UpdateAccountErrors = {
+    /**
+     * Invalid name or bank
+     */
+    400: unknown;
+    /**
+     * Account not found for this owner
+     */
+    404: unknown;
+};
+
+export type UpdateAccountResponses = {
+    /**
+     * Updated account
+     */
+    200: Account;
+};
+
+export type UpdateAccountResponse = UpdateAccountResponses[keyof UpdateAccountResponses];
 
 export type ListCardsData = {
     body?: never;

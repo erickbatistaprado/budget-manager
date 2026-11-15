@@ -1,4 +1,6 @@
 import {
+  accountSchema,
+  type Account,
   categorySchema,
   cardSchema,
   type Card,
@@ -132,6 +134,23 @@ export class BudgetManagerApi {
     return this.client.command(`/transactions/${id}/from/${month}`, {
       method: 'DELETE',
     });
+  }
+
+  accounts(): Promise<Account[]> {
+    return this.client.request('/accounts', z.array(accountSchema));
+  }
+  saveAccount(account: Omit<Account, 'id'>, id?: string): Promise<Account> {
+    return this.client.request(
+      id ? `/accounts/${id}` : '/accounts',
+      accountSchema,
+      {
+        method: id ? 'PUT' : 'POST',
+        body: account,
+      }
+    );
+  }
+  deleteAccount(id: string): Promise<void> {
+    return this.client.command(`/accounts/${id}`, { method: 'DELETE' });
   }
 
   cards(): Promise<Card[]> {
