@@ -1,313 +1,641 @@
 'use client';
 
-import { Input, Money } from '@/components';
-import { SavingLocation } from '@/enums';
-import { useSavings } from '@/hooks';
+import {
+  AnalyticsCard,
+  EmptyState,
+  RankedList,
+} from '@/components/Analytics/AnalyticsPanels';
+import SavingEntry from '@/components/Savings/SavingEntry';
+import { type InvestmentType, SavingLocation, TransactionType } from '@/enums';
+import { useSavings, useTransactions } from '@/hooks';
 import { useI18n } from '@/i18n/useI18n';
 import { savingService } from '@/services';
 import type { Saving } from '@/types';
-import clsx from 'clsx';
 import {
+  formatBRL,
+  formatCompactBRL,
+  formatPercent,
+  type RankedAmount,
+  type AnalyticsRange,
+} from '@/utils/analytics.util';
+import {
+  investmentAllocation,
+  investmentGroups,
+  investmentGroupKeys,
+  emergencyRunway,
+  savingsAllocation,
+  savingsHistoryRange,
+  savingsShare,
+  selectSavings,
+  type SavingsSort,
+} from '@/utils/savings.util';
+import { PieChart } from '@mui/x-charts';
+import {
+  useEffect,
   useMemo,
+  useRef,
   useState,
-  type ChangeEvent,
   type FormEvent,
   type JSX,
 } from 'react';
-import { FiEdit2, FiPlus, FiTrash2, FiX } from 'react-icons/fi';
 
 interface SavingForm {
+  name: string;
   amount: string;
   location: SavingLocation;
-  name: string;
+  investmentType: InvestmentType | '';
 }
-
 const initialForm: SavingForm = {
-  amount: '',
-  location: SavingLocation.INVESTMENT,
   name: '',
+  amount: '',
+  location: SavingLocation.SAVINGS_ACCOUNT,
+  investmentType: '',
 };
-
-function getSavingsTotal(savings: Saving[]): number {
-  return savings.reduce(
-    (total: number, saving: Saving): number => total + saving.amount,
-    0
-  );
-}
-
-function getSavingsByLocation(
-  savings: Saving[]
-): Record<SavingLocation, number> {
-  return savings.reduce(
-    (
-      totals: Record<SavingLocation, number>,
-      saving: Saving
-    ): Record<SavingLocation, number> => ({
-      ...totals,
-      [saving.location]: totals[saving.location] + saving.amount,
-    }),
-    {
-      [SavingLocation.CASH]: 0,
-      [SavingLocation.CHECKING_ACCOUNT]: 0,
-      [SavingLocation.SAVINGS_ACCOUNT]: 0,
-      [SavingLocation.INVESTMENT]: 0,
-      [SavingLocation.OTHER]: 0,
-    }
-  );
-}
+const fieldClass =
+  'w-full min-w-0 rounded-lg border border-[var(--ctp-surface2)] bg-[var(--ctp-base)] p-3 text-sm focus-visible:outline-[var(--ctp-blue)]';
+const colors = [
+  'var(--ctp-blue)',
+  'var(--ctp-peach)',
+  'var(--ctp-mauve)',
+  'var(--ctp-teal)',
+  'var(--ctp-yellow)',
+];
 
 export default function SavingsPage(): JSX.Element {
-  const { t } = useI18n();
-  const { data: savings, mutate } = useSavings();
+  const { language, t } = useI18n();
+  const messages = t.savings;
+  const request = useSavings();
+  const [today] = useState((): Date => new Date());
+  const range = useMemo(
+    (): AnalyticsRange => savingsHistoryRange(today),
+    [today]
+  );
+  const expenses = useTransactions(TransactionType.EXPENSE, range, {
+    loadAll: true,
+    pageSize: 1000,
+  });
   const [form, setForm] = useState<SavingForm>(initialForm);
-  const [editingSaving, setEditingSaving] = useState<Saving>();
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-
-  const savingsList: Saving[] = useMemo(
-    (): Saving[] => savings ?? [],
-    [savings]
+  const [editing, setEditing] = useState<Saving>();
+  const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SavingsSort>('amount');
+  const [location, setLocation] = useState<SavingLocation | null>(null);
+  const [investmentType, setInvestmentType] = useState<InvestmentType | null>(
+    null
   );
-  const totalSaved: number = getSavingsTotal(savingsList);
-  const savingsByLocation: Record<SavingLocation, number> = useMemo(
-    (): Record<SavingLocation, number> => getSavingsByLocation(savingsList),
-    [savingsList]
+  const investments = investmentAllocation(request.data ?? []);
+  const nameInput = useRef<HTMLInputElement>(null);
+  const allocation = savingsAllocation(request.data ?? []);
+  const entries = selectSavings(
+    request.data ?? [],
+    search,
+    location,
+    sort,
+    language,
+    investmentType
   );
-  const isFormInvalid: boolean =
-    !form.name.trim() || !form.amount || Number(form.amount) < 0;
-
-  function handleChange({
-    currentTarget: { id, value },
-  }: ChangeEvent<HTMLInputElement | HTMLSelectElement>): void {
-    setForm((prev: SavingForm): SavingForm => ({ ...prev, [id]: value }));
-  }
-
-  function handleEdit(saving: Saving): void {
-    setEditingSaving(saving);
-    setForm({
-      amount: saving.amount.toString(),
-      location: saving.location,
-      name: saving.name,
-    });
-    setErrorMessage('');
-  }
-
-  function resetForm(): void {
-    setEditingSaving(undefined);
+  const runway = emergencyRunway(allocation.total, expenses.data ?? [], today);
+  const expensesLoading =
+    expenses.isLoading || expenses.isLoadingMore || expenses.hasMore;
+  const largest = allocation.locations.find((item): boolean => item.amount > 0);
+  const nameInvalid = !form.name.trim();
+  const amountInvalid =
+    !form.amount.trim() ||
+    !Number.isFinite(Number(form.amount)) ||
+    Number(form.amount) < 0;
+  const typeInvalid =
+    form.location === SavingLocation.INVESTMENT && !form.investmentType;
+  function reset(): void {
+    setEditing(undefined);
     setForm(initialForm);
+    setSubmitted(false);
+    setError('');
   }
-
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ): Promise<void> {
+  useEffect(() => {
+    function escape(event: KeyboardEvent): void {
+      if (event.key === 'Escape') {
+        setEditing(undefined);
+        setForm(initialForm);
+        setSubmitted(false);
+      }
+    }
+    window.addEventListener('keydown', escape);
+    return (): void => window.removeEventListener('keydown', escape);
+  }, []);
+  function edit(saving: Saving): void {
+    setEditing(saving);
+    setForm({
+      name: saving.name,
+      amount: String(saving.amount),
+      location: saving.location,
+      investmentType: saving.investmentType ?? '',
+    });
+    setSubmitted(false);
+    setError('');
+    nameInput.current?.focus();
+  }
+  async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    setErrorMessage('');
-
-    if (isFormInvalid) {
-      setErrorMessage(t.savings.invalidForm);
+    setSubmitted(true);
+    if (nameInvalid || amountInvalid || typeInvalid) {
       return;
     }
-
+    setBusy(true);
+    setError('');
     try {
-      setIsSaving(true);
       const payload = {
+        name: form.name.trim(),
         amount: Number(form.amount),
         location: form.location,
-        name: form.name.trim(),
+        ...(form.location === SavingLocation.INVESTMENT && form.investmentType
+          ? { investmentType: form.investmentType }
+          : {}),
       };
-
-      if (editingSaving) {
-        await savingService.updateSaving({ ...payload, id: editingSaving.id });
+      if (editing) {
+        await savingService.updateSaving({ ...payload, id: editing.id });
       } else {
         await savingService.createSaving(payload);
       }
-
-      resetForm();
-      await mutate();
-    } catch (error: unknown) {
-      console.error(error);
-      setErrorMessage(t.savings.saveError);
+      reset();
+      await request.mutate();
+    } catch {
+      setError(messages.saveError);
     } finally {
-      setIsSaving(false);
+      setBusy(false);
     }
   }
-
-  async function handleDelete(id: string): Promise<void> {
-    setErrorMessage('');
-
+  async function remove(id: string): Promise<void> {
     try {
       await savingService.deleteSaving(id);
-      if (editingSaving?.id === id) {
-        resetForm();
+      if (editing?.id === id) {
+        reset();
       }
-      await mutate();
-    } catch (error: unknown) {
-      console.error(error);
-      setErrorMessage(t.savings.deleteError);
+      await request.mutate();
+    } catch {
+      setError(messages.deleteError);
     }
   }
-
+  let runwayText = messages.noRunway;
+  if (runway !== null) {
+    runwayText = `${new Intl.NumberFormat(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(runway)} ${messages.months}`;
+  }
+  if (expensesLoading) {
+    runwayText = messages.loading;
+  }
+  if (expenses.error) {
+    runwayText = messages.expensesError;
+  }
   return (
-    <div className="flex w-full flex-col gap-4 p-4">
-      <section className="grid gap-3 md:grid-cols-[2fr_1fr]">
-        <div className="rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md">
-          <span className="text-sm text-[var(--ctp-subtext1)]">
-            {t.savings.totalSaved}
-          </span>
-          <Money className="text-3xl font-semibold" value={totalSaved} />
-        </div>
-        <div className="rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md">
-          <span className="text-sm text-[var(--ctp-subtext1)]">
-            {t.savings.entries}
-          </span>
-          <div className="text-3xl font-semibold">{savingsList.length}</div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[360px_1fr]">
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-3 rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md"
+    <main className="mx-auto flex w-full max-w-[1600px] min-w-0 flex-col gap-6 p-4 text-[var(--ctp-text)] md:p-6">
+      <header>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {messages.title}
+        </h1>
+        <p className="mt-2 text-sm text-[var(--ctp-subtext1)]">
+          {messages.subtitle}
+        </p>
+      </header>
+      {error && (
+        <p role="alert" className="text-sm text-[var(--ctp-red)]">
+          {error}
+        </p>
+      )}
+      {request.error && <p role="alert">{messages.loadError}</p>}
+      {request.isLoading ? (
+        <div
+          role="status"
+          aria-label={messages.loading}
+          className="grid animate-pulse gap-4 sm:grid-cols-2"
         >
-          <h1 className="text-base font-semibold text-[var(--ctp-text)]">
-            {editingSaving ? t.savings.editTitle : t.savings.addTitle}
-          </h1>
-          <Input
-            id="name"
-            label={t.common.name}
-            value={form.name}
-            onChange={handleChange}
-          />
-          <Input
-            id="amount"
-            label={t.savings.amount}
-            type="number"
-            min="0"
-            step="0.01"
-            value={form.amount}
-            onChange={handleChange}
-          />
-          <select
-            id="location"
-            value={form.location}
-            onChange={handleChange}
-            className="rounded-md border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] px-4 py-3 text-[var(--ctp-text)] shadow-sm transition-colors focus:border-[var(--ctp-blue)] focus:ring-2 focus:ring-[var(--ctp-blue)]/25 focus:outline-none"
+          <span className="sr-only">{messages.loading}</span>
+          {[0, 1, 2, 3].map((index): JSX.Element => (
+            <div
+              key={index}
+              className="h-40 rounded-2xl bg-[var(--ctp-surface0)]"
+            />
+          ))}
+        </div>
+      ) : (
+        !request.error && (
+          <>
+            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <AnalyticsCard title={messages.totalSaved}>
+                <p className="text-3xl font-semibold break-all">
+                  {formatBRL(allocation.total, language)}
+                </p>
+                <p className="mt-2 text-sm text-[var(--ctp-subtext1)]">
+                  {new Intl.NumberFormat(language).format(
+                    request.data?.length ?? 0
+                  )}{' '}
+                  {messages.entries}
+                </p>
+              </AnalyticsCard>
+              <AnalyticsCard title={messages.runway}>
+                <p className="text-xl font-semibold">{runwayText}</p>
+                <p className="mt-2 text-xs text-[var(--ctp-subtext1)]">
+                  {messages.runwayNote}
+                </p>
+              </AnalyticsCard>
+              <AnalyticsCard title={messages.liquidity}>
+                <dl className="space-y-2 text-sm">
+                  {[
+                    { label: messages.liquid, amount: allocation.liquid },
+                    { label: messages.invested, amount: allocation.invested },
+                    { label: messages.other, amount: allocation.other },
+                  ].map((item): JSX.Element => (
+                    <div key={item.label}>
+                      <dt className="text-[var(--ctp-subtext1)]">
+                        {item.label}
+                      </dt>
+                      <dd className="font-medium break-words">
+                        {formatBRL(item.amount, language)} ·{' '}
+                        {formatPercent(
+                          savingsShare(item.amount, allocation.total),
+                          language
+                        )}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </AnalyticsCard>
+              <AnalyticsCard title={messages.largest}>
+                {largest ? (
+                  <>
+                    <p className="text-xl font-semibold">
+                      {messages.locations[largest.location]}
+                    </p>
+                    <p className="mt-2 break-all">
+                      {formatBRL(largest.amount, language)}
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--ctp-subtext1)]">
+                      {formatPercent(largest.share, language)}
+                    </p>
+                  </>
+                ) : (
+                  <EmptyState message={messages.empty} />
+                )}
+              </AnalyticsCard>
+            </section>
+            {request.data?.some(
+              (saving): boolean => saving.location === SavingLocation.INVESTMENT
+            ) && (
+              <AnalyticsCard title={messages.investments}>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {investments.groups.map((item): JSX.Element => (
+                    <div key={item.group} className="text-sm">
+                      <p>{messages.investmentGroups[item.group]}</p>
+                      <p>
+                        {formatBRL(item.amount, language)} ·{' '}
+                        {formatPercent(item.share, language)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 grid min-w-0 items-center gap-6 md:grid-cols-2">
+                  <div
+                    role="img"
+                    aria-label={messages.investments}
+                    className="min-w-0"
+                  >
+                    {investments.total > 0 && (
+                      <PieChart
+                        height={260}
+                        hideLegend
+                        series={[
+                          {
+                            innerRadius: 65,
+                            outerRadius: 100,
+                            paddingAngle: 3,
+                            data: investments.groups
+                              .filter((item): boolean => item.amount > 0)
+                              .map(
+                                (
+                                  item,
+                                  index
+                                ): {
+                                  id: string;
+                                  label: string;
+                                  value: number;
+                                  color: string;
+                                } => ({
+                                  id: item.group,
+                                  label: messages.investmentGroups[item.group],
+                                  value: item.amount,
+                                  color: colors[index],
+                                })
+                              ),
+                            valueFormatter: (item): string =>
+                              formatCompactBRL(item.value, language),
+                          },
+                        ]}
+                      />
+                    )}
+                  </div>
+                  <RankedList
+                    items={investments.types
+                      .filter((item): boolean => item.amount > 0)
+                      .map((item): RankedAmount => ({
+                        ...item,
+                        label: messages.investmentTypes[item.type],
+                      }))}
+                  />
+                </div>
+              </AnalyticsCard>
+            )}
+            <AnalyticsCard title={messages.allocation}>
+              {allocation.total > 0 ? (
+                <div className="grid min-w-0 items-center gap-6 md:grid-cols-2">
+                  <div
+                    className="min-w-0"
+                    role="img"
+                    aria-label={messages.allocation}
+                  >
+                    <PieChart
+                      height={260}
+                      hideLegend
+                      series={[
+                        {
+                          innerRadius: 65,
+                          outerRadius: 100,
+                          paddingAngle: 3,
+                          data: allocation.locations
+                            .filter((item): boolean => item.amount > 0)
+                            .map(
+                              (
+                                item,
+                                index
+                              ): {
+                                id: SavingLocation;
+                                label: string;
+                                value: number;
+                                color: string;
+                              } => ({
+                                id: item.location,
+                                label: messages.locations[item.location],
+                                value: item.amount,
+                                color: colors[index],
+                              })
+                            ),
+                          valueFormatter: (item): string =>
+                            formatCompactBRL(item.value, language),
+                        },
+                      ]}
+                    />
+                  </div>
+                  <RankedList
+                    items={allocation.locations
+                      .filter((item): boolean => item.amount > 0)
+                      .map((item): RankedAmount => ({
+                        ...item,
+                        label: messages.locations[item.location],
+                      }))}
+                  />
+                </div>
+              ) : (
+                <EmptyState message={messages.empty} />
+              )}
+            </AnalyticsCard>
+          </>
+        )
+      )}
+      <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <AnalyticsCard title={messages.entries}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="min-w-0 text-sm">
+              {messages.search}
+              <input
+                className={`${fieldClass} mt-1`}
+                value={search}
+                onChange={(event): void => setSearch(event.target.value)}
+              />
+            </label>
+            <label className="min-w-0 text-sm">
+              {messages.sort}
+              <select
+                className={`${fieldClass} mt-1`}
+                value={sort}
+                onChange={(event): void =>
+                  setSort(event.target.value as SavingsSort)
+                }
+              >
+                <option value="amount">{messages.sortAmount}</option>
+                <option value="name">{messages.sortName}</option>
+                <option value="updated">{messages.sortUpdated}</option>
+              </select>
+            </label>
+          </div>
+          <div
+            className="my-4 flex flex-wrap gap-2"
+            role="group"
+            aria-label={messages.location}
           >
-            {Object.values(SavingLocation).map(
-              (location: SavingLocation): JSX.Element => (
-                <option key={location} value={location}>
-                  {t.savings.locations[location]}
-                </option>
+            {[null, ...Object.values(SavingLocation)].map(
+              (value): JSX.Element => (
+                <button
+                  key={value ?? 'all'}
+                  type="button"
+                  aria-pressed={location === value}
+                  onClick={(): void => {
+                    setLocation(value);
+                    setInvestmentType(null);
+                  }}
+                  className={`rounded-full border px-3 py-2 text-xs ${location === value ? 'border-[var(--ctp-blue)] bg-[var(--ctp-blue)]/10 text-[var(--ctp-blue)]' : 'border-[var(--ctp-surface1)] text-[var(--ctp-subtext1)]'}`}
+                >
+                  {value === null ? messages.all : messages.locations[value]}
+                </button>
               )
             )}
-          </select>
-          {errorMessage && (
-            <span className="text-sm text-[var(--ctp-red)]">
-              {errorMessage}
-            </span>
-          )}
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <button
-              type="submit"
-              disabled={isSaving || isFormInvalid}
-              className={clsx(
-                'flex items-center justify-center gap-2 rounded-md px-4 py-3 font-medium transition',
-                isSaving || isFormInvalid
-                  ? 'cursor-not-allowed bg-[var(--ctp-surface2)] text-[var(--ctp-subtext0)]'
-                  : 'cursor-pointer bg-[var(--ctp-blue)] text-[var(--ctp-crust)] hover:bg-[var(--ctp-lavender)]'
-              )}
+          </div>
+          {location === SavingLocation.INVESTMENT && (
+            <div
+              role="group"
+              aria-label={messages.investmentType}
+              className="mb-4 flex flex-wrap gap-2"
             >
-              <FiPlus />
-              {isSaving ? t.common.saving : t.common.save}
-            </button>
-            {editingSaving && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="cursor-pointer rounded-md bg-[var(--ctp-surface1)] px-4 py-3 text-[var(--ctp-text)] transition hover:bg-[var(--ctp-surface2)]"
-              >
-                <FiX />
-              </button>
-            )}
-          </div>
-        </form>
-
-        <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-          <div className="rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md">
-            <h2 className="mb-3 text-sm font-semibold text-[var(--ctp-subtext1)]">
-              {t.savings.byLocation}
-            </h2>
-            <div className="space-y-3">
-              {Object.values(SavingLocation).map(
-                (location: SavingLocation): JSX.Element => (
-                  <div
-                    key={location}
-                    className="grid grid-cols-[1fr_auto] gap-3"
-                  >
-                    <span className="truncate text-sm text-[var(--ctp-text)]">
-                      {t.savings.locations[location]}
-                    </span>
-                    <Money
-                      className="text-sm font-semibold"
-                      value={savingsByLocation[location]}
-                    />
-                  </div>
-                )
-              )}
-            </div>
-          </div>
-
-          <div className="rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md">
-            <h2 className="mb-3 text-sm font-semibold text-[var(--ctp-subtext1)]">
-              {t.savings.savedMoney}
-            </h2>
-            <div className="space-y-2">
-              {savingsList.map((saving: Saving): JSX.Element => (
-                <div
-                  key={saving.id}
-                  className="grid grid-cols-[1fr_auto] items-center gap-3 rounded border border-[var(--ctp-surface1)] p-3"
+              {[
+                null,
+                ...investments.types
+                  .filter((item): boolean => item.amount > 0)
+                  .map((item): InvestmentType => item.type),
+              ].map((value): JSX.Element => (
+                <button
+                  key={value ?? 'all'}
+                  type="button"
+                  aria-pressed={investmentType === value}
+                  onClick={(): void => setInvestmentType(value)}
+                  className={`rounded-full border px-3 py-2 text-xs ${investmentType === value ? 'border-[var(--ctp-blue)] text-[var(--ctp-blue)]' : 'border-[var(--ctp-surface1)]'}`}
                 >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-[var(--ctp-text)]">
-                      {saving.name}
-                    </div>
-                    <div className="text-xs text-[var(--ctp-subtext0)]">
-                      {t.savings.locations[saving.location]}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Money
-                      className="text-sm font-semibold"
-                      value={saving.amount}
-                    />
-                    <button
-                      type="button"
-                      onClick={(): void => handleEdit(saving)}
-                      className="cursor-pointer rounded p-2 text-[var(--ctp-text)] hover:bg-[var(--ctp-surface1)]"
-                      title={t.common.edit}
-                    >
-                      <FiEdit2 />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(): Promise<void> => handleDelete(saving.id)}
-                      className="cursor-pointer rounded p-2 text-[var(--ctp-red)] hover:bg-[var(--ctp-red)]/25"
-                      title={t.common.delete}
-                    >
-                      <FiTrash2 />
-                    </button>
-                  </div>
-                </div>
+                  {value === null
+                    ? messages.allInvestmentTypes
+                    : messages.investmentTypes[value]}
+                </button>
               ))}
-              {!savingsList.length && (
-                <span className="text-sm text-[var(--ctp-subtext1)]">
-                  {t.savings.empty}
-                </span>
+            </div>
+          )}
+          {!request.isLoading && !request.error && (
+            <>
+              {entries.length ? (
+                <ul className="space-y-3">
+                  {entries.map((saving): JSX.Element => (
+                    <SavingEntry
+                      key={saving.id}
+                      saving={saving}
+                      total={allocation.total}
+                      today={today}
+                      onEdit={edit}
+                      onDelete={remove}
+                    />
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState
+                  message={
+                    request.data?.length ? messages.noMatches : messages.empty
+                  }
+                />
+              )}
+            </>
+          )}
+        </AnalyticsCard>
+        <AnalyticsCard title={editing ? messages.editTitle : messages.addTitle}>
+          <form noValidate onSubmit={submit} className="space-y-4">
+            <label className="block text-sm" htmlFor="saving-name">
+              {t.common.name}
+              <input
+                ref={nameInput}
+                id="saving-name"
+                className={`${fieldClass} mt-1`}
+                value={form.name}
+                aria-invalid={submitted && nameInvalid}
+                aria-describedby={
+                  submitted && nameInvalid ? 'name-error' : undefined
+                }
+                onChange={(event): void =>
+                  setForm({ ...form, name: event.target.value })
+                }
+              />
+            </label>
+            {submitted && nameInvalid && (
+              <p id="name-error" className="text-xs text-[var(--ctp-red)]">
+                {messages.nameRequired}
+              </p>
+            )}
+            <label className="block text-sm" htmlFor="saving-amount">
+              {messages.amount} (BRL)
+              <input
+                id="saving-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                className={`${fieldClass} mt-1`}
+                value={form.amount}
+                aria-invalid={submitted && amountInvalid}
+                aria-describedby={
+                  submitted && amountInvalid ? 'amount-error' : undefined
+                }
+                onChange={(event): void =>
+                  setForm({ ...form, amount: event.target.value })
+                }
+              />
+            </label>
+            {submitted && amountInvalid && (
+              <p id="amount-error" className="text-xs text-[var(--ctp-red)]">
+                {messages.amountInvalid}
+              </p>
+            )}
+            <label className="block text-sm" htmlFor="saving-location">
+              {messages.location}
+              <select
+                id="saving-location"
+                className={`${fieldClass} mt-1`}
+                value={form.location}
+                onChange={(event): void =>
+                  setForm({
+                    ...form,
+                    location: event.target.value as SavingLocation,
+                  })
+                }
+              >
+                {Object.values(SavingLocation).map((value): JSX.Element => (
+                  <option key={value} value={value}>
+                    {messages.locations[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {form.location === SavingLocation.INVESTMENT && (
+              <>
+                <label
+                  className="block text-sm"
+                  htmlFor="saving-investment-type"
+                >
+                  {messages.investmentType}
+                  <select
+                    id="saving-investment-type"
+                    required
+                    className={`${fieldClass} mt-1`}
+                    value={form.investmentType}
+                    aria-invalid={submitted && typeInvalid}
+                    aria-describedby={
+                      submitted && typeInvalid ? 'type-error' : undefined
+                    }
+                    onChange={(event): void =>
+                      setForm({
+                        ...form,
+                        investmentType: event.target.value as
+                          InvestmentType | '',
+                      })
+                    }
+                  >
+                    <option value="">{messages.selectInvestmentType}</option>
+                    {investmentGroupKeys.map((group): JSX.Element => (
+                      <optgroup
+                        key={group}
+                        label={messages.investmentGroups[group]}
+                      >
+                        {investmentGroups[group].map((type): JSX.Element => (
+                          <option key={type} value={type}>
+                            {messages.investmentTypes[type]}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </label>
+                {submitted && typeInvalid && (
+                  <span
+                    id="type-error"
+                    className="text-xs text-[var(--ctp-red)]"
+                  >
+                    {messages.investmentTypeRequired}
+                  </span>
+                )}
+              </>
+            )}
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="submit"
+                disabled={busy}
+                className="rounded-lg bg-[var(--ctp-blue)] px-4 py-3 text-sm font-medium text-[var(--ctp-crust)] disabled:opacity-50"
+              >
+                {busy ? t.common.saving : t.common.save}
+              </button>
+              {editing && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={reset}
+                  className="rounded-lg bg-[var(--ctp-surface0)] px-4 py-3 text-sm"
+                >
+                  {messages.cancel}
+                </button>
               )}
             </div>
-          </div>
-        </div>
-      </section>
-    </div>
+          </form>
+        </AnalyticsCard>
+      </div>
+    </main>
   );
 }

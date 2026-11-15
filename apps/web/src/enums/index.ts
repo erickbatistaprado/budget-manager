@@ -1,4 +1,5 @@
 export {
+  InvestmentType,
   RepeatInterval,
   SavingLocation,
   TransactionType,

@@ -8,12 +8,37 @@ import { postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import type { Category, Transaction } from '@/types';
 import { getApiDate, parseApiDate } from '@/utils/globalFormats.util';
 import clsx from 'clsx';
-import { useState, type ChangeEvent, type FormEvent, type JSX } from 'react';
+import {
+  useState,
+  useSyncExternalStore,
+  type ChangeEvent,
+  type Dispatch,
+  type FormEvent,
+  type JSX,
+  type SetStateAction,
+} from 'react';
 import { BsFillCreditCard2BackFill } from 'react-icons/bs';
 import { FcCurrencyExchange, FcIdea, FcSurvey } from 'react-icons/fc';
 import { GrTransaction } from 'react-icons/gr';
 import { MdEventRepeat } from 'react-icons/md';
 import { useSWRConfig } from 'swr';
+
+function subscribeToNothing(): () => void {
+  return (): void => {};
+}
+
+/**
+ * True only in the browser. The server runs in UTC, so between 21:00 and midnight in Brazil it is
+ * already tomorrow there: "today" must be chosen in the browser, or the date shown would be a day
+ * off and React would report a hydration mismatch.
+ */
+function useIsBrowser(): boolean {
+  return useSyncExternalStore(
+    subscribeToNothing,
+    (): boolean => true,
+    (): boolean => false
+  );
+}
 
 export interface NewTransactionProps {
   transaction?: Transaction;
@@ -28,9 +53,18 @@ export default function NewTransaction({
   const [form, setForm] = useState<Partial<Transaction>>(
     transaction ?? { repeats: RepeatInterval.NONE }
   );
-  const [date, setDate] = useState<Date>(
-    transaction?.date ? parseApiDate(transaction.date) : new Date()
+  const isBrowser: boolean = useIsBrowser();
+  const [pickedDate, setPickedDate] = useState<Date | undefined>(
+    transaction?.date ? parseApiDate(transaction.date) : undefined
   );
+  const date: Date | undefined =
+    pickedDate ?? (isBrowser ? new Date() : undefined);
+  const setDate: Dispatch<SetStateAction<Date>> = (
+    value: SetStateAction<Date>
+  ): void =>
+    setPickedDate((current: Date | undefined): Date =>
+      typeof value === 'function' ? value(current ?? new Date()) : value
+    );
   const [transactionType, setTransactionType] = useState<TransactionType | ''>(
     form.category?.transactionType ?? ''
   );
@@ -79,7 +113,7 @@ export default function NewTransaction({
       installments: form.installments ?? null,
       repeats: form.repeats ?? RepeatInterval.NONE,
       category: form.category,
-      date: getApiDate(date),
+      date: getApiDate(date ?? new Date()),
     });
 
     try {
@@ -149,7 +183,11 @@ export default function NewTransaction({
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[var(--ctp-surface0)]/55 p-5 text-[var(--ctp-text)] backdrop-blur-xs">
       <div className="flex items-center justify-center">
-        <DatePickerDialog date={date} setDate={setDate} arrows />
+        {date ? (
+          <DatePickerDialog date={date} setDate={setDate} arrows />
+        ) : (
+          <div aria-hidden className="h-10" />
+        )}
       </div>
       <form
         className="flex h-full w-full flex-col gap-5 rounded-lg"

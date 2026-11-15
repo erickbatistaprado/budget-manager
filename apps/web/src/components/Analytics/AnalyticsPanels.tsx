@@ -27,11 +27,13 @@ export function AnalyticsCard({
   );
 }
 
-export function EmptyState(): JSX.Element {
+export function EmptyState({
+  message,
+}: { message?: string } = {}): JSX.Element {
   const { t } = useI18n();
   return (
     <p className="flex min-h-32 items-center justify-center text-sm text-[var(--ctp-subtext1)]">
-      {t.analytics.empty}
+      {message ?? t.analytics.empty}
     </p>
   );
 }
