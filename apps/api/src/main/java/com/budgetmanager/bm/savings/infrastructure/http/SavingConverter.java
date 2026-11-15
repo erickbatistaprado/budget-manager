@@ -10,6 +10,7 @@ public class SavingConverter {
         .name(dto.name())
         .amount(dto.amount())
         .location(dto.location())
+        .investmentType(dto.investmentType())
         .build();
   }
 
@@ -19,6 +20,8 @@ public class SavingConverter {
         .name(saving.getName())
         .amount(saving.getAmount())
         .location(saving.getLocation())
+        .investmentType(saving.getInvestmentType())
+        .updatedAt(saving.getUpdatedAt())
         .build();
   }
 }

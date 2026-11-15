@@ -31,10 +31,10 @@ public class SavingService {
         Saving.builder()
             .name(draft.getName().trim())
             .amount(draft.getAmount())
-            .location(draft.getLocation())
             .user(getCurrentUser())
             .build();
-    return repository.save(saving);
+    place(saving, draft);
+    return repository.saveAndFlush(saving);
   }
 
   @Transactional
@@ -52,8 +52,17 @@ public class SavingService {
                     ApplicationError.NOT_FOUND, "Saving not found for {}", changes.getId()));
     saving.setName(changes.getName().trim());
     saving.setAmount(changes.getAmount());
-    saving.setLocation(changes.getLocation());
-    return repository.save(saving);
+    place(saving, changes);
+    return repository.saveAndFlush(saving);
+  }
+
+  private static void place(Saving saving, Saving requested) {
+    try {
+      saving.place(requested.getLocation(), requested.getInvestmentType());
+    } catch (IllegalArgumentException exception) {
+      throw new ApplicationException(
+          exception, ApplicationError.BAD_REQUEST, exception.getMessage());
+    }
   }
 
   @Transactional
