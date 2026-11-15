@@ -1,3 +1,15 @@
+import type {
+  Financing,
+  FinancingPreview,
+  FinancingSimulation,
+  FinancingDraft,
+  FinancingAdjustment,
+} from './financing';
+import {
+  financingSchema,
+  financingPreviewSchema,
+  financingSimulationSchema,
+} from './financing';
 import {
   accountSchema,
   type Account,
@@ -21,6 +33,86 @@ export class BudgetManagerApi {
 
   constructor(client: BudgetManagerClient) {
     this.client = client;
+  }
+
+  financings(): Promise<Financing[]> {
+    return this.client.request('/financings', z.array(financingSchema));
+  }
+  financing(id: string): Promise<Financing> {
+    return this.client.request(`/financings/${id}`, financingSchema);
+  }
+  previewFinancing(draft: FinancingDraft): Promise<FinancingPreview> {
+    return this.client.request('/financings/preview', financingPreviewSchema, {
+      method: 'POST',
+      body: draft,
+    });
+  }
+  createFinancing(draft: FinancingDraft): Promise<Financing> {
+    return this.client.request('/financings', financingSchema, {
+      method: 'POST',
+      body: draft,
+    });
+  }
+  updateFinancing(id: string, draft: FinancingDraft): Promise<Financing> {
+    return this.client.request(`/financings/${id}`, financingSchema, {
+      method: 'PUT',
+      body: draft,
+    });
+  }
+  deleteFinancing(id: string): Promise<void> {
+    return this.client.command(`/financings/${id}`, { method: 'DELETE' });
+  }
+  simulateFinancingExtra(
+    id: string,
+    change: FinancingAdjustment
+  ): Promise<FinancingSimulation[]> {
+    return this.client.request(
+      `/financings/${id}/extra-payments/simulate`,
+      z.array(financingSimulationSchema),
+      { method: 'POST', body: change }
+    );
+  }
+  payFinancingExtra(
+    id: string,
+    change: FinancingAdjustment
+  ): Promise<Financing> {
+    return this.client.request(
+      `/financings/${id}/extra-payments`,
+      financingSchema,
+      { method: 'POST', body: change }
+    );
+  }
+  syncFinancingBalance(
+    id: string,
+    change: FinancingAdjustment
+  ): Promise<Financing> {
+    return this.client.request(
+      `/financings/${id}/balance-syncs`,
+      financingSchema,
+      { method: 'POST', body: change }
+    );
+  }
+  payFinancingInstallment(
+    id: string,
+    number: number,
+    amount: number
+  ): Promise<Financing> {
+    return this.client.request(
+      `/financings/${id}/installments/${number}/paid`,
+      financingSchema,
+      { method: 'POST', body: { amount } }
+    );
+  }
+  changeFinancingDueDay(
+    id: string,
+    fromInstallment: number,
+    dueDay: number
+  ): Promise<Financing> {
+    return this.client.request(
+      `/financings/${id}/due-day-changes`,
+      financingSchema,
+      { method: 'POST', body: { fromInstallment, dueDay } }
+    );
   }
 
   login(email: string, password: string) {

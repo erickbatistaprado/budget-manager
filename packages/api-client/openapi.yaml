@@ -525,6 +525,453 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/StatementImportResult' }
+  /financings:
+    {
+      get:
+        {
+          operationId: 'listFinancings',
+          responses:
+            {
+              '200':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        {
+                          schema:
+                            {
+                              type: 'array',
+                              items: { $ref: '#/components/schemas/Financing' },
+                            },
+                        },
+                    },
+                },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+        },
+      post:
+        {
+          operationId: 'createFinancing',
+          responses:
+            {
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+              '201':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        { schema: { $ref: '#/components/schemas/Financing' } },
+                    },
+                },
+            },
+          requestBody:
+            {
+              required: true,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: '#/components/schemas/FinancingDraft' } },
+                },
+            },
+        },
+    }
+  /financings/preview:
+    {
+      post:
+        {
+          operationId: 'previewFinancing',
+          responses:
+            {
+              '200':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        {
+                          schema:
+                            { $ref: '#/components/schemas/FinancingPreview' },
+                        },
+                    },
+                },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+          requestBody:
+            {
+              required: true,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: '#/components/schemas/FinancingDraft' } },
+                },
+            },
+        },
+    }
+  /financings/{id}:
+    {
+      get:
+        {
+          operationId: 'getFinancing',
+          responses:
+            {
+              '200':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        { schema: { $ref: '#/components/schemas/Financing' } },
+                    },
+                },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+          parameters:
+            [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+        },
+      put:
+        {
+          operationId: 'putFinancing',
+          responses:
+            {
+              '200':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        { schema: { $ref: '#/components/schemas/Financing' } },
+                    },
+                },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+          requestBody:
+            {
+              required: true,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: '#/components/schemas/FinancingDraft' } },
+                },
+            },
+          parameters:
+            [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+        },
+      delete:
+        {
+          operationId: 'deleteFinancing',
+          responses:
+            {
+              '204': { description: 'Success' },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+          parameters:
+            [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+        },
+    }
+  /financings/{id}/schedule:
+    {
+      get:
+        {
+          operationId: 'financingSchedule',
+          responses:
+            {
+              '200':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        {
+                          schema:
+                            {
+                              type: 'array',
+                              items:
+                                { $ref: '#/components/schemas/FinancingRow' },
+                            },
+                        },
+                    },
+                },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+          parameters:
+            [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+        },
+    }
+  /financings/{id}/extra-payments:
+    {
+      post:
+        {
+          operationId: 'extrapaymentsFinancing',
+          responses:
+            {
+              '200':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        { schema: { $ref: '#/components/schemas/Financing' } },
+                    },
+                },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+          requestBody:
+            {
+              required: true,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        { $ref: '#/components/schemas/FinancingAdjustment' },
+                    },
+                },
+            },
+          parameters:
+            [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+        },
+    }
+  /financings/{id}/balance-syncs:
+    {
+      post:
+        {
+          operationId: 'balancesyncsFinancing',
+          responses:
+            {
+              '200':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        { schema: { $ref: '#/components/schemas/Financing' } },
+                    },
+                },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+          requestBody:
+            {
+              required: true,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        { $ref: '#/components/schemas/FinancingAdjustment' },
+                    },
+                },
+            },
+          parameters:
+            [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+        },
+    }
+  /financings/{id}/extra-payments/simulate:
+    {
+      post:
+        {
+          operationId: 'simulateFinancing',
+          responses:
+            {
+              '200':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        {
+                          schema:
+                            {
+                              type: 'array',
+                              items:
+                                {
+                                  $ref: '#/components/schemas/FinancingSimulation',
+                                },
+                            },
+                        },
+                    },
+                },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+          requestBody:
+            {
+              required: true,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        { $ref: '#/components/schemas/FinancingAdjustment' },
+                    },
+                },
+            },
+          parameters:
+            [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+        },
+    }
+  /financings/{id}/installments/{number}/paid:
+    {
+      post:
+        {
+          operationId: 'payFinancingInstallment',
+          responses:
+            {
+              '200':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        { schema: { $ref: '#/components/schemas/Financing' } },
+                    },
+                },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+          requestBody:
+            {
+              required: true,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        {
+                          type: 'object',
+                          required: ['amount'],
+                          properties: { amount: { type: 'number' } },
+                        },
+                    },
+                },
+            },
+          parameters:
+            [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+              {
+                name: 'number',
+                in: 'path',
+                required: true,
+                schema: { type: 'integer' },
+              },
+            ],
+        },
+    }
+  /financings/{id}/due-day-changes:
+    {
+      post:
+        {
+          operationId: 'changeFinancingDueDay',
+          responses:
+            {
+              '200':
+                {
+                  description: 'Success',
+                  content:
+                    {
+                      application/json:
+                        { schema: { $ref: '#/components/schemas/Financing' } },
+                    },
+                },
+              '400': { description: 'Invalid contract or adjustment' },
+              '404': { description: 'Financing not found for this owner' },
+            },
+          requestBody:
+            {
+              required: true,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        {
+                          type: 'object',
+                          required: ['fromInstallment', 'dueDay'],
+                          properties:
+                            {
+                              fromInstallment: { type: 'integer' },
+                              dueDay:
+                                { type: 'integer', minimum: 1, maximum: 31 },
+                            },
+                        },
+                    },
+                },
+            },
+          parameters:
+            [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+        },
+    }
 components:
   parameters:
     Id:
@@ -535,6 +982,130 @@ components:
         schema: { type: string, format: uuid },
       }
   schemas:
+    FinancingDraft:
+      {
+        type: 'object',
+        required:
+          [
+            'name',
+            'kind',
+            'categoryId',
+            'paymentMethod',
+            'system',
+            'amount',
+            'term',
+            'firstDueDate',
+          ],
+        properties:
+          {
+            purchasePrice: { type: ['number', 'null'] },
+            downPayment: { type: ['number', 'null'] },
+            iof: { type: ['number', 'null'] },
+            registration: { type: ['number', 'null'] },
+            valuationFee: { type: ['number', 'null'] },
+            alreadyPaid: { type: ['integer', 'null'], minimum: 0 },
+            amount: { type: 'number' },
+            annualRate: { type: ['number', 'null'] },
+            monthlyRate: { type: ['number', 'null'] },
+            term: { type: 'integer', minimum: 1, maximum: 500 },
+            statedInstallment: { type: ['number', 'null'] },
+            insurance: { type: ['number', 'null'] },
+            fees: { type: ['number', 'null'] },
+            name: { type: 'string' },
+            lender: { type: ['string', 'null'] },
+            categoryId: { type: 'string' },
+            accountId: { type: ['string', 'null'] },
+            kind: { type: 'string', enum: ['VEHICLE', 'REAL_ESTATE', 'OTHER'] },
+            system: { type: 'string', enum: ['SAC', 'PRICE'] },
+            paymentMethod: { $ref: '#/components/schemas/PaymentMethod' },
+            firstDueDate: { type: 'string', pattern: "^\\d{4}/\\d{2}/\\d{2}$" },
+          },
+      }
+    FinancingRow:
+      {
+        type: 'object',
+        required:
+          [
+            'status',
+            'number',
+            'dueDate',
+            'principal',
+            'interest',
+            'insurance',
+            'fees',
+            'payment',
+            'balance',
+          ],
+        properties:
+          {
+            status: { type: 'string', enum: ['SCHEDULED', 'PAID'] },
+            number: { type: 'number' },
+            principal: { type: 'number' },
+            interest: { type: 'number' },
+            insurance: { type: 'number' },
+            fees: { type: 'number' },
+            payment: { type: 'number' },
+            balance: { type: 'number' },
+            dueDate: { type: 'string' },
+            paidAmount: { type: ['number', 'null'] },
+          },
+      }
+    FinancingPreview:
+      {
+        type: 'object',
+        required:
+          ['effectiveMonthlyRate', 'totalInterest', 'totalPaid', 'schedule'],
+        properties:
+          {
+            effectiveMonthlyRate: { type: 'number' },
+            totalInterest: { type: 'number' },
+            totalPaid: { type: 'number' },
+            schedule:
+              {
+                type: 'array',
+                items: { $ref: '#/components/schemas/FinancingRow' },
+              },
+          },
+      }
+    Financing:
+      {
+        type: 'object',
+        required: ['id', 'contract', 'calculation', 'extraPaid', 'payoffDate'],
+        properties:
+          {
+            id: { type: 'string' },
+            contract: { $ref: '#/components/schemas/FinancingDraft' },
+            calculation: { $ref: '#/components/schemas/FinancingPreview' },
+            extraPaid: { type: 'number' },
+            payoffDate: { type: 'string' },
+          },
+      }
+    FinancingAdjustment:
+      {
+        type: 'object',
+        required: ['date', 'amount'],
+        properties:
+          {
+            date: { type: 'string' },
+            amount: { type: 'number' },
+            option: { type: 'string', enum: ['REDUCE_TERM', 'REDUCE_PAYMENT'] },
+          },
+      }
+    FinancingSimulation:
+      {
+        type: 'object',
+        required: ['option', 'interestSaved', 'schedule'],
+        properties:
+          {
+            option: { type: 'string', enum: ['REDUCE_TERM', 'REDUCE_PAYMENT'] },
+            interestSaved: { type: 'number' },
+            schedule:
+              {
+                type: 'array',
+                items: { $ref: '#/components/schemas/FinancingRow' },
+              },
+          },
+      }
     TransactionType: { type: string, enum: [INCOME, EXPENSE] }
     RepeatInterval:
       { type: string, enum: [DAILY, WEEKLY, MONTHLY, YEARLY, NONE] }
@@ -733,6 +1304,10 @@ components:
           properties:
             {
               id: { type: string, format: uuid },
+              source:
+                { type: string, enum: [MANUAL, FINANCING], readOnly: true },
+              financingId:
+                { type: [string, 'null'], format: uuid, readOnly: true },
               account:
                 {
                   anyOf:

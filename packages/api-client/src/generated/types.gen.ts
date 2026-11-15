@@ -5,6 +5,70 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:8080' | (string & {});
 };
 
+export type FinancingDraft = {
+    purchasePrice?: number | null;
+    downPayment?: number | null;
+    iof?: number | null;
+    registration?: number | null;
+    valuationFee?: number | null;
+    alreadyPaid?: number | null;
+    amount: number;
+    annualRate?: number | null;
+    monthlyRate?: number | null;
+    term: number;
+    statedInstallment?: number | null;
+    insurance?: number | null;
+    fees?: number | null;
+    name: string;
+    lender?: string | null;
+    categoryId: string;
+    accountId?: string | null;
+    kind: 'VEHICLE' | 'REAL_ESTATE' | 'OTHER';
+    system: 'SAC' | 'PRICE';
+    paymentMethod: PaymentMethod;
+    firstDueDate: string;
+};
+
+export type FinancingRow = {
+    status: 'SCHEDULED' | 'PAID';
+    number: number;
+    principal: number;
+    interest: number;
+    insurance: number;
+    fees: number;
+    payment: number;
+    balance: number;
+    dueDate: string;
+    paidAmount?: number | null;
+};
+
+export type FinancingPreview = {
+    effectiveMonthlyRate: number;
+    totalInterest: number;
+    totalPaid: number;
+    schedule: Array<FinancingRow>;
+};
+
+export type Financing = {
+    id: string;
+    contract: FinancingDraft;
+    calculation: FinancingPreview;
+    extraPaid: number;
+    payoffDate: string;
+};
+
+export type FinancingAdjustment = {
+    date: string;
+    amount: number;
+    option?: 'REDUCE_TERM' | 'REDUCE_PAYMENT';
+};
+
+export type FinancingSimulation = {
+    option: 'REDUCE_TERM' | 'REDUCE_PAYMENT';
+    interestSaved: number;
+    schedule: Array<FinancingRow>;
+};
+
 export type TransactionType = 'INCOME' | 'EXPENSE';
 
 export type RepeatInterval = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | 'NONE';
@@ -117,6 +181,8 @@ export type CardSummary = {
 
 export type Transaction = TransactionWrite & {
     id: string;
+    readonly source?: 'MANUAL' | 'FINANCING';
+    readonly financingId?: string | null;
     readonly account?: Account | null;
     readonly card?: CardSummary | null;
     /**
@@ -976,3 +1042,351 @@ export type ImportStatementLinesResponses = {
 };
 
 export type ImportStatementLinesResponse = ImportStatementLinesResponses[keyof ImportStatementLinesResponses];
+
+export type ListFinancingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/financings';
+};
+
+export type ListFinancingsErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type ListFinancingsResponses = {
+    /**
+     * Success
+     */
+    200: Array<Financing>;
+};
+
+export type ListFinancingsResponse = ListFinancingsResponses[keyof ListFinancingsResponses];
+
+export type CreateFinancingData = {
+    body: FinancingDraft;
+    path?: never;
+    query?: never;
+    url: '/financings';
+};
+
+export type CreateFinancingErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type CreateFinancingResponses = {
+    /**
+     * Success
+     */
+    201: Financing;
+};
+
+export type CreateFinancingResponse = CreateFinancingResponses[keyof CreateFinancingResponses];
+
+export type PreviewFinancingData = {
+    body: FinancingDraft;
+    path?: never;
+    query?: never;
+    url: '/financings/preview';
+};
+
+export type PreviewFinancingErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type PreviewFinancingResponses = {
+    /**
+     * Success
+     */
+    200: FinancingPreview;
+};
+
+export type PreviewFinancingResponse = PreviewFinancingResponses[keyof PreviewFinancingResponses];
+
+export type DeleteFinancingData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/financings/{id}';
+};
+
+export type DeleteFinancingErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type DeleteFinancingResponses = {
+    /**
+     * Success
+     */
+    204: void;
+};
+
+export type DeleteFinancingResponse = DeleteFinancingResponses[keyof DeleteFinancingResponses];
+
+export type GetFinancingData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/financings/{id}';
+};
+
+export type GetFinancingErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type GetFinancingResponses = {
+    /**
+     * Success
+     */
+    200: Financing;
+};
+
+export type GetFinancingResponse = GetFinancingResponses[keyof GetFinancingResponses];
+
+export type PutFinancingData = {
+    body: FinancingDraft;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/financings/{id}';
+};
+
+export type PutFinancingErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type PutFinancingResponses = {
+    /**
+     * Success
+     */
+    200: Financing;
+};
+
+export type PutFinancingResponse = PutFinancingResponses[keyof PutFinancingResponses];
+
+export type FinancingScheduleData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/financings/{id}/schedule';
+};
+
+export type FinancingScheduleErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type FinancingScheduleResponses = {
+    /**
+     * Success
+     */
+    200: Array<FinancingRow>;
+};
+
+export type FinancingScheduleResponse = FinancingScheduleResponses[keyof FinancingScheduleResponses];
+
+export type ExtrapaymentsFinancingData = {
+    body: FinancingAdjustment;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/financings/{id}/extra-payments';
+};
+
+export type ExtrapaymentsFinancingErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type ExtrapaymentsFinancingResponses = {
+    /**
+     * Success
+     */
+    200: Financing;
+};
+
+export type ExtrapaymentsFinancingResponse = ExtrapaymentsFinancingResponses[keyof ExtrapaymentsFinancingResponses];
+
+export type BalancesyncsFinancingData = {
+    body: FinancingAdjustment;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/financings/{id}/balance-syncs';
+};
+
+export type BalancesyncsFinancingErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type BalancesyncsFinancingResponses = {
+    /**
+     * Success
+     */
+    200: Financing;
+};
+
+export type BalancesyncsFinancingResponse = BalancesyncsFinancingResponses[keyof BalancesyncsFinancingResponses];
+
+export type SimulateFinancingData = {
+    body: FinancingAdjustment;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/financings/{id}/extra-payments/simulate';
+};
+
+export type SimulateFinancingErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type SimulateFinancingResponses = {
+    /**
+     * Success
+     */
+    200: Array<FinancingSimulation>;
+};
+
+export type SimulateFinancingResponse = SimulateFinancingResponses[keyof SimulateFinancingResponses];
+
+export type PayFinancingInstallmentData = {
+    body: {
+        amount: number;
+    };
+    path: {
+        id: string;
+        number: number;
+    };
+    query?: never;
+    url: '/financings/{id}/installments/{number}/paid';
+};
+
+export type PayFinancingInstallmentErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type PayFinancingInstallmentResponses = {
+    /**
+     * Success
+     */
+    200: Financing;
+};
+
+export type PayFinancingInstallmentResponse = PayFinancingInstallmentResponses[keyof PayFinancingInstallmentResponses];
+
+export type ChangeFinancingDueDayData = {
+    body: {
+        fromInstallment: number;
+        dueDay: number;
+    };
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/financings/{id}/due-day-changes';
+};
+
+export type ChangeFinancingDueDayErrors = {
+    /**
+     * Invalid contract or adjustment
+     */
+    400: unknown;
+    /**
+     * Financing not found for this owner
+     */
+    404: unknown;
+};
+
+export type ChangeFinancingDueDayResponses = {
+    /**
+     * Success
+     */
+    200: Financing;
+};
+
+export type ChangeFinancingDueDayResponse = ChangeFinancingDueDayResponses[keyof ChangeFinancingDueDayResponses];

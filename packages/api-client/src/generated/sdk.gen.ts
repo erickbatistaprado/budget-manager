@@ -3,7 +3,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { ChangeTransactionMonthData, ChangeTransactionMonthErrors, ChangeTransactionMonthResponses, CreateAccountData, CreateAccountErrors, CreateAccountResponses, CreateCardData, CreateCardErrors, CreateCardResponses, CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteCardData, DeleteCardErrors, DeleteCardResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionFromData, DeleteTransactionFromErrors, DeleteTransactionFromResponses, DeleteTransactionResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListAccountsData, ListAccountsResponses, ListCardsData, ListCardsResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, RestoreTransactionMonthData, RestoreTransactionMonthErrors, RestoreTransactionMonthResponses, SkipTransactionMonthData, SkipTransactionMonthErrors, SkipTransactionMonthResponses, SplitTransactionData, SplitTransactionErrors, SplitTransactionResponses, UpdateAccountData, UpdateAccountErrors, UpdateAccountResponses, UpdateCardData, UpdateCardErrors, UpdateCardResponses, UpdateUserData, UpdateUserResponses } from './types.gen';
+import type { BalancesyncsFinancingData, BalancesyncsFinancingErrors, BalancesyncsFinancingResponses, ChangeFinancingDueDayData, ChangeFinancingDueDayErrors, ChangeFinancingDueDayResponses, ChangeTransactionMonthData, ChangeTransactionMonthErrors, ChangeTransactionMonthResponses, CreateAccountData, CreateAccountErrors, CreateAccountResponses, CreateCardData, CreateCardErrors, CreateCardResponses, CreateFinancingData, CreateFinancingErrors, CreateFinancingResponses, CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteCardData, DeleteCardErrors, DeleteCardResponses, DeleteFinancingData, DeleteFinancingErrors, DeleteFinancingResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionFromData, DeleteTransactionFromErrors, DeleteTransactionFromResponses, DeleteTransactionResponses, ExtrapaymentsFinancingData, ExtrapaymentsFinancingErrors, ExtrapaymentsFinancingResponses, FinancingScheduleData, FinancingScheduleErrors, FinancingScheduleResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, GetFinancingData, GetFinancingErrors, GetFinancingResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListAccountsData, ListAccountsResponses, ListCardsData, ListCardsResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListFinancingsData, ListFinancingsErrors, ListFinancingsResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PayFinancingInstallmentData, PayFinancingInstallmentErrors, PayFinancingInstallmentResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewFinancingData, PreviewFinancingErrors, PreviewFinancingResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, PutFinancingData, PutFinancingErrors, PutFinancingResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, RestoreTransactionMonthData, RestoreTransactionMonthErrors, RestoreTransactionMonthResponses, SimulateFinancingData, SimulateFinancingErrors, SimulateFinancingResponses, SkipTransactionMonthData, SkipTransactionMonthErrors, SkipTransactionMonthResponses, SplitTransactionData, SplitTransactionErrors, SplitTransactionResponses, UpdateAccountData, UpdateAccountErrors, UpdateAccountResponses, UpdateCardData, UpdateCardErrors, UpdateCardResponses, UpdateUserData, UpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -195,6 +195,86 @@ export const previewStatementImport = <ThrowOnError extends boolean = false>(opt
  */
 export const importStatementLines = <ThrowOnError extends boolean = false>(options: Options<ImportStatementLinesData, ThrowOnError>): RequestResult<ImportStatementLinesResponses, unknown, ThrowOnError> => (options.client ?? client).post<ImportStatementLinesResponses, unknown, ThrowOnError>({
     url: '/statement-imports',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const listFinancings = <ThrowOnError extends boolean = false>(options?: Options<ListFinancingsData, ThrowOnError>): RequestResult<ListFinancingsResponses, ListFinancingsErrors, ThrowOnError> => (options?.client ?? client).get<ListFinancingsResponses, ListFinancingsErrors, ThrowOnError>({ url: '/financings', ...options });
+
+export const createFinancing = <ThrowOnError extends boolean = false>(options: Options<CreateFinancingData, ThrowOnError>): RequestResult<CreateFinancingResponses, CreateFinancingErrors, ThrowOnError> => (options.client ?? client).post<CreateFinancingResponses, CreateFinancingErrors, ThrowOnError>({
+    url: '/financings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const previewFinancing = <ThrowOnError extends boolean = false>(options: Options<PreviewFinancingData, ThrowOnError>): RequestResult<PreviewFinancingResponses, PreviewFinancingErrors, ThrowOnError> => (options.client ?? client).post<PreviewFinancingResponses, PreviewFinancingErrors, ThrowOnError>({
+    url: '/financings/preview',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteFinancing = <ThrowOnError extends boolean = false>(options: Options<DeleteFinancingData, ThrowOnError>): RequestResult<DeleteFinancingResponses, DeleteFinancingErrors, ThrowOnError> => (options.client ?? client).delete<DeleteFinancingResponses, DeleteFinancingErrors, ThrowOnError>({ url: '/financings/{id}', ...options });
+
+export const getFinancing = <ThrowOnError extends boolean = false>(options: Options<GetFinancingData, ThrowOnError>): RequestResult<GetFinancingResponses, GetFinancingErrors, ThrowOnError> => (options.client ?? client).get<GetFinancingResponses, GetFinancingErrors, ThrowOnError>({ url: '/financings/{id}', ...options });
+
+export const putFinancing = <ThrowOnError extends boolean = false>(options: Options<PutFinancingData, ThrowOnError>): RequestResult<PutFinancingResponses, PutFinancingErrors, ThrowOnError> => (options.client ?? client).put<PutFinancingResponses, PutFinancingErrors, ThrowOnError>({
+    url: '/financings/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const financingSchedule = <ThrowOnError extends boolean = false>(options: Options<FinancingScheduleData, ThrowOnError>): RequestResult<FinancingScheduleResponses, FinancingScheduleErrors, ThrowOnError> => (options.client ?? client).get<FinancingScheduleResponses, FinancingScheduleErrors, ThrowOnError>({ url: '/financings/{id}/schedule', ...options });
+
+export const extrapaymentsFinancing = <ThrowOnError extends boolean = false>(options: Options<ExtrapaymentsFinancingData, ThrowOnError>): RequestResult<ExtrapaymentsFinancingResponses, ExtrapaymentsFinancingErrors, ThrowOnError> => (options.client ?? client).post<ExtrapaymentsFinancingResponses, ExtrapaymentsFinancingErrors, ThrowOnError>({
+    url: '/financings/{id}/extra-payments',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const balancesyncsFinancing = <ThrowOnError extends boolean = false>(options: Options<BalancesyncsFinancingData, ThrowOnError>): RequestResult<BalancesyncsFinancingResponses, BalancesyncsFinancingErrors, ThrowOnError> => (options.client ?? client).post<BalancesyncsFinancingResponses, BalancesyncsFinancingErrors, ThrowOnError>({
+    url: '/financings/{id}/balance-syncs',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const simulateFinancing = <ThrowOnError extends boolean = false>(options: Options<SimulateFinancingData, ThrowOnError>): RequestResult<SimulateFinancingResponses, SimulateFinancingErrors, ThrowOnError> => (options.client ?? client).post<SimulateFinancingResponses, SimulateFinancingErrors, ThrowOnError>({
+    url: '/financings/{id}/extra-payments/simulate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const payFinancingInstallment = <ThrowOnError extends boolean = false>(options: Options<PayFinancingInstallmentData, ThrowOnError>): RequestResult<PayFinancingInstallmentResponses, PayFinancingInstallmentErrors, ThrowOnError> => (options.client ?? client).post<PayFinancingInstallmentResponses, PayFinancingInstallmentErrors, ThrowOnError>({
+    url: '/financings/{id}/installments/{number}/paid',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const changeFinancingDueDay = <ThrowOnError extends boolean = false>(options: Options<ChangeFinancingDueDayData, ThrowOnError>): RequestResult<ChangeFinancingDueDayResponses, ChangeFinancingDueDayErrors, ThrowOnError> => (options.client ?? client).post<ChangeFinancingDueDayResponses, ChangeFinancingDueDayErrors, ThrowOnError>({
+    url: '/financings/{id}/due-day-changes',
     ...options,
     headers: {
         'Content-Type': 'application/json',

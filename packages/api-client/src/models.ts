@@ -137,6 +137,8 @@ export const transactionMonthSchema = z.object({
 });
 
 export const transactionSchema = z.object({
+  source: z.enum(['MANUAL', 'FINANCING']).optional(),
+  financingId: z.string().nullish(),
   id: z.string(),
   category: categorySchema,
   paymentMethod: z.enum(PaymentMethod).nullish(),
