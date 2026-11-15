@@ -79,6 +79,12 @@ Work tracked for Budget Manager. Tick items off as they land on `main`.
 
 ## Features
 
+### Financing
+
+- [ ] Car and house loans (financiamentos) with SAC/Price schedules, extra
+      payments that reduce the term or the payment, and balance sync with the
+      bank. Plan: [docs/features/financing.md](features/financing.md).
+
 ### Analytics and languages
 
 - [x] Analytics redesign: week, month, year or custom periods; income, expenses,
