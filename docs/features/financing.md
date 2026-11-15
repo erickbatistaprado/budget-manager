@@ -1,6 +1,6 @@
 # Financing (financiamentos)
 
-Status: planned, not started.
+Status: phases 1 and 2 implemented; Docker-backed verification pending.
 
 Car and house loans do not behave like card installments, so they get their own feature instead
 of a 48× installment purchase:
@@ -140,3 +140,124 @@ All owner-scoped, documented in `packages/api-client/openapi.yaml`.
 - Which contracts first: house (SFH/SFI, usually SAC with TR) or car (CDC, usually Price)?
 - Does the bank's statement or app show the outstanding balance, so balance sync can be routine?
 - Should TR/IPCA be fetched automatically later, or is manual sync enough?
+
+## Implemented phases 1 and 2
+
+The API, shared client and web now include car and property contracts, SAC and Price schedules,
+extra-payment simulations and confirmation, actual installment payments, bank balance syncs,
+and due-day changes. Phase 3 remains out of scope: no Analytics debt card, automatic TR/IPCA,
+or mobile feature is included.
+
+### Calculation and history
+
+`financing/domain/Amortization` is independent of Spring and persistence. Money uses BigDecimal,
+HALF_UP cents, and a final principal adjustment. Rates are decimal fractions (`0.015` means 1.5%
+monthly). Drafts accept a monthly rate, or an annual effective rate when monthlyRate is omitted.
+A stated Price installment means principal plus interest, before monthly insurance and fees.
+Bisection derives its effective monthly rate; responses show this alongside the quoted rate.
+R$50,000 at 1.5% over 36 months gives R$1,807.62; R$1,815 implies a higher effective rate.
+
+The domain `Financing` aggregate stores terms as columns in `t_financing` and ordered
+`FinancingChange` children in `t_financing_change`. Its schedule is never stored: `schedule()`
+replays changes through the unchanged amortization engine. No JSON mapping is used. Optimistic versioning protects concurrent updates. Financial
+adjustments apply after installments due on or before their date and preserve those rows;
+recalculating a future paid row is refused. Dated balance adjustments must be chronological.
+Metadata may be edited, but changing financial terms after payment or adjustment history exists
+is refused. Recording an actual paid amount changes the ledger expense, not the principal split:
+use a bank balance sync when the actual outstanding principal differs.
+
+Due-day changes preserve amounts and clamp short months independently. Moving 28 to 7 starting
+at installment 11 due November 28 moves it to December 7 and subsequent dates to January 7, etc.
+The original financed amount alone is amortized; purchase price, down payment, IOF, registration
+and valuation fee are informational costs. Creation accepts an already-paid count; omitted means
+all installments due strictly before the server's current date.
+
+### Ledger and HTTP
+
+`ledger/application/FinancingLedgerService` is the cross-context application boundary. It mirrors
+explicit schedule amounts and dates into existing `t_installment` rows and records extra payments
+as separate same-day expenses. Actual paid amounts replace the corresponding ledger amount.
+V12 adds `source = FINANCING` and `financing_id`; ordinary purchases retain equal division and
+last-installment cents. Normal edit, delete, early-payment/restore and monthly routes reject
+financing-owned expenses with an instruction to manage the financing. Web expense rows link to
+the contract. Month listings continue to query installment due dates.
+
+`TransactionRepository.findImportCandidates` excludes all financing-owned expenses. A future
+boleto reconciliation should use a separate financing-installment matcher before purchase
+matching in `StatementImportService`; purchase duplicate matching must continue to exclude them.
+
+The routes listed above are implemented, plus `POST /financings/preview` (no writes) and
+`POST /financings/{id}/due-day-changes` (`fromInstallment`, `dueDay`). All contract routes enforce
+ownership with 404s. API dates use `yyyy/MM/dd`; request drafts do not contain response-only
+primitive fields. The OpenAPI specification, generated SDK and handwritten client are updated.
+
+### Web and validation
+
+`/financings`, `/financings/new`, and `/financings/[id]` provide the list, live server preview,
+contract costs and rate summary, outstanding/paid/interest/progress cards, MUI balance and payment
+composition charts with custom legends, a horizontally scrollable schedule, and adjustment forms.
+Extra payments display both simulations before confirmation. Strings are English and Brazilian
+Portuguese, and controls follow the cards/transaction panel styles.
+
+Domain tests cover both systems, stated and computed Price, zero rates, rounding, repeated and
+near-payoff extras, bank sync, paid amounts, due-day changes and deterministic history replay.
+Testcontainers coverage was added for migration, already-paid creation, explicit ledger amounts,
+listing, direct-edit guards, preview/request parsing and ownership. Docker is inaccessible in this
+sandbox, so these integration tests still need a Docker-enabled run.
+
+Persistence redesign validation: API unit tests and `ArchitectureTest` pass (185 tests run,
+zero failures/errors, one optional local-statement test skipped), together with PMD, Spotless
+and SpotBugs. Mockito was supplied as a JVM agent because sandbox attachment is blocked.
+Docker-backed tests remain excluded here; financing integration assertions now reload the
+aggregate and verify ordered history/schedule replay, and sign in again after MockMvc requests.
+The HTTP shapes, web and client are unchanged by this redesign.
+
+The shared-client check passes. API domain tests and PMD/Spotless/SpotBugs checks pass. Web tests
+(186 tests), lint and TypeScript checks pass with a temporary external preload that reads the
+TypeScript configuration through its API, plus `--watchman=false`; the sandbox returns empty
+output from Next.js's TypeScript child process and prevents Watchman's runtime directory writes.
+The production build also succeeds with that external preload. Neither workaround changes
+repository configuration or dependencies; ordinary `npm run check` / `npm run build` should be
+rerun outside this sandbox along with full `./mvnw verify`.
+
+## Implementation files
+
+- `apps/api/src/main/java/com/budgetmanager/bm/financing/application/FinancingService.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/financing/domain/Amortization.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/financing/infrastructure/http/FinancingController.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/financing/domain/Financing.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/financing/domain/FinancingChange.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/financing/infrastructure/persistence/FinancingRepository.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/ledger/application/FinancingLedgerService.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/ledger/application/TransactionService.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/ledger/domain/Transaction.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/ledger/infrastructure/http/TransactionConverter.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/ledger/infrastructure/http/TransactionDto.java`
+- `apps/api/src/main/java/com/budgetmanager/bm/ledger/infrastructure/persistence/TransactionRepository.java`
+- `apps/api/src/main/resources/db/migration/V12__financing.sql`
+- `apps/api/src/test/java/com/budgetmanager/bm/financing/domain/AmortizationTest.java`
+- `apps/api/src/test/java/com/budgetmanager/bm/financing/domain/FinancingTest.java`
+- `apps/api/src/test/java/com/budgetmanager/bm/financing/infrastructure/http/FinancingIntegrationTest.java`
+- `apps/api/src/test/java/com/budgetmanager/bm/migration/FinancingMigrationTest.java`
+- `apps/web/src/app/(private)/financings/[id]/page.tsx`
+- `apps/web/src/app/(private)/financings/new/page.tsx`
+- `apps/web/src/app/(private)/financings/page.tsx`
+- `apps/web/src/components/FinancialMovements/FinancialMovements.component.tsx`
+- `apps/web/src/components/Financing/ExtraPaymentDialog.test.tsx`
+- `apps/web/src/components/Financing/ExtraPaymentDialog.tsx`
+- `apps/web/src/components/Financing/styles.ts`
+- `apps/web/src/components/SideMenu/SideMenu.component.tsx`
+- `apps/web/src/i18n/messages/en.ts`
+- `apps/web/src/i18n/messages/pt.ts`
+- `apps/web/src/types/transaction.type.ts`
+- `apps/web/src/utils/financing.util.test.ts`
+- `apps/web/src/utils/financing.util.ts`
+- `docs/features/financing.md`
+- `packages/api-client/openapi.yaml`
+- `packages/api-client/src/endpoints.ts`
+- `packages/api-client/src/financing.ts`
+- `packages/api-client/src/generated/index.ts`
+- `packages/api-client/src/generated/sdk.gen.ts`
+- `packages/api-client/src/generated/types.gen.ts`
+- `packages/api-client/src/index.ts`
+- `packages/api-client/src/models.ts`
