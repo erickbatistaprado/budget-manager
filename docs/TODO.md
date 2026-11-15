@@ -79,6 +79,13 @@ Work tracked for Budget Manager. Tick items off as they land on `main`.
 
 ## Features
 
+### Monthly entries
+
+- [x] Change a monthly income or expense for one month only (amount, date,
+      notes, or skip it) or from a month on, never touching earlier months.
+      Deleting offers the same two choices. Design:
+      [docs/features/monthly-changes.md](features/monthly-changes.md).
+
 ### Financing
 
 - [ ] Car and house loans (financiamentos) with SAC/Price schedules, extra
