@@ -51,6 +51,18 @@ export default function Body(): JSX.Element {
     sortOrder: expenseSort.order,
   });
 
+  // The tables page through the month; totals and charts need all of it.
+  const { data: allIncomes } = useTransactions(
+    TransactionType.INCOME,
+    monthRange,
+    { loadAll: true, pageSize: 1000 }
+  );
+  const { data: allExpenses } = useTransactions(
+    TransactionType.EXPENSE,
+    monthRange,
+    { loadAll: true, pageSize: 1000 }
+  );
+
   function toggleSort(
     key: TransactionSortKey,
     setSort: (value: TransactionSortState) => void,
@@ -70,14 +82,14 @@ export default function Body(): JSX.Element {
     <div className="flex min-h-0 flex-col gap-2 p-2 lg:h-[calc(100vh-61px)] lg:overflow-hidden">
       <div className="flex w-full shrink-0 flex-col justify-between gap-2 lg:flex-row">
         <Balance
-          incomes={incomes ?? []}
-          expenses={expenses ?? []}
+          incomes={allIncomes ?? []}
+          expenses={allExpenses ?? []}
           date={date}
           setDate={setDate}
         />
         <Charts
-          expenses={expenses ?? []}
-          incomes={incomes ?? []}
+          expenses={allExpenses ?? []}
+          incomes={allIncomes ?? []}
           startDate={monthRange.startDate}
           endDate={monthRange.endDate}
         />
