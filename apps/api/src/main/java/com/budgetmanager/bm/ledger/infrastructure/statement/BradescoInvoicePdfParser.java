@@ -7,6 +7,7 @@ import com.budgetmanager.bm.ledger.domain.statement.StatementText;
 import com.budgetmanager.bm.shared.application.ApplicationError;
 import com.budgetmanager.bm.shared.application.ApplicationException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,11 +55,17 @@ final class BradescoInvoicePdfParser {
   }
 
   static ParsedStatement parse(List<TextLine> lines, List<TextRow> rows) {
+    LocalDate billDueDate = null;
     int dueMonth = 0;
     int dueYear = 0;
     for (TextLine line : lines) {
       Matcher due = DUE_DATE.matcher(line.trimmed());
       if (due.find()) {
+        billDueDate =
+            LocalDate.of(
+                Integer.parseInt(due.group(3)),
+                Integer.parseInt(due.group(2)),
+                Integer.parseInt(due.group(1)));
         dueMonth = Integer.parseInt(due.group(2));
         dueYear = Integer.parseInt(due.group(3));
         break;
@@ -124,7 +131,8 @@ final class BradescoInvoicePdfParser {
         StatementSource.BRADESCO_CARD_PDF,
         parsed,
         cardTotalsFound ? printedTotal : null,
-        parsedTotal);
+        parsedTotal,
+        billDueDate);
   }
 
   /** {@code 1.029,25} is a charge and {@code 147,60 -} a credit. */

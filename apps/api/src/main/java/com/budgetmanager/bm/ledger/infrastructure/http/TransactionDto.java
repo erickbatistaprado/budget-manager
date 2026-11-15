@@ -16,6 +16,9 @@ import lombok.Builder;
 @Builder
 public record TransactionDto(
     UUID id,
+    UUID cardId,
+    CardSummaryDto card,
+    @JsonFormat(pattern = "yyyy/MM/dd") LocalDate billDueDate,
     @Valid @NotNull CategoryDto category,
     String notes,
     @NotNull @Positive BigDecimal totalValue,

@@ -27,7 +27,8 @@ class MonthlyTransactionServiceTest {
   private final TransactionRepository repository = mock(TransactionRepository.class);
   private final UserService users = mock(UserService.class);
   private final CategoryService categories = mock(CategoryService.class);
-  private final TransactionService service = new TransactionService(repository, users, categories);
+  private final TransactionService service =
+      new TransactionService(repository, users, categories, mock(CardService.class));
   private final Map<UUID, Transaction> transactions = new HashMap<>();
   private final Category category =
       Category.builder().id(UUID.randomUUID()).transactionType(TransactionType.EXPENSE).build();

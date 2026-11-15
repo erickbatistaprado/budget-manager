@@ -2,6 +2,7 @@ package com.budgetmanager.bm.ledger.application;
 
 import com.budgetmanager.bm.identity.application.UserService;
 import com.budgetmanager.bm.identity.domain.User;
+import com.budgetmanager.bm.ledger.domain.Card;
 import com.budgetmanager.bm.ledger.domain.Category;
 import com.budgetmanager.bm.ledger.domain.RepeatInterval;
 import com.budgetmanager.bm.ledger.domain.Transaction;
@@ -48,6 +49,7 @@ public class StatementImportService {
   private final TransactionService transactionService;
   private final CategoryService categoryService;
   private final UserService userService;
+  private final CardService cardService;
 
   /** Where a suggested category comes from, strongest first. */
   public enum SuggestionSource {
@@ -101,11 +103,17 @@ public class StatementImportService {
 
   public record LineToImport(StatementLine line, UUID categoryId) {}
 
-  public record ImportResult(int imported, int skippedAsDuplicates, int movedInstallments) {}
+  public record ImportResult(
+      int imported, int skippedAsDuplicates, int movedInstallments, int billDatesSet) {}
 
   @Transactional(readOnly = true)
   public Preview preview(byte[] content, String password) {
-    ParsedStatement statement = statementReader.read(content, password);
+    return preview(content, password, null);
+  }
+
+  @Transactional(readOnly = true)
+  public Preview preview(byte[] content, String password, String filename) {
+    ParsedStatement statement = statementReader.read(content, password, filename);
     User user = userService.requireCurrentUser();
     List<ExistingTransaction> existing = transactionRepository.findImportCandidates(user.getId());
     DuplicateMatcher matcher = new DuplicateMatcher(existing);
@@ -152,7 +160,14 @@ public class StatementImportService {
       if (line.paidEarly()) {
         lines[index] =
             prepaidLine(
-                index, line, matcher, alreadyMoved, purchaseCreatedByLine, lines, suggester);
+                index,
+                line,
+                matcher,
+                alreadyMoved,
+                purchaseCreatedByLine,
+                lines,
+                suggester,
+                statement.billDueDate());
       }
     }
     return new Preview(statement, Arrays.asList(lines));
@@ -160,6 +175,12 @@ public class StatementImportService {
 
   @Transactional
   public ImportResult importLines(List<LineToImport> linesToImport) {
+    return importLines(linesToImport, null, null);
+  }
+
+  @Transactional
+  public ImportResult importLines(
+      List<LineToImport> linesToImport, UUID cardId, LocalDate billDueDate) {
     if (linesToImport == null || linesToImport.isEmpty()) {
       throw new ApplicationException(ApplicationError.BAD_REQUEST, "Select at least one line");
     }
@@ -169,6 +190,8 @@ public class StatementImportService {
     Set<String> alreadyMoved = alreadyMoved(user);
     Map<Object, UUID> purchasesCreated = new HashMap<>();
 
+    var card = cardId == null ? null : cardService.requireOwned(cardId, user);
+    Set<UUID> billDatesSet = new HashSet<>();
     int imported = 0;
     int skipped = 0;
     int moved = 0;
@@ -179,12 +202,21 @@ public class StatementImportService {
       if (line.paidEarly()) {
         continue;
       }
-      if (matcher.match(index, line, category.getId()) != null) {
+      var match = matcher.match(index, line, category.getId());
+      if (match != null) {
+        if (match.transactionId() != null && billDueDate != null) {
+          Transaction saved =
+              transactionRepository
+                  .findByIdAndUserId(match.transactionId(), user.getId())
+                  .orElseThrow();
+          if (setMissingBill(saved, line, card, billDueDate)) {
+            billDatesSet.add(saved.getId());
+          }
+        }
         skipped++;
         continue;
       }
-      Transaction saved =
-          transactionService.save(toTransaction(line, line.date()), category.getId());
+      Transaction saved = saveImported(line, line.date(), category.getId(), card, billDueDate);
       imported++;
       if (line.isInstallment()) {
         purchasesCreated.putIfAbsent(DuplicateMatcher.purchaseKey(line), saved.getId());
@@ -204,38 +236,69 @@ public class StatementImportService {
       if (purchaseId == null) {
         LocalDate firstInstallment = line.date().minusMonths(line.installmentNumber() - 1L);
         purchaseId =
-            transactionService
-                .save(toTransaction(line, firstInstallment), lineToImport.categoryId())
+            saveImported(line, firstInstallment, lineToImport.categoryId(), card, billDueDate)
                 .getId();
         purchasesCreated.put(purchaseKey, purchaseId);
         imported++;
       }
-      String movedKey = movedKey(purchaseId, line.installmentNumber(), line.date());
+      LocalDate paidOn = billDueDate == null ? line.date() : billDueDate;
+      String movedKey = movedKey(purchaseId, line.installmentNumber(), paidOn);
+      Transaction purchase =
+          transactionRepository.findByIdAndUserId(purchaseId, user.getId()).orElseThrow();
+      if (billDueDate != null && setMissingBill(purchase, line, card, billDueDate)) {
+        billDatesSet.add(purchase.getId());
+      }
       if (alreadyMoved.contains(movedKey)) {
         skipped++;
         continue;
       }
-      Transaction purchase =
-          transactionRepository.findByIdAndUserId(purchaseId, user.getId()).orElseThrow();
-      if (!canPayEarly(purchase, line)) {
+      if (!canPayEarly(purchase, line, paidOn)) {
         // The saved schedule disagrees with the statement, for instance the installment is due
         // before the prepayment date; leave it where it is rather than failing the whole import.
         skipped++;
         continue;
       }
-      purchase.payInstallmentEarly(line.installmentNumber(), line.date());
+      purchase.payInstallmentEarly(line.installmentNumber(), paidOn);
       transactionRepository.save(purchase);
       alreadyMoved.add(movedKey);
       moved++;
     }
-    return new ImportResult(imported, skipped, moved);
+    return new ImportResult(imported, skipped, moved, billDatesSet.size());
   }
 
-  private static boolean canPayEarly(Transaction purchase, StatementLine line) {
+  private Transaction saveImported(
+      StatementLine line, LocalDate date, UUID categoryId, Card card, LocalDate billDueDate) {
+    Transaction draft = toTransaction(line, date);
+    draft.setCard(card);
+    Transaction saved = transactionService.save(draft, categoryId);
+    if (billDueDate != null) {
+      saved.assignBillDueDate(firstBill(line, billDueDate));
+    }
+    return saved;
+  }
+
+  private boolean setMissingBill(
+      Transaction saved, StatementLine line, Card card, LocalDate billDueDate) {
+    if (saved.getBillDueDate() != null
+        || (saved.getRepeats() != null && saved.getRepeats() != RepeatInterval.NONE)) {
+      return false;
+    }
+    saved.assignBillDueDate(firstBill(line, billDueDate));
+    if (saved.getCard() == null && card != null) {
+      saved.setCard(card);
+    }
+    return true;
+  }
+
+  private static LocalDate firstBill(StatementLine line, LocalDate billDueDate) {
+    return billDueDate.minusMonths(line.isInstallment() ? line.installmentNumber() - 1L : 0);
+  }
+
+  private static boolean canPayEarly(Transaction purchase, StatementLine line, LocalDate paidOn) {
     int number = line.installmentNumber();
     return purchase.getInstallmentNumbers() != null
         && number <= purchase.getInstallmentNumbers()
-        && !line.date().isAfter(purchase.scheduledDueDate(number));
+        && !paidOn.isAfter(purchase.scheduledDueDate(number));
   }
 
   private PreviewLine suggested(
@@ -262,13 +325,18 @@ public class StatementImportService {
       Set<String> alreadyMoved,
       Map<Object, Integer> purchaseCreatedByLine,
       PreviewLine[] lines,
-      CategorySuggester suggester) {
+      CategorySuggester suggester,
+      LocalDate billDueDate) {
     String merchantKey = MerchantText.merchantKey(line.description());
     Optional<ExistingTransaction> purchase = matcher.findPurchase(line);
     if (purchase.isPresent()) {
       ExistingTransaction saved = purchase.get();
       boolean moved =
-          alreadyMoved.contains(movedKey(saved.id(), line.installmentNumber(), line.date()));
+          alreadyMoved.contains(
+              movedKey(
+                  saved.id(),
+                  line.installmentNumber(),
+                  billDueDate == null ? line.date() : billDueDate));
       return new PreviewLine(
           index,
           line,

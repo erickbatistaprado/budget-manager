@@ -7,6 +7,7 @@ import com.budgetmanager.bm.ledger.domain.statement.StatementText;
 import com.budgetmanager.bm.shared.application.ApplicationError;
 import com.budgetmanager.bm.shared.application.ApplicationException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -40,6 +41,21 @@ final class NubankCardPdfParser {
   }
 
   static ParsedStatement parse(List<TextLine> lines) {
+    LocalDate billDueDate = null;
+    var duePattern =
+        Pattern.compile("(?i)Data de vencimento:\\s*(\\d{1,2})\\s+([A-Z]{3})\\s+(\\d{4})");
+    for (TextLine line : lines) {
+      Matcher due = duePattern.matcher(line.trimmed());
+      if (due.find()) {
+        Integer month =
+            StatementLines.PORTUGUESE_MONTHS.get(due.group(2).toUpperCase(java.util.Locale.ROOT));
+        if (month != null) {
+          billDueDate =
+              LocalDate.of(Integer.parseInt(due.group(3)), month, Integer.parseInt(due.group(1)));
+          break;
+        }
+      }
+    }
     int closingMonth = 0;
     int closingYear = 0;
     for (TextLine line : lines) {
@@ -102,6 +118,7 @@ final class NubankCardPdfParser {
         StatementSource.NUBANK_CARD_PDF,
         parsed,
         printedTotal.signum() == 0 && parsed.isEmpty() ? null : printedTotal,
-        parsedTotal);
+        parsedTotal,
+        billDueDate);
   }
 }

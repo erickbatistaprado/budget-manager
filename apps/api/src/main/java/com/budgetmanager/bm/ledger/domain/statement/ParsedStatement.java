@@ -1,6 +1,7 @@
 package com.budgetmanager.bm.ledger.domain.statement;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -12,7 +13,25 @@ public record ParsedStatement(
     StatementSource source,
     List<StatementLine> lines,
     BigDecimal printedTotal,
-    BigDecimal parsedTotal) {
+    BigDecimal parsedTotal,
+    LocalDate billDueDate,
+    LocalDate statementDate) {
+  public ParsedStatement(
+      StatementSource source,
+      List<StatementLine> lines,
+      BigDecimal printedTotal,
+      BigDecimal parsedTotal,
+      LocalDate billDueDate) {
+    this(source, lines, printedTotal, parsedTotal, billDueDate, null);
+  }
+
+  public ParsedStatement(
+      StatementSource source,
+      List<StatementLine> lines,
+      BigDecimal printedTotal,
+      BigDecimal parsedTotal) {
+    this(source, lines, printedTotal, parsedTotal, null);
+  }
 
   public ParsedStatement {
     lines = List.copyOf(lines);

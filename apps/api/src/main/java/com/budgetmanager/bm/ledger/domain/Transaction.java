@@ -41,6 +41,20 @@ public class Transaction {
   @JoinColumn(name = "category_id", nullable = false)
   private Category category;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "card_id")
+  private Card card;
+
+  private LocalDate billDueDate;
+
+  public void assignBillDueDate(LocalDate dueDate) {
+    billDueDate = dueDate;
+    installments.stream()
+        .filter(installment -> !installment.isPaidEarly())
+        .forEach(installment ->
+            installment.setDueDate(scheduledDueDate(installment.getInstallmentNumber())));
+  }
+
   private String notes;
 
   @NotNull
@@ -198,7 +212,7 @@ public class Transaction {
 
   /** The month an installment falls in when nothing was paid early. */
   public LocalDate scheduledDueDate(int number) {
-    return date.plusMonths((long) number - 1);
+    return (billDueDate == null ? date : billDueDate).plusMonths((long) number - 1);
   }
 
   /**

@@ -42,10 +42,13 @@ public class StatementImportController {
       throw new ApplicationException(
           exception, ApplicationError.BAD_REQUEST, "The file could not be read");
     }
-    StatementImportService.Preview preview = service.preview(content, password);
+    StatementImportService.Preview preview =
+        service.preview(content, password, file.getOriginalFilename());
     return ok(
         new StatementPreviewDto(
             preview.statement().source(),
+            preview.statement().billDueDate(),
+            preview.statement().statementDate(),
             preview.statement().printedTotal(),
             preview.statement().parsedTotal(),
             preview.statement().totalsMatch(),
@@ -83,10 +86,15 @@ public class StatementImportController {
       @Valid @RequestBody StatementImportRequestDto request) {
     StatementImportService.ImportResult result =
         service.importLines(
-            request.lines().stream().map(StatementImportController::toLineToImport).toList());
+            request.lines().stream().map(StatementImportController::toLineToImport).toList(),
+            request.cardId(),
+            request.billDueDate());
     return ok(
         new StatementImportResultDto(
-            result.imported(), result.skippedAsDuplicates(), result.movedInstallments()));
+            result.imported(),
+            result.skippedAsDuplicates(),
+            result.movedInstallments(),
+            result.billDatesSet()));
   }
 
   private static StatementImportService.LineToImport toLineToImport(StatementImportLineDto dto) {

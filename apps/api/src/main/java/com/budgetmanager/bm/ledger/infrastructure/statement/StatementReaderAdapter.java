@@ -16,6 +16,11 @@ public class StatementReaderAdapter implements StatementReader {
 
   @Override
   public ParsedStatement read(byte[] content, String password) {
+    return read(content, password, null);
+  }
+
+  @Override
+  public ParsedStatement read(byte[] content, String password, String filename) {
     if (content == null || content.length == 0) {
       throw new ApplicationException(ApplicationError.BAD_REQUEST, "The file is empty");
     }
@@ -24,7 +29,7 @@ public class StatementReaderAdapter implements StatementReader {
     }
     String text = new String(content, StandardCharsets.UTF_8);
     if (NubankCardCsvParser.accepts(text)) {
-      return NubankCardCsvParser.parse(text);
+      return NubankCardCsvParser.parse(text, filename);
     }
     throw unsupported();
   }

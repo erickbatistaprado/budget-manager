@@ -7,6 +7,7 @@ import com.budgetmanager.bm.ledger.domain.statement.StatementText;
 import com.budgetmanager.bm.shared.application.ApplicationError;
 import com.budgetmanager.bm.shared.application.ApplicationException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,12 +60,18 @@ final class BradescoCardPdfParser {
 
   static ParsedStatement parse(List<TextLine> allLines) {
     List<TextLine> lines = allLines.stream().filter(line -> !line.isBlank()).toList();
+    LocalDate statementDate = null;
     int closingMonth = 0;
     int closingYear = 0;
     BigDecimal printedTotal = null;
     for (TextLine line : lines) {
       Matcher date = STATEMENT_DATE.matcher(line.trimmed());
       if (closingMonth == 0 && date.find()) {
+        statementDate =
+            LocalDate.of(
+                Integer.parseInt(date.group(3)),
+                Integer.parseInt(date.group(2)),
+                Integer.parseInt(date.group(1)));
         closingMonth = Integer.parseInt(date.group(2));
         closingYear = Integer.parseInt(date.group(3));
       }
@@ -124,7 +131,7 @@ final class BradescoCardPdfParser {
               StatementLines.InstallmentDate.PURCHASE));
     }
     return new ParsedStatement(
-        StatementSource.BRADESCO_CARD_PDF, parsed, printedTotal, parsedTotal);
+        StatementSource.BRADESCO_CARD_PDF, parsed, printedTotal, parsedTotal, null, statementDate);
   }
 
   /**

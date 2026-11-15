@@ -31,6 +31,7 @@ public class TransactionService {
   private final TransactionRepository repository;
   private final UserService userService;
   private final CategoryService categoryService;
+  private final CardService cardService;
 
   @Transactional(readOnly = true)
   public Page<Transaction> findByTransactionTypeAndDateBetween(
@@ -234,6 +235,16 @@ public class TransactionService {
       throw new ApplicationException(
           ApplicationError.BAD_REQUEST, "Transaction cannot repeat and have installments");
     }
+    if (source.getCard() != null && repeats != RepeatInterval.NONE) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST, "Monthly series cannot have a card");
+    }
+    var card =
+        source.getCard() == null
+            ? null
+            : cardService.requireOwned(source.getCard().getId(), target.getUser());
+    target.setCard(card);
+    target.assignBillDueDate(card == null ? null : card.billDueDate(source.getDate()));
     target.setNotes(source.getNotes());
     target.setTotalValue(source.getTotalValue());
     target.setDate(source.getDate());

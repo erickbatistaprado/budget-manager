@@ -98,6 +98,7 @@ class StatementReaderAdapterTest {
     ParsedStatement statement = reader.read(pdf(BRADESCO_INVOICE_PAGE, null), null);
 
     assertThat(statement.source()).isEqualTo(StatementSource.BRADESCO_CARD_PDF);
+    assertThat(statement.billDueDate()).isEqualTo(java.time.LocalDate.of(2026, 11, 5));
     assertThat(statement.printedTotal()).isEqualByComparingTo("1069.10");
     assertThat(statement.totalsMatch()).isTrue();
     assertThat(statement.lines())
@@ -145,6 +146,8 @@ class StatementReaderAdapterTest {
 
     assertThat(statement.source()).isEqualTo(StatementSource.BRADESCO_CARD_PDF);
     assertThat(statement.totalsMatch()).isTrue();
+    assertThat(statement.billDueDate()).isNull();
+    assertThat(statement.statementDate()).isEqualTo(java.time.LocalDate.of(2026, 11, 14));
     assertThat(statement.lines())
         .extracting(StatementLine::description, StatementLine::installmentNumber)
         .containsExactly(

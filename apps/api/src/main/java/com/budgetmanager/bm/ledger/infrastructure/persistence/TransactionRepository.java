@@ -52,7 +52,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
                                 (t.repeats <> 'NONE'
                                   AND (t.date <= :endDate OR (t.repeats = 'MONTHLY' AND t.date <= :lastDayOfEndMonth))
                                   AND (t.repeatUntil IS NULL OR t.repeatUntil >= :firstDayOfStartMonth)) OR
-                                (t.date BETWEEN :startDate AND :endDate)
+                                ((t.repeats = 'NONE' OR t.repeats IS NULL) AND COALESCE(t.billDueDate, t.date) BETWEEN :startDate AND :endDate)
                             )
                         )
                         OR
@@ -108,7 +108,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
                                 (t.repeats <> 'NONE'
                                   AND (t.date <= :endDate OR (t.repeats = 'MONTHLY' AND t.date <= :lastDayOfEndMonth))
                                   AND (t.repeatUntil IS NULL OR t.repeatUntil >= :firstDayOfStartMonth)) OR
-                                (t.date BETWEEN :startDate AND :endDate)
+                                ((t.repeats = 'NONE' OR t.repeats IS NULL) AND COALESCE(t.billDueDate, t.date) BETWEEN :startDate AND :endDate)
                             )
                         )
                         OR
@@ -139,6 +139,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
           SELECT DISTINCT t
           FROM Transaction t
           JOIN FETCH t.category c
+          LEFT JOIN FETCH t.card
           LEFT JOIN FETCH t.installments i
           WHERE t.id IN :ids
       """)

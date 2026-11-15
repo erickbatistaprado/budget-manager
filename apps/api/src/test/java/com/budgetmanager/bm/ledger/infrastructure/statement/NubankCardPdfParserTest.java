@@ -14,6 +14,7 @@ class NubankCardPdfParserTest {
   private static final List<TextLine> BILL =
       lines(
           "1 100 Olá, Alex.",
+          "1 120 Data de vencimento: 09 NOV 2026",
           "2 60 FATURA 09 JAN 2027   EMISSÃO E ENVIO 31 DEZ 2026",
           "2 150 Pagamento recebido   −R$ 900,00",
           "3 60 FATURA 09 JAN 2027   EMISSÃO E ENVIO 31 DEZ 2026",
@@ -33,6 +34,11 @@ class NubankCardPdfParserTest {
           "4 200 03 JAN   Phone Plan   R$ 169,31",
           "4 300 Pagamentos   -R$ 900,00",
           "4 322 30 NOV   Pagamento em 30 NOV   −R$ 900,00");
+
+  @Test
+  void readsThePrintedDueDate() {
+    assertThat(NubankCardPdfParser.parse(BILL).billDueDate()).isEqualTo(LocalDate.of(2026, 11, 9));
+  }
 
   @Test
   void readsTransactionsAndSkipsPayments() {

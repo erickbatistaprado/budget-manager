@@ -9,4 +9,8 @@ public interface StatementReader {
    * @param password only needed for protected PDFs; may be {@code null}
    */
   ParsedStatement read(byte[] content, String password);
+
+  default ParsedStatement read(byte[] content, String password, String filename) {
+    return read(content, password);
+  }
 }

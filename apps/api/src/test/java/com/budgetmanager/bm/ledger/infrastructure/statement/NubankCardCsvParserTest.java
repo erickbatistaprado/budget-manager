@@ -10,6 +10,17 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 class NubankCardCsvParserTest {
+  @Test
+  void readsDueDateFromTheOriginalFilenameOnly() {
+    var reader = new StatementReaderAdapter();
+    byte[] csv =
+        "date,title,amount\n2026-11-12,Shop,\"12,00\""
+            .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    assertThat(reader.read(csv, null, "Nubank_2026-12-07.csv").billDueDate())
+        .isEqualTo(LocalDate.of(2026, 12, 7));
+    assertThat(reader.read(csv, null, "other.csv").billDueDate()).isNull();
+    assertThat(reader.read(csv, null, "Nubank_2026-02-30.csv").billDueDate()).isNull();
+  }
 
   private static final String CSV =
       """

@@ -24,6 +24,23 @@ final class NubankCardCsvParser {
   }
 
   static ParsedStatement parse(String content) {
+    return parse(content, null);
+  }
+
+  static ParsedStatement parse(String content, String filename) {
+    LocalDate billDueDate = null;
+    if (filename != null) {
+      var filenameDate =
+          java.util.regex.Pattern.compile("(?i)^Nubank_(\\d{4}-\\d{2}-\\d{2})\\.csv$")
+              .matcher(filename);
+      if (filenameDate.matches()) {
+        try {
+          billDueDate = LocalDate.parse(filenameDate.group(1));
+        } catch (DateTimeParseException ignored) {
+          /* Unrecognized filename dates are optional. */
+        }
+      }
+    }
     List<StatementLine> lines = new ArrayList<>();
     String[] rows = content.replace("\r", "").split("\n");
     for (int index = 1; index < rows.length; index++) {
@@ -48,7 +65,7 @@ final class NubankCardCsvParser {
         throw invalid(index + 1);
       }
     }
-    return new ParsedStatement(StatementSource.NUBANK_CARD_CSV, lines, null, null);
+    return new ParsedStatement(StatementSource.NUBANK_CARD_CSV, lines, null, null, billDueDate);
   }
 
   /** Splits one CSV row, honouring quotes and doubled quotes inside them. */

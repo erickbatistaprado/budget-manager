@@ -21,6 +21,8 @@ public final class StatementImportDtos {
 
   public record StatementPreviewDto(
       StatementSource source,
+      @JsonFormat(pattern = "yyyy/MM/dd") LocalDate billDueDate,
+      @JsonFormat(pattern = "yyyy/MM/dd") LocalDate statementDate,
       BigDecimal printedTotal,
       BigDecimal parsedTotal,
       boolean totalsMatch,
@@ -54,6 +56,8 @@ public final class StatementImportDtos {
       boolean selected) {}
 
   public record StatementImportRequestDto(
+      UUID cardId,
+      @JsonFormat(pattern = "yyyy/MM/dd") LocalDate billDueDate,
       @NotEmpty @Size(max = 2000) List<@Valid @NotNull StatementImportLineDto> lines) {
 
     public StatementImportRequestDto {
@@ -72,5 +76,5 @@ public final class StatementImportDtos {
       @NotNull UUID categoryId) {}
 
   public record StatementImportResultDto(
-      int imported, int skippedAsDuplicates, int movedInstallments) {}
+      int imported, int skippedAsDuplicates, int movedInstallments, int billDatesSet) {}
 }

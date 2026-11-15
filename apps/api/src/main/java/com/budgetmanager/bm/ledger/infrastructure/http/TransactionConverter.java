@@ -1,5 +1,6 @@
 package com.budgetmanager.bm.ledger.infrastructure.http;
 
+import com.budgetmanager.bm.ledger.domain.Card;
 import com.budgetmanager.bm.ledger.domain.Transaction;
 import java.time.YearMonth;
 import java.util.Comparator;
@@ -13,6 +14,11 @@ public final class TransactionConverter {
   public static TransactionDto entityToDto(Transaction entity) {
     return TransactionDto.builder()
         .id(entity.getId())
+        .card(
+            entity.getCard() == null
+                ? null
+                : new CardSummaryDto(entity.getCard().getId(), entity.getCard().getName()))
+        .billDueDate(entity.getBillDueDate())
         .notes(entity.getNotes())
         .repeats(entity.getRepeats())
         .repeatUntil(entity.getRepeatUntil())
@@ -46,6 +52,7 @@ public final class TransactionConverter {
   public static Transaction dtoToEntity(TransactionDto dto) {
     return Transaction.builder()
         .id(dto.id())
+        .card(dto.cardId() == null ? null : Card.builder().id(dto.cardId()).build())
         .notes(dto.notes())
         .repeats(dto.repeats())
         .date(dto.date())
