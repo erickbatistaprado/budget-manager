@@ -10,6 +10,7 @@ import com.budgetmanager.bm.shared.application.ApplicationException;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -82,6 +83,58 @@ public class TransactionController {
     return ok(
         TransactionConverter.entityToDto(
             service.restoreInstallments(id, change.installmentNumbers())));
+  }
+
+  @PutMapping("/{id}/months/{month}")
+  public ResponseEntity<TransactionDto> changeMonth(
+      @PathVariable UUID id,
+      @PathVariable String month,
+      @Valid @RequestBody TransactionMonthChangeDto change) {
+    return ok(
+        TransactionConverter.entityToDto(
+            service.changeMonth(
+                id, parseMonth(month), change.amount(), change.date(), change.notes())));
+  }
+
+  @DeleteMapping("/{id}/months/{month}")
+  public ResponseEntity<Void> skipMonth(@PathVariable UUID id, @PathVariable String month) {
+    service.skipMonth(id, parseMonth(month), false);
+    return noContent().build();
+  }
+
+  @DeleteMapping("/{id}/months/{month}/override")
+  public ResponseEntity<Void> restoreMonth(@PathVariable UUID id, @PathVariable String month) {
+    service.skipMonth(id, parseMonth(month), true);
+    return noContent().build();
+  }
+
+  @PostMapping("/{id}/split/{month}")
+  public ResponseEntity<TransactionDto> split(
+      @PathVariable UUID id,
+      @PathVariable String month,
+      @Valid @RequestBody TransactionDto change) {
+    return ok(
+        TransactionConverter.entityToDto(
+            service.split(
+                id,
+                parseMonth(month),
+                TransactionConverter.dtoToEntity(change),
+                change.category().id())));
+  }
+
+  @DeleteMapping("/{id}/from/{month}")
+  public ResponseEntity<Void> deleteFrom(@PathVariable UUID id, @PathVariable String month) {
+    service.deleteFrom(id, parseMonth(month));
+    return noContent().build();
+  }
+
+  private YearMonth parseMonth(String month) {
+    try {
+      return YearMonth.parse(month);
+    } catch (java.time.format.DateTimeParseException exception) {
+      throw new ApplicationException(
+          exception, ApplicationError.BAD_REQUEST, "Use yyyy-MM for a month");
+    }
   }
 
   @DeleteMapping("/{id}")

@@ -49,7 +49,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
                         (
                             t.installmentNumbers IS NULL
                             AND (
-                                (t.repeats <> 'NONE' AND t.date <= :endDate) OR
+                                (t.repeats <> 'NONE'
+                                  AND (t.date <= :endDate OR (t.repeats = 'MONTHLY' AND t.date <= :lastDayOfEndMonth))
+                                  AND (t.repeatUntil IS NULL OR t.repeatUntil >= :firstDayOfStartMonth)) OR
                                 (t.date BETWEEN :startDate AND :endDate)
                             )
                         )
@@ -103,7 +105,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
                         (
                             t.installmentNumbers IS NULL
                             AND (
-                                (t.repeats <> 'NONE' AND t.date <= :endDate) OR
+                                (t.repeats <> 'NONE'
+                                  AND (t.date <= :endDate OR (t.repeats = 'MONTHLY' AND t.date <= :lastDayOfEndMonth))
+                                  AND (t.repeatUntil IS NULL OR t.repeatUntil >= :firstDayOfStartMonth)) OR
                                 (t.date BETWEEN :startDate AND :endDate)
                             )
                         )
@@ -124,6 +128,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
       @Param("type") TransactionType type,
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate,
+      @Param("firstDayOfStartMonth") LocalDate firstDayOfStartMonth,
+      @Param("lastDayOfEndMonth") LocalDate lastDayOfEndMonth,
       @Param("sortKey") String sortKey,
       @Param("sortOrder") String sortOrder,
       Pageable pageable);

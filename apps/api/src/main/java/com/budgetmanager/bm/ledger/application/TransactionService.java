@@ -8,7 +8,9 @@ import com.budgetmanager.bm.ledger.domain.TransactionType;
 import com.budgetmanager.bm.ledger.infrastructure.persistence.TransactionRepository;
 import com.budgetmanager.bm.shared.application.ApplicationError;
 import com.budgetmanager.bm.shared.application.ApplicationException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,6 +47,8 @@ public class TransactionService {
             transactionType,
             startDate,
             endDate,
+            startDate.withDayOfMonth(1),
+            YearMonth.from(endDate).atEndOfMonth(),
             normalizeSortKey(sortKey),
             normalizeSortOrder(sortOrder),
             pageable);
@@ -62,6 +66,8 @@ public class TransactionService {
             .filter(Objects::nonNull)
             .toList();
 
+    transactions.forEach(
+        transaction -> org.hibernate.Hibernate.initialize(transaction.getMonths()));
     return new PageImpl<>(transactions, pageable, transactionIds.getTotalElements());
   }
 
@@ -84,14 +90,17 @@ public class TransactionService {
     }
     User user = userService.requireCurrentUser();
     Transaction transaction = requireOwned(changes.getId(), user);
+    rejectMonthlyWholeChange(transaction);
     transaction.setCategory(categoryService.requireOwned(categoryId, user));
     apply(changes, transaction);
-    return repository.save(transaction);
+    return loaded(transaction);
   }
 
   @Transactional
   public void deleteById(UUID id) {
-    repository.delete(requireOwned(id, userService.requireCurrentUser()));
+    Transaction transaction = requireOwned(id, userService.requireCurrentUser());
+    rejectMonthlyWholeChange(transaction);
+    repository.delete(transaction);
   }
 
   /** Moves the chosen installments to the day they were prepaid. */
@@ -127,7 +136,95 @@ public class TransactionService {
     }
     repository.saveAndFlush(transaction);
     // Reload with category and installments, so the caller can render it after the session ends.
-    return repository.findAllWithCategoryAndInstallmentsByIdIn(List.of(transactionId)).getFirst();
+    return loaded(transaction);
+  }
+
+  @Transactional
+  public Transaction changeMonth(
+      UUID id, YearMonth month, BigDecimal amount, LocalDate date, String notes) {
+    Transaction transaction = requireOwned(id, userService.requireCurrentUser());
+    monthlyChange(() -> transaction.changeMonth(month, amount, date, notes));
+    return loaded(transaction);
+  }
+
+  @Transactional
+  public void skipMonth(UUID id, YearMonth month, boolean restore) {
+    Transaction transaction = requireOwned(id, userService.requireCurrentUser());
+    monthlyChange(() -> {
+      if (restore) {
+        transaction.restoreMonth(month);
+      } else {
+        transaction.skipMonth(month);
+      }
+    });
+    repository.save(transaction);
+  }
+
+  @Transactional
+  public Transaction split(UUID id, YearMonth month, Transaction draft, UUID categoryId) {
+    User user = userService.requireCurrentUser();
+    Transaction original = requireOwned(id, user);
+    monthlyChange(() -> original.requireMonth(month));
+    var category = categoryService.requireOwned(categoryId, user);
+    if (category.getTransactionType() != original.getCategory().getTransactionType()
+        || draft.getDate() == null
+        || !YearMonth.from(draft.getDate()).equals(month)) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST,
+          "Keep the transaction type and choose a date in the selected month");
+    }
+    LocalDate until = original.getRepeatUntil();
+    Transaction target = original;
+    if (!month.equals(YearMonth.from(original.getDate()))) {
+      original.endBefore(month);
+      target = Transaction.builder().user(user).build();
+    } else {
+      original.dropMonthsFrom(month);
+    }
+    target.setCategory(category);
+    draft.setRepeats(RepeatInterval.MONTHLY);
+    draft.setInstallmentNumbers(null);
+    apply(draft, target);
+    target.setRepeatUntil(until);
+    return loaded(target);
+  }
+
+  @Transactional
+  public void deleteFrom(UUID id, YearMonth month) {
+    Transaction transaction = requireOwned(id, userService.requireCurrentUser());
+    monthlyChange(() -> transaction.requireMonth(month));
+    if (month.equals(YearMonth.from(transaction.getDate()))) {
+      repository.delete(transaction);
+    } else {
+      transaction.endBefore(month);
+      repository.save(transaction);
+    }
+  }
+
+  private Transaction loaded(Transaction transaction) {
+    repository.saveAndFlush(transaction);
+    Transaction result =
+        repository
+            .findAllWithCategoryAndInstallmentsByIdIn(List.of(transaction.getId()))
+            .getFirst();
+    org.hibernate.Hibernate.initialize(result.getMonths());
+    return result;
+  }
+
+  private void monthlyChange(Runnable change) {
+    try {
+      change.run();
+    } catch (IllegalArgumentException exception) {
+      throw new ApplicationException(
+          exception, ApplicationError.BAD_REQUEST, exception.getMessage());
+    }
+  }
+
+  private void rejectMonthlyWholeChange(Transaction transaction) {
+    if (transaction.getRepeats() == RepeatInterval.MONTHLY) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST, "Choose a month and a scope for monthly changes");
+    }
   }
 
   private void apply(Transaction source, Transaction target) {

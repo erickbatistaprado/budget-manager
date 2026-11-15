@@ -1,6 +1,7 @@
 package com.budgetmanager.bm.ledger.infrastructure.http;
 
 import com.budgetmanager.bm.ledger.domain.Transaction;
+import java.time.YearMonth;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +15,18 @@ public final class TransactionConverter {
         .id(entity.getId())
         .notes(entity.getNotes())
         .repeats(entity.getRepeats())
+        .repeatUntil(entity.getRepeatUntil())
+        .months(
+            entity.getMonths().stream()
+                .sorted(Comparator.comparing(change -> change.getMonth()))
+                .map(change ->
+                    new TransactionMonthDto(
+                        YearMonth.from(change.getMonth()).toString(),
+                        change.getAmount(),
+                        change.getDate(),
+                        change.getNotes(),
+                        change.isSkipped()))
+                .toList())
         .date(entity.getDate())
         .totalValue(entity.getTotalValue())
         .installmentNumbers(entity.getInstallmentNumbers())

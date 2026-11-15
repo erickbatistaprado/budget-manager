@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -60,6 +61,93 @@ public class Transaction {
 
   @Enumerated(EnumType.STRING)
   private RepeatInterval repeats;
+
+  private LocalDate repeatUntil;
+
+  @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Builder.Default
+  private List<TransactionMonth> months = new ArrayList<>();
+
+  public boolean occursIn(YearMonth month) {
+    return repeats == RepeatInterval.MONTHLY
+        && month != null
+        && !month.isBefore(YearMonth.from(date))
+        && (repeatUntil == null || !month.isAfter(YearMonth.from(repeatUntil)));
+  }
+
+  public void requireMonth(YearMonth month) {
+    if (!occursIn(month)) {
+      throw new IllegalArgumentException("Choose a month covered by this monthly series");
+    }
+  }
+
+  public void changeMonth(
+      YearMonth month, BigDecimal amount, LocalDate dueDate, String monthNotes) {
+    requireMonth(month);
+    if (amount == null
+        || amount.signum() <= 0
+        || dueDate == null
+        || !YearMonth.from(dueDate).equals(month)) {
+      throw new IllegalArgumentException(
+          "A positive amount and a date inside the chosen month are required");
+    }
+    TransactionMonth change = monthOverride(month);
+    change.setAmount(amount);
+    change.setDate(dueDate);
+    change.setNotes(monthNotes);
+    change.setSkipped(false);
+  }
+
+  public void skipMonth(YearMonth month) {
+    requireMonth(month);
+    TransactionMonth change = monthOverride(month);
+    change.setAmount(null);
+    change.setDate(null);
+    change.setNotes(null);
+    change.setSkipped(true);
+  }
+
+  public void restoreMonth(YearMonth month) {
+    requireMonth(month);
+    months.removeIf(change -> change.getMonth().equals(month.atDay(1)));
+  }
+
+  public BigDecimal amountIn(YearMonth month) {
+    if (!occursIn(month)) {
+      return BigDecimal.ZERO;
+    }
+    return months.stream()
+        .filter(change -> change.getMonth().equals(month.atDay(1)))
+        .findFirst()
+        .map(change -> change.isSkipped() ? BigDecimal.ZERO : change.getAmount())
+        .orElse(totalValue);
+  }
+
+  public void endBefore(YearMonth month) {
+    requireMonth(month);
+    if (month.equals(YearMonth.from(date))) {
+      throw new IllegalArgumentException("Remove the series when ending before its first month");
+    }
+    repeatUntil = month.minusMonths(1).atDay(1);
+    dropMonthsFrom(month);
+  }
+
+  public void dropMonthsFrom(YearMonth month) {
+    months.removeIf(change -> !change.getMonth().isBefore(month.atDay(1)));
+  }
+
+  private TransactionMonth monthOverride(YearMonth month) {
+    return months.stream()
+        .filter(change -> change.getMonth().equals(month.atDay(1)))
+        .findFirst()
+        .orElseGet(() -> {
+          TransactionMonth change = new TransactionMonth();
+          change.setTransaction(this);
+          change.setMonth(month.atDay(1));
+          months.add(change);
+          return change;
+        });
+  }
 
   @NotNull(message = "Date must not be null")
   private LocalDate date;

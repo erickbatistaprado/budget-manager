@@ -24,9 +24,12 @@ public record TransactionDto(
         Integer installmentNumbers,
     List<InstallmentDto> installments,
     RepeatInterval repeats,
+    @JsonFormat(pattern = "yyyy/MM/dd") LocalDate repeatUntil,
+    List<TransactionMonthDto> months,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd") @NotNull LocalDate date) {
 
   public TransactionDto {
+    months = months == null ? List.of() : List.copyOf(months);
     installments = installments == null ? List.of() : List.copyOf(installments);
   }
 }
