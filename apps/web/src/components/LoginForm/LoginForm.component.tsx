@@ -1,6 +1,7 @@
 'use client';
 
 import { Input } from '@/components';
+import { useI18n } from '@/i18n/useI18n';
 import { authenticationService, userService } from '@/services';
 import { isValidEmail, isValidPassword } from '@/validations/validators.util';
 import clsx from 'clsx';
@@ -16,6 +17,7 @@ import {
 
 export default function LoginForm(): JSX.Element {
   const { push } = useRouter();
+  const { t } = useI18n();
   const [isError, setIsError] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,12 +25,14 @@ export default function LoginForm(): JSX.Element {
   const [variant, setVariant] = useState<'login' | 'register'>('login');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const submitLabel = variant === 'login' ? 'Login' : 'Sign Up';
+  const submitLabel: string =
+    variant === 'login' ? t.auth.loginButton : t.auth.signUp;
 
   const toggleVariant: () => void = useCallback(
     (): void =>
-      setVariant((variant: 'login' | 'register'): 'login' | 'register' =>
-        variant === 'login' ? 'register' : 'login'
+      setVariant(
+        (currentVariant: 'login' | 'register'): 'login' | 'register' =>
+          currentVariant === 'login' ? 'register' : 'login'
       ),
     []
   );
@@ -45,14 +49,12 @@ export default function LoginForm(): JSX.Element {
 
     if (!isValidEmail(email)) {
       setIsError(true);
-      setErrorMessage('Enter a valid email address.');
+      setErrorMessage(t.auth.invalidEmail);
       return;
     }
     if (variant === 'register' && !isValidPassword(password)) {
       setIsError(true);
-      setErrorMessage(
-        'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'
-      );
+      setErrorMessage(t.auth.invalidPassword);
       return;
     }
     if (isSubmitting) {
@@ -71,9 +73,7 @@ export default function LoginForm(): JSX.Element {
       console.error(error);
       setIsError(true);
       setErrorMessage(
-        variant === 'login'
-          ? 'Unable to sign in with those credentials.'
-          : 'Unable to create your account.'
+        variant === 'login' ? t.auth.loginError : t.auth.registerError
       );
     } finally {
       setIsSubmitting(false);
@@ -91,13 +91,13 @@ export default function LoginForm(): JSX.Element {
   return (
     <>
       <h2 className="mb-8 text-center text-3xl font-bold text-[var(--ctp-text)]">
-        {variant === 'login' ? 'Sign In' : 'Sign Up'}
+        {variant === 'login' ? t.auth.signIn : t.auth.signUp}
       </h2>
       <div className="flex flex-col gap-4">
         {variant === 'register' && (
           <Input
             id="name"
-            label="Name"
+            label={t.common.name}
             type="text"
             value={name}
             onChange={({
@@ -108,7 +108,7 @@ export default function LoginForm(): JSX.Element {
         <div className={clsx('rounded-md', isError && 'border border-red-400')}>
           <Input
             id="email"
-            label="Email"
+            label={t.auth.email}
             type="email"
             value={email}
             onChange={({
@@ -120,7 +120,7 @@ export default function LoginForm(): JSX.Element {
         <div className={clsx('rounded-md', isError && 'border border-red-400')}>
           <Input
             id="password"
-            label="Password"
+            label={t.auth.password}
             type="password"
             value={password}
             onChange={({
@@ -144,18 +144,16 @@ export default function LoginForm(): JSX.Element {
           disabled={!password.length || isSubmitting}
           onClick={onClick}
         >
-          {isSubmitting ? 'Please wait...' : submitLabel}
+          {isSubmitting ? t.auth.pleaseWait : submitLabel}
         </button>
       </div>
       <p className="mt-6 text-center text-[var(--ctp-subtext1)]">
-        {variant === 'login'
-          ? "Don't have an account?"
-          : 'Already have an account?'}
+        {variant === 'login' ? t.auth.noAccount : t.auth.haveAccount}
         <button
           className="ml-1 cursor-pointer font-semibold text-[var(--ctp-blue)] hover:underline"
           onClick={toggleVariant}
         >
-          {variant === 'login' ? 'Sign Up' : 'Sign In'}
+          {variant === 'login' ? t.auth.signUp : t.auth.signIn}
         </button>
       </p>
     </>

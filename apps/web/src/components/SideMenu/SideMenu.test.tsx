@@ -73,4 +73,11 @@ describe('SideMenu', (): void => {
     expect(mockOnClose).toHaveBeenCalledTimes(2);
     expect(mockPush).toHaveBeenCalledWith('/profile');
   });
+
+  it('renders the language switcher with EN and PT options', (): void => {
+    render(<SideMenu onClose={mockOnClose} />);
+
+    expect(screen.getByRole('radio', { name: 'EN' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'PT' })).toBeInTheDocument();
+  });
 });

@@ -2,6 +2,7 @@
 
 import { Input } from '@/components';
 import { useCurrentUser, useProfileImage } from '@/hooks';
+import { useI18n } from '@/i18n/useI18n';
 import { deleteFetcher, postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import {
   arePasswordsEqual,
@@ -27,6 +28,7 @@ interface UpdatedUser {
 }
 
 export default function ProfileForm(): JSX.Element {
+  const { t } = useI18n();
   const [updatedUser, setUpdatedUser] = useState<UpdatedUser>({
     name: '',
     password: '',
@@ -103,16 +105,14 @@ export default function ProfileForm(): JSX.Element {
     } catch (error: unknown) {
       console.error(error);
       if (error instanceof Error && error.message === 'differentPasswords') {
-        setErrorMessage('Passwords must match.');
+        setErrorMessage(t.profile.passwordsMatchError);
         return;
       }
       if (error instanceof Error && error.message === 'weakPassword') {
-        setErrorMessage(
-          'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'
-        );
+        setErrorMessage(t.profile.passwordRequirementsError);
         return;
       }
-      setErrorMessage('Unable to save profile changes.');
+      setErrorMessage(t.profile.saveError);
     }
   }
 
@@ -149,7 +149,7 @@ export default function ProfileForm(): JSX.Element {
       await mutateImage(undefined, { revalidate: false });
     } catch (error: unknown) {
       console.error(error);
-      setErrorMessage('Unable to delete profile image.');
+      setErrorMessage(t.profile.deleteImageError);
     } finally {
       setIsDeletingImage(false);
     }
@@ -160,7 +160,7 @@ export default function ProfileForm(): JSX.Element {
       return (
         <Image
           src={profileImageUrl}
-          alt="Profile"
+          alt={t.profile.title}
           fill
           className="object-cover"
         />
@@ -168,7 +168,7 @@ export default function ProfileForm(): JSX.Element {
     }
     return (
       <div className="flex h-full w-full items-center justify-center text-[var(--ctp-subtext0)]">
-        Choose Image
+        {t.profile.chooseImage}
       </div>
     );
   }
@@ -200,14 +200,14 @@ export default function ProfileForm(): JSX.Element {
             disabled={isDeletingImage}
             className="cursor-pointer rounded-md bg-[var(--ctp-red)]/25 px-4 py-2 text-sm font-medium text-[var(--ctp-red)] transition hover:bg-[var(--ctp-red)]/35 disabled:cursor-not-allowed disabled:bg-[var(--ctp-surface1)] disabled:text-[var(--ctp-subtext0)]"
           >
-            {isDeletingImage ? 'Deleting...' : 'Delete image'}
+            {isDeletingImage ? t.common.deleting : t.profile.deleteImage}
           </button>
         )}
       </div>
       <div className="text-center">
         {currentUser?.name && (
           <h2 className="text-xl font-semibold text-[var(--ctp-text)]">
-            Hello, {currentUser.name} 👋
+            {t.profile.greeting(currentUser.name)}
           </h2>
         )}
         {currentUser?.email && (
@@ -220,21 +220,21 @@ export default function ProfileForm(): JSX.Element {
       >
         <Input
           id="name"
-          label="Name"
+          label={t.common.name}
           type="text"
           value={updatedUser.name}
           onChange={handleChange}
         />
         <Input
           id="password"
-          label="Password"
+          label={t.auth.password}
           type="password"
           value={updatedUser.password}
           onChange={handleChange}
         />
         <Input
           id="confirmPassword"
-          label="Confirm Password"
+          label={t.profile.confirmPassword}
           type="password"
           value={updatedUser.confirmPassword}
           onChange={handleChange}
@@ -245,10 +245,10 @@ export default function ProfileForm(): JSX.Element {
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
           <button
             type="button"
-            onClick={() => push('/')}
+            onClick={(): void => push('/')}
             className="flex-1 cursor-pointer rounded-lg bg-[var(--ctp-surface1)] py-3 text-lg font-medium text-[var(--ctp-text)] transition hover:bg-[var(--ctp-surface2)]"
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button
             type="submit"
@@ -260,7 +260,7 @@ export default function ProfileForm(): JSX.Element {
                 : 'cursor-pointer bg-[var(--ctp-surface1)] text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)]'
             )}
           >
-            Save
+            {t.common.save}
           </button>
         </div>
       </form>

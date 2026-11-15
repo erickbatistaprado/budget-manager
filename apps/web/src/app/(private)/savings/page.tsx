@@ -3,6 +3,7 @@
 import { Input, Money } from '@/components';
 import { SavingLocation } from '@/enums';
 import { useSavings } from '@/hooks';
+import { useI18n } from '@/i18n/useI18n';
 import { savingService } from '@/services';
 import type { Saving } from '@/types';
 import clsx from 'clsx';
@@ -25,14 +26,6 @@ const initialForm: SavingForm = {
   amount: '',
   location: SavingLocation.INVESTMENT,
   name: '',
-};
-
-const savingLocationLabels: Record<SavingLocation, string> = {
-  [SavingLocation.CASH]: 'Cash',
-  [SavingLocation.CHECKING_ACCOUNT]: 'Checking',
-  [SavingLocation.SAVINGS_ACCOUNT]: 'Savings',
-  [SavingLocation.INVESTMENT]: 'Investments',
-  [SavingLocation.OTHER]: 'Other',
 };
 
 function getSavingsTotal(savings: Saving[]): number {
@@ -64,19 +57,23 @@ function getSavingsByLocation(
 }
 
 export default function SavingsPage(): JSX.Element {
+  const { t } = useI18n();
   const { data: savings, mutate } = useSavings();
   const [form, setForm] = useState<SavingForm>(initialForm);
   const [editingSaving, setEditingSaving] = useState<Saving>();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  const savingsList = useMemo((): Saving[] => savings ?? [], [savings]);
-  const totalSaved = getSavingsTotal(savingsList);
-  const savingsByLocation = useMemo(
+  const savingsList: Saving[] = useMemo(
+    (): Saving[] => savings ?? [],
+    [savings]
+  );
+  const totalSaved: number = getSavingsTotal(savingsList);
+  const savingsByLocation: Record<SavingLocation, number> = useMemo(
     (): Record<SavingLocation, number> => getSavingsByLocation(savingsList),
     [savingsList]
   );
-  const isFormInvalid =
+  const isFormInvalid: boolean =
     !form.name.trim() || !form.amount || Number(form.amount) < 0;
 
   function handleChange({
@@ -107,7 +104,7 @@ export default function SavingsPage(): JSX.Element {
     setErrorMessage('');
 
     if (isFormInvalid) {
-      setErrorMessage('Add a name and a valid amount.');
+      setErrorMessage(t.savings.invalidForm);
       return;
     }
 
@@ -129,7 +126,7 @@ export default function SavingsPage(): JSX.Element {
       await mutate();
     } catch (error: unknown) {
       console.error(error);
-      setErrorMessage('Unable to save this entry.');
+      setErrorMessage(t.savings.saveError);
     } finally {
       setIsSaving(false);
     }
@@ -146,7 +143,7 @@ export default function SavingsPage(): JSX.Element {
       await mutate();
     } catch (error: unknown) {
       console.error(error);
-      setErrorMessage('Unable to delete this entry.');
+      setErrorMessage(t.savings.deleteError);
     }
   }
 
@@ -155,12 +152,14 @@ export default function SavingsPage(): JSX.Element {
       <section className="grid gap-3 md:grid-cols-[2fr_1fr]">
         <div className="rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md">
           <span className="text-sm text-[var(--ctp-subtext1)]">
-            Total saved
+            {t.savings.totalSaved}
           </span>
           <Money className="text-3xl font-semibold" value={totalSaved} />
         </div>
         <div className="rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md">
-          <span className="text-sm text-[var(--ctp-subtext1)]">Entries</span>
+          <span className="text-sm text-[var(--ctp-subtext1)]">
+            {t.savings.entries}
+          </span>
           <div className="text-3xl font-semibold">{savingsList.length}</div>
         </div>
       </section>
@@ -171,17 +170,17 @@ export default function SavingsPage(): JSX.Element {
           className="flex flex-col gap-3 rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md"
         >
           <h1 className="text-base font-semibold text-[var(--ctp-text)]">
-            {editingSaving ? 'Edit saved money' : 'Add saved money'}
+            {editingSaving ? t.savings.editTitle : t.savings.addTitle}
           </h1>
           <Input
             id="name"
-            label="Name"
+            label={t.common.name}
             value={form.name}
             onChange={handleChange}
           />
           <Input
             id="amount"
-            label="Amount"
+            label={t.savings.amount}
             type="number"
             min="0"
             step="0.01"
@@ -197,7 +196,7 @@ export default function SavingsPage(): JSX.Element {
             {Object.values(SavingLocation).map(
               (location: SavingLocation): JSX.Element => (
                 <option key={location} value={location}>
-                  {savingLocationLabels[location]}
+                  {t.savings.locations[location]}
                 </option>
               )
             )}
@@ -219,7 +218,7 @@ export default function SavingsPage(): JSX.Element {
               )}
             >
               <FiPlus />
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving ? t.common.saving : t.common.save}
             </button>
             {editingSaving && (
               <button
@@ -236,7 +235,7 @@ export default function SavingsPage(): JSX.Element {
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           <div className="rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md">
             <h2 className="mb-3 text-sm font-semibold text-[var(--ctp-subtext1)]">
-              By location
+              {t.savings.byLocation}
             </h2>
             <div className="space-y-3">
               {Object.values(SavingLocation).map(
@@ -246,7 +245,7 @@ export default function SavingsPage(): JSX.Element {
                     className="grid grid-cols-[1fr_auto] gap-3"
                   >
                     <span className="truncate text-sm text-[var(--ctp-text)]">
-                      {savingLocationLabels[location]}
+                      {t.savings.locations[location]}
                     </span>
                     <Money
                       className="text-sm font-semibold"
@@ -260,7 +259,7 @@ export default function SavingsPage(): JSX.Element {
 
           <div className="rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md">
             <h2 className="mb-3 text-sm font-semibold text-[var(--ctp-subtext1)]">
-              Saved money
+              {t.savings.savedMoney}
             </h2>
             <div className="space-y-2">
               {savingsList.map((saving: Saving): JSX.Element => (
@@ -273,7 +272,7 @@ export default function SavingsPage(): JSX.Element {
                       {saving.name}
                     </div>
                     <div className="text-xs text-[var(--ctp-subtext0)]">
-                      {savingLocationLabels[saving.location]}
+                      {t.savings.locations[saving.location]}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -285,7 +284,7 @@ export default function SavingsPage(): JSX.Element {
                       type="button"
                       onClick={(): void => handleEdit(saving)}
                       className="cursor-pointer rounded p-2 text-[var(--ctp-text)] hover:bg-[var(--ctp-surface1)]"
-                      title="Edit"
+                      title={t.common.edit}
                     >
                       <FiEdit2 />
                     </button>
@@ -293,7 +292,7 @@ export default function SavingsPage(): JSX.Element {
                       type="button"
                       onClick={(): Promise<void> => handleDelete(saving.id)}
                       className="cursor-pointer rounded p-2 text-[var(--ctp-red)] hover:bg-[var(--ctp-red)]/25"
-                      title="Delete"
+                      title={t.common.delete}
                     >
                       <FiTrash2 />
                     </button>
@@ -302,7 +301,7 @@ export default function SavingsPage(): JSX.Element {
               ))}
               {!savingsList.length && (
                 <span className="text-sm text-[var(--ctp-subtext1)]">
-                  No saved money added yet.
+                  {t.savings.empty}
                 </span>
               )}
             </div>

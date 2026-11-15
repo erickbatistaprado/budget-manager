@@ -3,6 +3,7 @@
 import { Input, Money } from '@/components';
 import { TransactionType } from '@/enums';
 import { useCategories } from '@/hooks';
+import { useI18n } from '@/i18n/useI18n';
 import {
   PASSWORD_REQUIRED_STATUS,
   StatementImportError,
@@ -11,9 +12,11 @@ import {
 import type { Category } from '@/types';
 import {
   applyCategory,
+  chooseCategory,
+  describeLineDetails,
   describeStatus,
+  describeSuggestion,
   formatStatementDate,
-  statementSourceLabels,
   summarize,
   toImportLines,
   toRows,
@@ -41,19 +44,22 @@ const field =
 const primaryButton =
   'flex items-center justify-center gap-2 rounded-md px-4 py-2 font-medium transition';
 
-function messageOf(error: unknown): string {
-  return error instanceof StatementImportError
-    ? error.message
-    : 'Something went wrong. Try again.';
+function messageOf(error: unknown, fallback: string): string {
+  if (error instanceof StatementImportError) {
+    return error.message;
+  }
+  return fallback;
 }
 
 function buttonState(disabled: boolean): string {
-  return disabled
-    ? 'cursor-not-allowed bg-[var(--ctp-surface2)] text-[var(--ctp-subtext0)]'
-    : 'cursor-pointer bg-[var(--ctp-blue)] text-[var(--ctp-crust)] hover:bg-[var(--ctp-lavender)]';
+  if (disabled) {
+    return 'cursor-not-allowed bg-[var(--ctp-surface2)] text-[var(--ctp-subtext0)]';
+  }
+  return 'cursor-pointer bg-[var(--ctp-blue)] text-[var(--ctp-crust)] hover:bg-[var(--ctp-lavender)]';
 }
 
 export default function ImportPage(): JSX.Element {
+  const { t } = useI18n();
   const { data: expenseCategories, mutate: reloadExpenses } = useCategories(
     TransactionType.EXPENSE
   );
@@ -75,7 +81,10 @@ export default function ImportPage(): JSX.Element {
     TransactionType.EXPENSE
   );
 
-  const summary: ImportSummary = useMemo(() => summarize(rows), [rows]);
+  const summary: ImportSummary = useMemo(
+    (): ImportSummary => summarize(rows),
+    [rows]
+  );
   const visibleRows: ImportRow[] = hideDuplicates
     ? rows.filter((row: ImportRow): boolean => !row.line.duplicate)
     : rows;
@@ -119,7 +128,7 @@ export default function ImportPage(): JSX.Element {
         error instanceof StatementImportError &&
           error.status === PASSWORD_REQUIRED_STATUS
       );
-      setErrorMessage(messageOf(error));
+      setErrorMessage(messageOf(error, t.common.errorGeneric));
     } finally {
       setIsBusy(false);
     }
@@ -154,7 +163,7 @@ export default function ImportPage(): JSX.Element {
         ? reloadIncome()
         : reloadExpenses());
     } catch (error: unknown) {
-      setErrorMessage(messageOf(error));
+      setErrorMessage(messageOf(error, t.common.errorGeneric));
     }
   }
 
@@ -172,7 +181,7 @@ export default function ImportPage(): JSX.Element {
         setRows(toRows(refreshed));
       }
     } catch (error: unknown) {
-      setErrorMessage(messageOf(error));
+      setErrorMessage(messageOf(error, t.common.errorGeneric));
     } finally {
       setIsBusy(false);
     }
@@ -186,14 +195,13 @@ export default function ImportPage(): JSX.Element {
           className={clsx(panel, 'flex min-w-0 flex-col gap-3')}
         >
           <h1 className="text-base font-semibold text-[var(--ctp-text)]">
-            Import a statement
+            {t.import.title}
           </h1>
           <p className="text-sm text-[var(--ctp-subtext1)]">
-            Bradesco card PDF, NuBank card bill PDF or NuBank CSV. Nothing is
-            saved until you review the lines and press Import.
+            {t.import.description}
           </p>
           <input
-            aria-label="Statement file"
+            aria-label={t.import.statementFile}
             type="file"
             accept=".pdf,.csv,application/pdf,text/csv"
             onChange={handleFile}
@@ -202,7 +210,7 @@ export default function ImportPage(): JSX.Element {
           {needsPassword && (
             <Input
               id="password"
-              label="PDF password"
+              label={t.import.pdfPassword}
               type="password"
               autoComplete="off"
               value={password}
@@ -217,7 +225,7 @@ export default function ImportPage(): JSX.Element {
             className={clsx(primaryButton, buttonState(!file || isBusy))}
           >
             <FiUpload />
-            {isBusy && !preview ? 'Reading...' : 'Read statement'}
+            {isBusy && !preview ? t.import.reading : t.import.readStatement}
           </button>
           {errorMessage && (
             <span role="alert" className="text-sm text-[var(--ctp-red)]">
@@ -226,22 +234,22 @@ export default function ImportPage(): JSX.Element {
           )}
           {result && (
             <span role="status" className="text-sm text-[var(--ctp-green)]">
-              Imported {result.imported}{' '}
-              {result.imported === 1 ? 'transaction' : 'transactions'}
-              {result.skippedAsDuplicates > 0 &&
-                `, skipped ${result.skippedAsDuplicates} already saved`}
-              .
+              {t.import.importSuccess(
+                result.imported,
+                result.skippedAsDuplicates,
+                result.movedInstallments
+              )}
             </span>
           )}
 
           <div className="mt-2 flex flex-col gap-2 border-t border-[var(--ctp-surface1)] pt-3">
             <span className="text-sm font-semibold text-[var(--ctp-subtext1)]">
-              New category
+              {t.import.newCategory}
             </span>
             <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
               <input
-                aria-label="New category name"
-                placeholder="Name"
+                aria-label={t.import.newCategoryName}
+                placeholder={t.common.name}
                 size={1}
                 value={newCategoryName}
                 onChange={({
@@ -252,7 +260,7 @@ export default function ImportPage(): JSX.Element {
                 className={field}
               />
               <select
-                aria-label="New category type"
+                aria-label={t.import.newCategoryType}
                 value={newCategoryType}
                 onChange={({
                   currentTarget: { value },
@@ -261,14 +269,18 @@ export default function ImportPage(): JSX.Element {
                 }
                 className={field}
               >
-                <option value={TransactionType.EXPENSE}>Expense</option>
-                <option value={TransactionType.INCOME}>Income</option>
+                <option value={TransactionType.EXPENSE}>
+                  {t.common.expense}
+                </option>
+                <option value={TransactionType.INCOME}>
+                  {t.common.income}
+                </option>
               </select>
               <button
                 type="button"
                 onClick={(): Promise<void> => handleCreateCategory()}
                 disabled={!newCategoryName.trim()}
-                title="Add category"
+                title={t.import.addCategory}
                 className={clsx(
                   'rounded-md px-3',
                   buttonState(!newCategoryName.trim())
@@ -284,11 +296,15 @@ export default function ImportPage(): JSX.Element {
           <div className={clsx(panel, 'flex min-w-0 flex-col gap-3')}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-base font-semibold text-[var(--ctp-text)]">
-                {statementSourceLabels[preview.source]}
+                {t.import.sources[preview.source]}
               </h2>
               <span className="text-sm text-[var(--ctp-subtext1)]">
-                {summary.total} lines · {summary.duplicates} already saved ·{' '}
-                {summary.credits} credits
+                {t.import.summary(
+                  summary.total,
+                  summary.duplicates,
+                  summary.credits,
+                  summary.suggested
+                )}
               </span>
             </div>
             {preview.printedTotal !== null &&
@@ -302,8 +318,11 @@ export default function ImportPage(): JSX.Element {
                   )}
                 >
                   {preview.totalsMatch
-                    ? 'Every line was read: they add up to the statement total.'
-                    : `Lines add up to ${preview.parsedTotal ?? 0} but the statement shows ${preview.printedTotal}. Some line may be missing; check before importing.`}
+                    ? t.import.totalsMatch
+                    : t.import.totalsMismatch(
+                        preview.parsedTotal ?? 0,
+                        preview.printedTotal
+                      )}
                 </div>
               )}
 
@@ -314,24 +333,24 @@ export default function ImportPage(): JSX.Element {
                   checked={hideDuplicates}
                   onChange={(): void => setHideDuplicates(!hideDuplicates)}
                 />
-                Hide already saved
+                {t.import.hideAlreadySaved}
               </label>
               <button
                 type="button"
                 onClick={(): void => selectAll(true)}
                 className="cursor-pointer rounded px-2 py-1 text-[var(--ctp-blue)] hover:bg-[var(--ctp-surface1)]"
               >
-                Select all
+                {t.import.selectAll}
               </button>
               <button
                 type="button"
                 onClick={(): void => selectAll(false)}
                 className="cursor-pointer rounded px-2 py-1 text-[var(--ctp-blue)] hover:bg-[var(--ctp-surface1)]"
               >
-                Select none
+                {t.import.selectNone}
               </button>
               <select
-                aria-label="Category for selected expenses"
+                aria-label={t.import.categoryForSelected}
                 value=""
                 onChange={({
                   currentTarget: { value },
@@ -340,7 +359,7 @@ export default function ImportPage(): JSX.Element {
                 }
                 className={field}
               >
-                <option value="">Category for selected expenses…</option>
+                <option value="">{t.import.categoryForSelected}</option>
                 {categoriesFor(false).map((category: Category): JSX.Element => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -353,12 +372,12 @@ export default function ImportPage(): JSX.Element {
               <table className="w-full min-w-[760px] text-left text-sm">
                 <thead className="text-[var(--ctp-subtext1)]">
                   <tr>
-                    <th className="p-2" aria-label="Import" />
-                    <th className="p-2">Date</th>
-                    <th className="p-2">Description</th>
-                    <th className="p-2 text-right">Amount</th>
-                    <th className="p-2">Category</th>
-                    <th className="p-2">Status</th>
+                    <th className="p-2" aria-label={t.import.importColumn} />
+                    <th className="p-2">{t.common.date}</th>
+                    <th className="p-2">{t.import.descriptionColumn}</th>
+                    <th className="p-2 text-right">{t.common.value}</th>
+                    <th className="p-2">{t.common.category}</th>
+                    <th className="p-2">{t.import.statusColumn}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -373,7 +392,7 @@ export default function ImportPage(): JSX.Element {
                       <td className="p-2">
                         <input
                           type="checkbox"
-                          aria-label={`Import ${row.line.description}`}
+                          aria-label={t.import.importRow(row.line.description)}
                           checked={row.selected}
                           onChange={(): void =>
                             updateRow(row.line.index, {
@@ -390,10 +409,7 @@ export default function ImportPage(): JSX.Element {
                           {row.line.description}
                         </div>
                         <div className="text-xs text-[var(--ctp-subtext0)]">
-                          {row.line.installmentNumber &&
-                            row.line.installmentTotal &&
-                            `Installment ${row.line.installmentNumber}/${row.line.installmentTotal} · creates all ${row.line.installmentTotal} · `}
-                          {row.line.cardholder}
+                          {describeLineDetails(row.line, t.import)}
                         </div>
                       </td>
                       <td
@@ -410,12 +426,14 @@ export default function ImportPage(): JSX.Element {
                       </td>
                       <td className="p-2">
                         <select
-                          aria-label={`Category for ${row.line.description}`}
+                          aria-label={t.import.categoryForRow(
+                            row.line.description
+                          )}
                           value={row.categoryId}
                           onChange={({
                             currentTarget: { value },
                           }: ChangeEvent<HTMLSelectElement>): void =>
-                            updateRow(row.line.index, { categoryId: value })
+                            setRows(chooseCategory(rows, row.line.index, value))
                           }
                           className={clsx(
                             field,
@@ -427,8 +445,8 @@ export default function ImportPage(): JSX.Element {
                         >
                           <option value="">
                             {row.line.credit
-                              ? 'Income category…'
-                              : 'Expense category…'}
+                              ? t.import.incomeCategoryPlaceholder
+                              : t.import.expenseCategoryPlaceholder}
                           </option>
                           {categoriesFor(row.line.credit).map(
                             (category: Category): JSX.Element => (
@@ -438,9 +456,14 @@ export default function ImportPage(): JSX.Element {
                             )
                           )}
                         </select>
+                        {describeSuggestion(row, t.import) && (
+                          <div className="mt-1 text-xs text-[var(--ctp-subtext0)]">
+                            {describeSuggestion(row, t.import)}
+                          </div>
+                        )}
                       </td>
                       <td className="p-2 text-xs whitespace-nowrap text-[var(--ctp-subtext1)]">
-                        {describeStatus(row.line)}
+                        {describeStatus(row.line, t.import)}
                       </td>
                     </tr>
                   ))}
@@ -450,9 +473,10 @@ export default function ImportPage(): JSX.Element {
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ctp-surface1)] pt-3">
               <span className="text-sm text-[var(--ctp-subtext1)]">
-                {summary.selected} selected
-                {summary.missingCategory > 0 &&
-                  ` · ${summary.missingCategory} still need a category`}
+                {t.import.selectedCount(
+                  summary.selected,
+                  summary.missingCategory
+                )}
               </span>
               <div className="flex items-center gap-3">
                 <Money
@@ -466,7 +490,9 @@ export default function ImportPage(): JSX.Element {
                   className={clsx(primaryButton, buttonState(!canImport))}
                 >
                   <FiCheck />
-                  {isBusy ? 'Importing...' : `Import ${summary.selected}`}
+                  {isBusy
+                    ? t.import.importing
+                    : t.import.importCount(summary.selected)}
                 </button>
               </div>
             </div>
@@ -478,7 +504,7 @@ export default function ImportPage(): JSX.Element {
               'flex items-center justify-center text-sm text-[var(--ctp-subtext1)]'
             )}
           >
-            Choose a statement to see its lines here.
+            {t.import.emptyPreview}
           </div>
         )}
       </section>

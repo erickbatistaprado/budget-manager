@@ -1,4 +1,7 @@
+'use client';
+
 import { BalanceBarChart, BalancePieChart } from '@/components';
+import { useI18n } from '@/i18n/useI18n';
 import type { Transaction } from '@/types';
 import type { JSX } from 'react';
 
@@ -15,6 +18,8 @@ export default function Charts({
   startDate,
   endDate,
 }: Readonly<ChartsProps>): JSX.Element {
+  const { t } = useI18n();
+
   return (
     <div className="flex w-full cursor-default items-center justify-start rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-2 shadow-md">
       <BalanceBarChart
@@ -23,8 +28,8 @@ export default function Charts({
         expenses={expenses}
         incomes={incomes}
       />
-      <BalancePieChart transactions={incomes} typography="Incomes" />
-      <BalancePieChart transactions={expenses} typography="Expenses" />
+      <BalancePieChart transactions={incomes} typography={t.home.incomes} />
+      <BalancePieChart transactions={expenses} typography={t.home.expenses} />
     </div>
   );
 }

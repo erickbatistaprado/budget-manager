@@ -9,6 +9,7 @@ export { default as FinancialMovements } from '@/components/FinancialMovements/F
 export { default as Header } from '@/components/Header/Header.component';
 export { default as HeaderCell } from '@/components/HeaderCell/HeaderCell.component';
 export { default as Input } from '@/components/Input/Input.component';
+export { default as InstallmentPrepayment } from '@/components/InstallmentPrepayment/InstallmentPrepayment.component';
 export { default as LoginForm } from '@/components/LoginForm/LoginForm.component';
 export { default as MenuButton } from '@/components/MenuButton/MenuButton.component';
 export { default as Money } from '@/components/Money/Money.component';
@@ -19,3 +20,4 @@ export { default as SideMenu } from '@/components/SideMenu/SideMenu.component';
 export { default as Tooltip } from '@/components/Tooltip/Tooltip.component';
 export { default as Transactions } from '@/components/Transactions/Transactions.component';
 export { default as ThemeSwitcher } from '@/components/ThemeSwitcher/ThemeSwitcher.component';
+export { default as LanguageSwitcher } from '@/components/LanguageSwitcher/LanguageSwitcher.component';

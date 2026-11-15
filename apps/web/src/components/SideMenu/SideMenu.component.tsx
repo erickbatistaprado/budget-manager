@@ -1,12 +1,13 @@
 'use client';
 
-import { MenuButton, ThemeSwitcher } from '@/components';
+import { LanguageSwitcher, MenuButton, ThemeSwitcher } from '@/components';
+import { useI18n } from '@/i18n/useI18n';
 import { authenticationService } from '@/services';
 import { usePathname, useRouter } from 'next/navigation';
 import type { JSX } from 'react';
 import { CgProfile } from 'react-icons/cg';
-import { FiUpload } from 'react-icons/fi';
 import { FaHome } from 'react-icons/fa';
+import { FiUpload } from 'react-icons/fi';
 import { PiSignOutBold } from 'react-icons/pi';
 import { RiSafe2Line } from 'react-icons/ri';
 import { VscGraph } from 'react-icons/vsc';
@@ -18,8 +19,9 @@ interface SideMenuProps {
 export default function SideMenu({
   onClose,
 }: Readonly<SideMenuProps>): JSX.Element {
-  const pathname = usePathname();
+  const pathname: string = usePathname();
   const { push } = useRouter();
+  const { t } = useI18n();
 
   function isActive(path: string): boolean {
     return pathname === path;
@@ -32,47 +34,50 @@ export default function SideMenu({
 
   return (
     <div className="flex h-full w-full max-w-xs flex-col bg-[var(--ctp-mantle)]/95 p-6 shadow-xl backdrop-blur-sm">
-      <p className="mb-8 text-3xl font-bold text-[var(--ctp-text)]">Menu</p>
+      <p className="mb-8 text-3xl font-bold text-[var(--ctp-text)]">
+        {t.menu.title}
+      </p>
       <nav className="flex flex-col gap-3 text-lg">
         <MenuButton active={isActive('/')} onClick={(): void => onClick('/')}>
           <FaHome size={22} />
-          Home
+          {t.menu.home}
         </MenuButton>
         <MenuButton
           active={isActive('/analytics')}
           onClick={(): void => onClick('/analytics')}
         >
           <VscGraph size={22} />
-          Analytics
+          {t.menu.analytics}
         </MenuButton>
         <MenuButton
           active={isActive('/savings')}
           onClick={(): void => onClick('/savings')}
         >
           <RiSafe2Line size={22} />
-          Savings
+          {t.menu.savings}
         </MenuButton>
         <MenuButton
           active={isActive('/import')}
           onClick={(): void => onClick('/import')}
         >
           <FiUpload size={22} />
-          Import
+          {t.menu.import}
         </MenuButton>
         <MenuButton
           active={isActive('/profile')}
           onClick={(): void => onClick('/profile')}
         >
           <CgProfile size={22} />
-          Profile
+          {t.menu.profile}
         </MenuButton>
         <MenuButton onClick={authenticationService.logout}>
           <PiSignOutBold size={22} />
-          Sign Out
+          {t.menu.signOut}
         </MenuButton>
       </nav>
-      <div className="mt-auto pt-8">
+      <div className="mt-auto flex flex-col gap-3 pt-8">
         <ThemeSwitcher />
+        <LanguageSwitcher />
       </div>
     </div>
   );

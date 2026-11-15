@@ -1,3 +1,4 @@
+import { renderWithI18n } from '@/i18n/testing';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import Money from './Money.component';
@@ -32,5 +33,11 @@ describe('Money component', (): void => {
     const { formatCurrency } = jest.requireMock('@/utils/globalFormats.util');
     render(<Money value={500} />);
     expect(formatCurrency).toHaveBeenCalledWith(500, 'en');
+  });
+
+  it('calls formatCurrency with pt when language is pt', (): void => {
+    const { formatCurrency } = jest.requireMock('@/utils/globalFormats.util');
+    renderWithI18n(<Money value={500} />, { language: 'pt' });
+    expect(formatCurrency).toHaveBeenCalledWith(500, 'pt');
   });
 });

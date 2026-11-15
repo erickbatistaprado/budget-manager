@@ -3,6 +3,7 @@
 import { Balance, Charts, Transactions } from '@/components';
 import { TransactionType } from '@/enums';
 import { useTransactions } from '@/hooks';
+import { useI18n } from '@/i18n/useI18n';
 import type { TransactionSortKey, TransactionSortOrder } from '@/types';
 import {
   getStartOfTheMonthAndEndOfTheMonth,
@@ -16,6 +17,7 @@ interface TransactionSortState {
 }
 
 export default function Body(): JSX.Element {
+  const { t } = useI18n();
   const [date, setDate] = useState<Date>(new Date());
   const [incomeSort, setIncomeSort] = useState<TransactionSortState>({
     key: 'date',
@@ -91,7 +93,7 @@ export default function Body(): JSX.Element {
           sortOrder={incomeSort.order}
           transactions={incomes}
           transactionsMutate={incomesMutate}
-          title="Incomes"
+          title={t.home.incomes}
           selectedDate={date}
           toggleSort={(key: TransactionSortKey): void =>
             toggleSort(key, setIncomeSort, incomeSort)
@@ -105,7 +107,7 @@ export default function Body(): JSX.Element {
           sortOrder={expenseSort.order}
           transactions={expenses}
           transactionsMutate={expensesMutate}
-          title="Expenses"
+          title={t.home.expenses}
           selectedDate={date}
           toggleSort={(key: TransactionSortKey): void =>
             toggleSort(key, setExpenseSort, expenseSort)

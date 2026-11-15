@@ -1,5 +1,6 @@
 'use client';
 
+import { useI18n } from '@/i18n/useI18n';
 import type { Transaction } from '@/types';
 import { PieChart, type ChartsLegendSlotProps } from '@mui/x-charts';
 import { useMemo, type JSX } from 'react';
@@ -23,6 +24,8 @@ export default function BalancePieChart({
   height = 180,
   width = 180,
 }: Readonly<BalancePieChartProps>): JSX.Element {
+  const { t } = useI18n();
+
   const groupedTransactions: PieChartDataType[] =
     useMemo((): PieChartDataType[] => {
       const grouped = Object.values(
@@ -53,7 +56,8 @@ export default function BalancePieChart({
       );
 
       return grouped.sort(
-        (a: PieChartDataType, b: PieChartDataType): number => b.value - a.value
+        (firstData: PieChartDataType, secondData: PieChartDataType): number =>
+          secondData.value - firstData.value
       );
     }, [transactions]);
 
@@ -84,7 +88,7 @@ export default function BalancePieChart({
     </div>
   ) : (
     <div className="flex h-full w-full items-center justify-center text-[var(--ctp-subtext1)]">
-      <span>No transaction data available</span>
+      <span>{t.home.noData}</span>
     </div>
   );
 }

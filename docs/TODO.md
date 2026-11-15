@@ -58,6 +58,11 @@ Work tracked for Budget Manager. Tick items off as they land on `main`.
 
 ### Follow-ups found during the upgrade
 
+- [x] Dates from the API were read as midnight UTC, a day early in Brazil;
+      anything due on the 1st showed in the previous month.
+- [x] A month with several installments of one purchase (after a prepayment)
+      showed and counted only one.
+
 - [ ] ESLint 10: eslint-config-next and eslint-config-expo plugins do not
       declare support yet; npm marks ESLint 9 as deprecated.
 - [ ] TypeScript 7: blocked by typescript-eslint and the OpenAPI generator.
@@ -73,6 +78,18 @@ Work tracked for Budget Manager. Tick items off as they land on `main`.
       target matters.
 
 ## Features
+
+### Analytics and languages
+
+- [x] Analytics redesign: week, month, year or custom periods; income, expenses,
+      net, savings rate and spending per day against the previous period; this
+      month's and next month's spending room after installments and repeating
+      charges; daily spending, income vs expenses, cumulative, categories, top
+      merchants, the next 6 months of installments and savings by location.
+- [x] English and Portuguese (Brazil), switched from the side menu and kept in a
+      cookie so the server renders the right language. Money is always BRL;
+      numbers and dates follow the language.
+- [ ] Mobile app in Portuguese.
 
 ### Import bank statements from PDF
 
@@ -94,8 +111,21 @@ paid bank-connection service is needed.
       than collapsed; installment purchases match by description, count,
       installment amount and category, so next month's bill does not repeat
       them. The import checks again on the server.
-- [x] Category suggestions from the last transaction with the same description.
+- [x] Category suggestions, strongest first: the same description, the same
+      merchant written differently, a built-in list of well-known merchants and
+      words (`MerchantKeywords`), then similar merchants. The latest choice wins,
+      the page says where each suggestion came from, and picking a category
+      fills the other lines of the same merchant. Everything stays local.
+- [ ] Opt-in AI suggestions for lines still unknown, sending only merchant
+      names. Not started: it is the only option that sends data off the
+      machine.
 - [x] Installments create the whole purchase with its schedule.
+- [x] Prepaid installments (`Antecipada - … - Parcela 7/8`) move that
+      installment to the day it was paid instead of being skipped, whether the
+      purchase was saved earlier, is created by another line of the bill, or by
+      the prepaid line itself. Re-importing moves nothing twice.
+- [x] Pay installments early by hand from a transaction (and undo it), so a
+      card prepayment never means deleting and recreating the purchase.
 - [x] Clear errors for protected PDFs (asks for the password), scans and
       unsupported files.
 - [ ] Bradesco and NuBank account (checking) statements, not only cards.

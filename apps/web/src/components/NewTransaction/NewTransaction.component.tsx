@@ -3,6 +3,7 @@
 import { DatePickerDialog, Input, SelectWithTooltip } from '@/components';
 import { RepeatInterval, TransactionType } from '@/enums';
 import { useCategories } from '@/hooks';
+import { useI18n } from '@/i18n/useI18n';
 import { postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import type { Category, Transaction } from '@/types';
 import { getApiDate, parseApiDate } from '@/utils/globalFormats.util';
@@ -23,6 +24,7 @@ export default function NewTransaction({
   transaction,
   onClose,
 }: Readonly<NewTransactionProps>): JSX.Element {
+  const { t } = useI18n();
   const [form, setForm] = useState<Partial<Transaction>>(
     transaction ?? { repeats: RepeatInterval.NONE }
   );
@@ -43,15 +45,15 @@ export default function NewTransaction({
     event.preventDefault();
     setErrorMessage('');
 
-    const totalValue = Number(form.totalValue);
-    const installmentNumbers = Number(form.installmentNumbers);
+    const totalValue: number = Number(form.totalValue);
+    const installmentNumbers: number = Number(form.installmentNumbers);
 
     if (!Number.isFinite(totalValue) || totalValue <= 0) {
-      setErrorMessage('Value must be greater than zero.');
+      setErrorMessage(t.transactions.valueGreaterThanZero);
       return;
     }
     if (!form.category?.id) {
-      setErrorMessage('Select a category.');
+      setErrorMessage(t.transactions.selectCategoryError);
       return;
     }
     if (
@@ -59,7 +61,7 @@ export default function NewTransaction({
       form.installmentNumbers &&
       (!Number.isInteger(installmentNumbers) || installmentNumbers <= 1)
     ) {
-      setErrorMessage('Installments must be a whole number greater than one.');
+      setErrorMessage(t.transactions.invalidInstallments);
       return;
     }
     if (isSubmitting) {
@@ -96,7 +98,7 @@ export default function NewTransaction({
       onClose();
     } catch (error: unknown) {
       console.error(error);
-      setErrorMessage('Unable to save transaction.');
+      setErrorMessage(t.transactions.saveError);
     } finally {
       setIsSubmitting(false);
     }
@@ -110,7 +112,9 @@ export default function NewTransaction({
         ...prevForm,
         [id]:
           id === 'category'
-            ? categories?.find((c: Category): boolean => c.id === value)
+            ? categories?.find(
+                (categoryItem: Category): boolean => categoryItem.id === value
+              )
             : value,
       })
     );
@@ -137,7 +141,7 @@ export default function NewTransaction({
     form.repeats === RepeatInterval.NONE &&
     transactionType === TransactionType.EXPENSE
   );
-  const totalValue = Number(form.totalValue);
+  const totalValue: number = Number(form.totalValue);
   const isSaveDisabled: boolean = Boolean(
     !Number.isFinite(totalValue) || totalValue <= 0 || !form.category?.id
   );
@@ -154,44 +158,52 @@ export default function NewTransaction({
       >
         <SelectWithTooltip
           id="repeats"
-          tooltip="Does it repeat?"
+          tooltip={t.transactions.repeatsTooltip}
           icon={
             <MdEventRepeat className="text-[var(--ctp-yellow)]" size={25} />
           }
           value={form.repeats}
           onChange={handleChange}
           options={[
-            { label: 'None', value: RepeatInterval.NONE },
-            { label: 'Monthly', value: RepeatInterval.MONTHLY },
+            { label: t.transactions.repeatsNone, value: RepeatInterval.NONE },
+            {
+              label: t.transactions.repeatsMonthly,
+              value: RepeatInterval.MONTHLY,
+            },
           ]}
         />
         <SelectWithTooltip
           id="transactionType"
-          tooltip="Transaction Type"
+          tooltip={t.transactions.typeTooltip}
           icon={<GrTransaction className="text-[var(--ctp-green)]" size={25} />}
           value={transactionType}
           onChange={handleTransactionTypeChange}
           options={[
-            { label: 'Select a transaction type', value: '' },
-            { label: 'Expense', value: 'EXPENSE' },
-            { label: 'Income', value: 'INCOME' },
+            { label: t.transactions.selectType, value: '' },
+            { label: t.common.expense, value: 'EXPENSE' },
+            { label: t.common.income, value: 'INCOME' },
           ]}
         />
         <SelectWithTooltip
           id="category"
-          tooltip="Transaction category"
+          tooltip={t.transactions.categoryTooltip}
           icon={<FcIdea size={25} />}
           value={form.category?.id || ''}
           onChange={handleChange}
           options={[
-            { label: 'Select a category', value: '' },
+            { label: t.transactions.selectCategory, value: '' },
             ...(categories
               ?.slice()
-              .sort((a: Category, b: Category): number =>
-                a.name.localeCompare(b.name)
+              .sort(
+                (firstCategory: Category, secondCategory: Category): number =>
+                  firstCategory.name.localeCompare(secondCategory.name)
               )
-              .map(({ name, id }: Category) => ({ label: name, value: id })) ??
-              []),
+              .map(
+                ({ name, id }: Category): { label: string; value: string } => ({
+                  label: name,
+                  value: id,
+                })
+              ) ?? []),
           ]}
           disabled={!categories?.length}
         />
@@ -203,7 +215,7 @@ export default function NewTransaction({
             />
             <Input
               id="installmentNumbers"
-              label="Number of installments"
+              label={t.transactions.numberOfInstallments}
               type="number"
               min={2}
               step={1}
@@ -216,7 +228,7 @@ export default function NewTransaction({
           <FcSurvey size={25} />
           <Input
             id="notes"
-            label="Notes"
+            label={t.common.notes}
             type="text"
             value={form.notes ?? ''}
             onChange={handleChange}
@@ -227,7 +239,7 @@ export default function NewTransaction({
           <Input
             className="no-spinner"
             id="totalValue"
-            label="Value"
+            label={t.common.value}
             type="number"
             min={0.01}
             step={0.01}
@@ -244,7 +256,7 @@ export default function NewTransaction({
             type="button"
             onClick={handleOnClose}
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button
             className={clsx(
@@ -257,7 +269,7 @@ export default function NewTransaction({
             form="newTransactionForm"
             disabled={isSaveDisabled || isSubmitting}
           >
-            {isSubmitting ? 'Saving...' : 'Save'}
+            {isSubmitting ? t.common.saving : t.common.save}
           </button>
         </div>
       </form>

@@ -8,7 +8,7 @@ export default function HomeLayout({
   children: ReactNode;
 }>): JSX.Element {
   return (
-    <section className="flex min-h-screen flex-col" lang="en">
+    <section className="flex min-h-screen flex-col">
       <Header />
       <main className="min-h-0 flex-1">{children}</main>
     </section>

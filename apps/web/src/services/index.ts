@@ -1,4 +1,5 @@
 export { authenticationService } from '@/services/authentication/authentication.service';
+export { installmentService } from '@/services/installment/installment.service';
 export { savingService } from '@/services/saving/saving.service';
 export {
   PASSWORD_REQUIRED_STATUS,

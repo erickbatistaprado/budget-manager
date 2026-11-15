@@ -1,17 +1,20 @@
 'use client';
 
-import { Money, NewTransaction } from '@/components';
+import { InstallmentPrepayment, Money, NewTransaction } from '@/components';
+import { useI18n } from '@/i18n/useI18n';
 import { deleteFetcher } from '@/libs/fetchers.lib';
 import type { Installment, Transaction } from '@/types';
+import { formatDate, parseApiDate } from '@/utils/globalFormats.util';
 import {
-  formatDate,
-  parseApiDate,
-  roundNumbersUp,
-} from '@/utils/globalFormats.util';
+  amountInMonth,
+  describeInstallments,
+  installmentsInMonth,
+} from '@/utils/installments.util';
 import clsx from 'clsx';
 import { useMemo, useState, type JSX } from 'react';
 import { BiEdit } from 'react-icons/bi';
 import { FcFullTrash } from 'react-icons/fc';
+import { FiFastForward } from 'react-icons/fi';
 
 export interface FinancialMovementsProps {
   transaction: Transaction;
@@ -24,10 +27,12 @@ export default function FinancialMovements({
   mutateOnDelete,
   selectedDate,
 }: Readonly<FinancialMovementsProps>): JSX.Element {
+  const { language, t } = useI18n();
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isPrepaying, setIsPrepaying] = useState<boolean>(false);
 
   async function deleteTransaction(): Promise<void> {
     setErrorMessage('');
@@ -43,7 +48,7 @@ export default function FinancialMovements({
       await mutateOnDelete();
     } catch (error: unknown) {
       console.error(error);
-      setErrorMessage('Unable to delete.');
+      setErrorMessage(t.transactions.deleteError);
     } finally {
       setIsDeleting(false);
       setIsConfirmingDelete(false);
@@ -60,33 +65,31 @@ export default function FinancialMovements({
         .getDate()
         .toString()
         .padStart(2, '0');
-      return `Day ${day} (${transaction.repeats})`;
+      const repeatsLabel: string =
+        transaction.repeats === 'MONTHLY'
+          ? t.transactions.repeatsMonthly
+          : transaction.repeats;
+      return t.transactions.dayAndRepeat(day, repeatsLabel);
     }
     if (currentInstallment) {
-      return formatDate(currentInstallment.dueDate, 'en-US');
+      return formatDate(currentInstallment.dueDate, language);
     }
-    return formatDate(transaction.date, 'en-US');
+    return formatDate(transaction.date, language);
   }
 
-  const currentInstallment: Installment | undefined =
-    transaction.installments?.find((installment: Installment): boolean => {
-      const installmentDate = parseApiDate(installment.dueDate);
+  const dueThisMonth: Installment[] = installmentsInMonth(
+    transaction,
+    selectedDate
+  );
+  const currentInstallment: Installment | undefined = dueThisMonth[0];
+  const paidEarlyThisMonth: boolean = dueThisMonth.some(
+    (installment: Installment): boolean => installment.paidEarly
+  );
 
-      return (
-        selectedDate.getMonth() === installmentDate.getMonth() &&
-        selectedDate.getFullYear() === installmentDate.getFullYear()
-      );
-    });
-
-  const calculateInstallmentAmount: number = useMemo((): number => {
-    if (transaction.installmentNumbers) {
-      return roundNumbersUp(
-        transaction.totalValue,
-        transaction.installmentNumbers
-      );
-    }
-    return transaction.totalValue;
-  }, [transaction]);
+  const calculateInstallmentAmount: number = useMemo(
+    (): number => amountInMonth(transaction, selectedDate),
+    [transaction, selectedDate]
+  );
 
   return (
     <div className="grid grid-cols-4 border-b-2 border-[var(--ctp-surface1)] text-lg">
@@ -104,9 +107,24 @@ export default function FinancialMovements({
         />
         <span className="truncate">
           {transaction.category.name}{' '}
-          {transaction.installmentNumbers &&
-            `(${currentInstallment?.installmentNumber}/${transaction.installmentNumbers})`}
+          {describeInstallments(transaction, selectedDate)}
+          {paidEarlyThisMonth && (
+            <span className="ml-1 rounded bg-[var(--ctp-green)]/15 px-1 text-xs text-[var(--ctp-green)]">
+              {t.transactions.paidEarly}
+            </span>
+          )}
         </span>
+        {Boolean(transaction.installmentNumbers) && (
+          <button
+            type="button"
+            aria-label={t.transactions.payInstallmentsEarly}
+            title={t.transactions.payInstallmentsEarly}
+            onClick={(): void => setIsPrepaying(!isPrepaying)}
+            className="cursor-pointer text-[var(--ctp-subtext1)] transition-colors hover:text-[var(--ctp-blue)]"
+          >
+            <FiFastForward size={18} />
+          </button>
+        )}
       </div>
       <div className="truncate">{transaction.notes}</div>
       <div className="truncate">{getDate()}</div>
@@ -125,7 +143,7 @@ export default function FinancialMovements({
               onClick={deleteTransaction}
               type="button"
             >
-              {isDeleting ? 'Deleting...' : 'Confirm'}
+              {isDeleting ? t.common.deleting : t.common.confirm}
             </button>
             <button
               className="cursor-pointer rounded bg-[var(--ctp-surface1)] px-2 py-1 text-xs font-semibold text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)]"
@@ -133,13 +151,13 @@ export default function FinancialMovements({
               onClick={(): void => setIsConfirmingDelete(false)}
               type="button"
             >
-              Cancel
+              {t.common.cancel}
             </button>
           </div>
         )}
         {!isConfirmingDelete && (
           <button
-            aria-label="Delete transaction"
+            aria-label={t.transactions.deleteAriaLabel}
             className="cursor-pointer"
             disabled={isDeleting}
             onClick={(): void => {
@@ -161,6 +179,13 @@ export default function FinancialMovements({
       >
         <NewTransaction onClose={onEditOrClose} transaction={transaction} />
       </div>
+      {isPrepaying && (
+        <InstallmentPrepayment
+          transaction={transaction}
+          onChanged={mutateOnDelete}
+          onClose={(): void => setIsPrepaying(false)}
+        />
+      )}
     </div>
   );
 }

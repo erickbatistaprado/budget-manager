@@ -2,6 +2,7 @@
 
 import { NewTransaction, SideMenu, Tooltip } from '@/components';
 import { useProfileImage } from '@/hooks';
+import { useI18n } from '@/i18n/useI18n';
 import clsx from 'clsx';
 import Image from 'next/image';
 import { useEffect, useMemo, useState, type JSX } from 'react';
@@ -10,6 +11,7 @@ import { VscRobot } from 'react-icons/vsc';
 
 export default function Header(): JSX.Element {
   const { data: profileImage } = useProfileImage();
+  const { t } = useI18n();
 
   const [isLeftOpen, setIsLeftOpen] = useState(false);
   const [isRightOpen, setIsRightOpen] = useState(false);
@@ -41,7 +43,7 @@ export default function Header(): JSX.Element {
         />
       )}
       <header className="flex justify-between py-2">
-        <Tooltip tooltip="Menu" placement="right">
+        <Tooltip tooltip={t.header.menuTooltip} placement="right">
           {profileImageUrl ? (
             <div className="relative h-11 w-11 cursor-pointer overflow-hidden rounded-full">
               <Image
@@ -50,7 +52,7 @@ export default function Header(): JSX.Element {
                   setIsLeftOpen((prev: boolean): boolean => !prev)
                 }
                 className="object-cover"
-                alt="Profile"
+                alt={t.header.profileAlt}
                 fill
               />
             </div>
@@ -64,7 +66,7 @@ export default function Header(): JSX.Element {
             />
           )}
         </Tooltip>
-        <Tooltip tooltip="New transaction" placement="left">
+        <Tooltip tooltip={t.header.newTransactionTooltip} placement="left">
           <AiOutlinePlus
             className="cursor-pointer rounded-md p-1 hover:text-[var(--ctp-subtext0)]"
             size={44}

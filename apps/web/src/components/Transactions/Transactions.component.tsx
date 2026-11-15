@@ -1,6 +1,7 @@
 'use client';
 
 import { FinancialMovements, HeaderCell } from '@/components';
+import { useI18n } from '@/i18n/useI18n';
 import type {
   Transaction,
   TransactionSortKey,
@@ -33,6 +34,7 @@ export default function Transactions({
   title,
   toggleSort,
 }: Readonly<SingleTransactionProps>): JSX.Element {
+  const { t } = useI18n();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const loadMoreIfNeeded = useCallback((): void => {
@@ -68,14 +70,14 @@ export default function Transactions({
           toggleSort={toggleSort}
         />
         <HeaderCell
-          label="Notes"
+          label={t.common.notes}
           keyName="notes"
           sortKey={sortKey}
           sortOrder={sortOrder}
           toggleSort={toggleSort}
         />
         <HeaderCell
-          label="Date"
+          label={t.common.date}
           keyName="date"
           sortKey={sortKey}
           sortOrder={sortOrder}
@@ -83,7 +85,7 @@ export default function Transactions({
         />
         <div className="flex w-full justify-end">
           <HeaderCell
-            label="Value"
+            label={t.common.value}
             keyName="value"
             sortKey={sortKey}
             sortOrder={sortOrder}
@@ -106,7 +108,7 @@ export default function Transactions({
         ))}
         {isLoadingMore && (
           <div className="py-2 text-center text-sm text-[var(--ctp-subtext0)]">
-            Loading more...
+            {t.home.loadingMore}
           </div>
         )}
       </div>

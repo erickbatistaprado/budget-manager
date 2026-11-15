@@ -1,5 +1,13 @@
 import '@/app/globals.css';
+import I18nProvider from '@/i18n/I18nProvider';
+import {
+  getHtmlLang,
+  LANGUAGE_COOKIE_KEY,
+  languageFromRequest,
+  type Language,
+} from '@/i18n/language';
 import type { Metadata } from 'next';
+import { cookies, headers } from 'next/headers';
 import type { JSX, ReactNode } from 'react';
 
 export const metadata: Metadata = {
@@ -18,13 +26,24 @@ const themeScript = `
 })();
 `;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
-}>): JSX.Element {
+}>): Promise<JSX.Element> {
+  const cookieStore = await cookies();
+  const headerStore = await headers();
+  const cookieValue: string | undefined =
+    cookieStore.get(LANGUAGE_COOKIE_KEY)?.value;
+  const acceptLanguage: string | null = headerStore.get('accept-language');
+  const initialLanguage: Language = languageFromRequest(
+    cookieValue,
+    acceptLanguage
+  );
+  const htmlLang: 'en' | 'pt-BR' = getHtmlLang(initialLanguage);
+
   return (
-    <html className="h-full" lang="en" suppressHydrationWarning>
+    <html className="h-full" lang={htmlLang} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
@@ -32,7 +51,9 @@ export default function RootLayout({
         className="min-h-screen text-[var(--ctp-text)] antialiased transition-colors"
         suppressHydrationWarning
       >
-        {children}
+        <I18nProvider initialLanguage={initialLanguage}>
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import { useI18n } from '@/i18n/useI18n';
 import clsx from 'clsx';
 import type { JSX } from 'react';
 import type { IconType } from 'react-icons';
@@ -23,6 +24,7 @@ export default function HeaderCell({
   sortOrder,
   toggleSort,
 }: Readonly<HeaderCellProps>): JSX.Element {
+  const { t } = useI18n();
   const active: boolean = sortKey === keyName;
   const EyeIcon: IconType = sortOrder === 'asc' ? FaChevronUp : FaChevronDown;
 
@@ -35,10 +37,10 @@ export default function HeaderCell({
       onClick={(): void => toggleSort(keyName)}
       tabIndex={0}
       aria-pressed={active}
-      aria-label={`Sort by ${label}`}
+      aria-label={t.common.sortBy(label)}
     >
       <span>{label}</span>
-      {active ? <EyeIcon aria-label={`Sorted ${sortOrder}`} /> : null}
+      {active ? <EyeIcon aria-label={t.common.sorted(sortOrder)} /> : null}
     </button>
   );
 }

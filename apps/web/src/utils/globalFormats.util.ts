@@ -3,11 +3,14 @@ export interface DateRangeTransactions {
   endDate: Date;
 }
 export function getLocation(language: string): 'en-US' | 'pt-BR' {
-  return language === 'en' ? 'en-US' : 'pt-BR';
+  if (language.startsWith('pt')) {
+    return 'pt-BR';
+  }
+  return 'en-US';
 }
 
-export function getCurrency(language: string): 'USD' | 'BRL' {
-  return language === 'en' ? 'USD' : 'BRL';
+export function getCurrency(): 'BRL' {
+  return 'BRL';
 }
 
 export function getLocalDate(date: Date): string {
@@ -21,15 +24,28 @@ export function getApiDate(date: Date): string {
   return getLocalDate(date).replaceAll('-', '/');
 }
 
+/**
+ * Reads an API date (`2026/11/27`) as that calendar day in the browser's time zone. `new
+ * Date('2026-11-27')` would read it as midnight UTC, which is still the 26th in Brazil, and would
+ * move anything due on the 1st into the previous month.
+ */
 export function parseApiDate(date: Date | string): Date {
   if (date instanceof Date) {
     return date;
   }
-
-  return new Date(date.replaceAll('/', '-'));
+  const match: RegExpMatchArray | null = /^(\d{4})[/-](\d{2})[/-](\d{2})/.exec(
+    date
+  );
+  if (!match) {
+    return new Date(date);
+  }
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
 }
 
-export function formatDate(date: Date | string, language: string): string {
+export function formatDate(
+  date: Date | string,
+  language: string = 'en'
+): string {
   return parseApiDate(date).toLocaleDateString(getLocation(language), {
     year: 'numeric',
     month: '2-digit',
@@ -39,10 +55,10 @@ export function formatDate(date: Date | string, language: string): string {
 
 export function formatCurrency(
   value: bigint | number | undefined,
-  language: string
+  language: string = 'en'
 ): string | undefined {
   return value?.toLocaleString(getLocation(language), {
-    currency: getCurrency(language),
+    currency: 'BRL',
     minimumFractionDigits: 2,
     style: 'currency',
   });
