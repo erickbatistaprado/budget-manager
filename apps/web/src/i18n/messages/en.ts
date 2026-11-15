@@ -87,6 +87,7 @@ export const en = {
   transactions: {
     onlyMonth: (month: string): string => `Only ${month}`,
     fromMonth: (month: string): string => `${month} and the following months`,
+    deleteTitle: (name: string): string => `Delete ${name}?`,
     monthlyScopeTitle: 'Which months should change?',
     onlyMonthHint: "Change only this month's amount, date or notes.",
     fromMonthHint: 'Use the new values from this month on.',

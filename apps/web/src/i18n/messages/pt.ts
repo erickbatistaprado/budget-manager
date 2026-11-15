@@ -90,6 +90,7 @@ export const pt: Messages = {
   transactions: {
     onlyMonth: (month: string): string => `Só em ${month}`,
     fromMonth: (month: string): string => `De ${month} em diante`,
+    deleteTitle: (name: string): string => `Excluir ${name}?`,
     monthlyScopeTitle: 'Quais meses devem mudar?',
     onlyMonthHint: 'Altera só o valor, a data ou as notas deste mês.',
     fromMonthHint: 'Usa os novos valores deste mês em diante.',

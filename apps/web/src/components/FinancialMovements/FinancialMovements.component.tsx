@@ -27,6 +27,11 @@ export interface FinancialMovementsProps {
   selectedDate: Date;
 }
 
+const dangerButton =
+  'cursor-pointer rounded bg-[var(--ctp-red)]/25 px-2 py-1 text-xs font-semibold whitespace-nowrap text-[var(--ctp-red)] disabled:opacity-50';
+const cancelButton =
+  'cursor-pointer rounded bg-[var(--ctp-surface1)] px-2 py-1 text-xs font-semibold whitespace-nowrap text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)] disabled:opacity-50';
+
 export default function FinancialMovements({
   transaction,
   selectedDate,
@@ -194,48 +199,6 @@ export default function FinancialMovements({
             {errorMessage}
           </span>
         )}
-        {isConfirmingDelete && (
-          <div className="flex items-center gap-1">
-            {monthly && (
-              <>
-                <span className="text-xs">
-                  {t.transactions.earlierUnchanged}
-                </span>
-                <button
-                  type="button"
-                  disabled={isDeleting}
-                  onClick={(): void => {
-                    void deleteTransaction('following');
-                  }}
-                >
-                  {t.transactions.fromMonth(monthLabel)}
-                </button>
-              </>
-            )}
-            <button
-              className="cursor-pointer rounded bg-[var(--ctp-red)]/25 px-2 py-1 text-xs font-semibold text-[var(--ctp-red)]"
-              disabled={isDeleting}
-              onClick={(): void => {
-                void deleteTransaction('month');
-              }}
-              type="button"
-            >
-              {isDeleting && t.common.deleting}
-              {!isDeleting &&
-                (monthly
-                  ? t.transactions.onlyMonth(monthLabel)
-                  : t.common.confirm)}
-            </button>
-            <button
-              className="cursor-pointer rounded bg-[var(--ctp-surface1)] px-2 py-1 text-xs font-semibold text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)]"
-              disabled={isDeleting}
-              onClick={(): void => setIsConfirmingDelete(false)}
-              type="button"
-            >
-              {t.common.cancel}
-            </button>
-          </div>
-        )}
         {!isConfirmingDelete && (
           <button
             aria-label={t.transactions.deleteAriaLabel}
@@ -250,6 +213,66 @@ export default function FinancialMovements({
           </button>
         )}
       </div>
+      {isConfirmingDelete && (
+        <div className="col-span-4 mb-2 flex flex-wrap items-center justify-between gap-3 rounded-md bg-[var(--ctp-surface0)] px-3 py-2 text-sm">
+          <div className="min-w-0">
+            <p className="font-semibold">
+              {t.transactions.deleteTitle(
+                transaction.notes || transaction.category.name
+              )}
+            </p>
+            {monthly && (
+              <p className="text-xs text-[var(--ctp-subtext0)]">
+                {t.transactions.earlierUnchanged}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {isDeleting && <span className="text-xs">{t.common.deleting}</span>}
+            {!isDeleting && !monthly && (
+              <button
+                className={dangerButton}
+                onClick={(): void => {
+                  void deleteTransaction('month');
+                }}
+                type="button"
+              >
+                {t.common.delete}
+              </button>
+            )}
+            {!isDeleting && monthly && (
+              <>
+                <button
+                  className={dangerButton}
+                  onClick={(): void => {
+                    void deleteTransaction('month');
+                  }}
+                  type="button"
+                >
+                  {t.transactions.onlyMonth(monthLabel)}
+                </button>
+                <button
+                  className={dangerButton}
+                  onClick={(): void => {
+                    void deleteTransaction('following');
+                  }}
+                  type="button"
+                >
+                  {t.transactions.fromMonth(monthLabel)}
+                </button>
+              </>
+            )}
+            <button
+              className={cancelButton}
+              disabled={isDeleting}
+              onClick={(): void => setIsConfirmingDelete(false)}
+              type="button"
+            >
+              {t.common.cancel}
+            </button>
+          </div>
+        </div>
+      )}
       <div
         className={clsx(
           'fixed top-0 right-0 z-50 h-full w-[400px] transform bg-[var(--ctp-mantle)] shadow-lg transition-transform duration-300 md:w-[500px]',
