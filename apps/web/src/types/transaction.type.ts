@@ -3,6 +3,8 @@ import type { RepeatInterval } from '@/enums';
 import type { Category, Installment } from '@/types';
 
 export interface Transaction {
+  source?: 'MANUAL' | 'FINANCING';
+  financingId?: string | null;
   id: string;
   category: Category;
   paymentMethod?: PaymentMethod | null;

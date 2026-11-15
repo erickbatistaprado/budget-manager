@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { InstallmentPrepayment, Money, NewTransaction } from '@/components';
 import { paymentLabel } from '@/utils/payment.util';
@@ -113,6 +114,7 @@ export default function FinancialMovements({
     selectedDate
   );
   const currentInstallment: Installment | undefined = dueThisMonth[0];
+  const displayedNotes = occurrence ? occurrence.notes : transaction.notes;
   const paidEarlyThisMonth: boolean = dueThisMonth.some(
     (installment: Installment): boolean => installment.paidEarly
   );
@@ -137,6 +139,7 @@ export default function FinancialMovements({
       <div className="flex items-center justify-start gap-2">
         <button
           type="button"
+          disabled={Boolean(transaction.financingId)}
           aria-label={t.transactions.editAriaLabel}
           onClick={onEditOrClose}
         >
@@ -159,20 +162,30 @@ export default function FinancialMovements({
             </span>
           )}
         </span>
-        {Boolean(transaction.installmentNumbers) && (
-          <button
-            type="button"
-            aria-label={t.transactions.payInstallmentsEarly}
-            title={t.transactions.payInstallmentsEarly}
-            onClick={(): void => setIsPrepaying(!isPrepaying)}
-            className="cursor-pointer text-[var(--ctp-subtext1)] transition-colors hover:text-[var(--ctp-blue)]"
-          >
-            <FiFastForward size={18} />
-          </button>
-        )}
+        {Boolean(transaction.installmentNumbers) &&
+          !transaction.financingId && (
+            <button
+              type="button"
+              aria-label={t.transactions.payInstallmentsEarly}
+              title={t.transactions.payInstallmentsEarly}
+              onClick={(): void => setIsPrepaying(!isPrepaying)}
+              className="cursor-pointer text-[var(--ctp-subtext1)] transition-colors hover:text-[var(--ctp-blue)]"
+            >
+              <FiFastForward size={18} />
+            </button>
+          )}
       </div>
       <div className="truncate">
-        {occurrence ? occurrence.notes : transaction.notes}
+        {transaction.financingId ? (
+          <Link
+            className="underline"
+            href={`/financings/${transaction.financingId}`}
+          >
+            {transaction.notes || t.financing.title}
+          </Link>
+        ) : (
+          displayedNotes
+        )}
       </div>
       <div className="truncate">
         {getDate()}
@@ -203,7 +216,7 @@ export default function FinancialMovements({
             {errorMessage}
           </span>
         )}
-        {!isConfirmingDelete && (
+        {!isConfirmingDelete && !transaction.financingId && (
           <button
             aria-label={t.transactions.deleteAriaLabel}
             className="cursor-pointer"
