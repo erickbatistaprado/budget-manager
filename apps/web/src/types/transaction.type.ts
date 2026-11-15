@@ -1,9 +1,13 @@
+import type { Account, PaymentMethod } from '@budget-manager/api-client';
 import type { RepeatInterval } from '@/enums';
 import type { Category, Installment } from '@/types';
 
 export interface Transaction {
   id: string;
   category: Category;
+  paymentMethod?: PaymentMethod | null;
+  accountId?: string | null;
+  account?: Account | null;
   cardId?: string | null;
   card?: { id: string; name: string } | null;
   billDueDate?: string | null;

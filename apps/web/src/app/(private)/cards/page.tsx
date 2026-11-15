@@ -4,7 +4,9 @@ import useCards from '@/hooks/useCards.hook';
 import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import { useI18n } from '@/i18n/useI18n';
 import { deleteFetcher, postFetcher, putFetcher } from '@/libs/fetchers.lib';
-import type { Card } from '@budget-manager/api-client';
+import AccountsSection from '@/components/Accounts/AccountsSection';
+import { BankSelect, BankBadge } from '@/components/Bank/Bank';
+import { Bank, type Card } from '@budget-manager/api-client';
 import { useState, type FormEvent, type JSX } from 'react';
 
 const field =
@@ -16,6 +18,7 @@ export default function CardsPage(): JSX.Element {
   const { data: cards, error, mutate } = useCards();
   const [editing, setEditing] = useState<string>();
   const [name, setName] = useState('');
+  const [bank, setBank] = useState(Bank.OTHER);
   const [closingDay, setClosingDay] = useState('25');
   const [dueDay, setDueDay] = useState('5');
   const [deleting, setDeleting] = useState<string>();
@@ -25,6 +28,7 @@ export default function CardsPage(): JSX.Element {
   function reset(): void {
     setEditing(undefined);
     setName('');
+    setBank(Bank.OTHER);
     setClosingDay('25');
     setDueDay('5');
     setMessage('');
@@ -48,6 +52,7 @@ export default function CardsPage(): JSX.Element {
     try {
       const body = JSON.stringify({
         name: name.trim(),
+        bank,
         closingDay: closing,
         dueDay: due,
       });
@@ -86,6 +91,7 @@ export default function CardsPage(): JSX.Element {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-5">
       <h1 className="text-xl font-semibold">{t.cards.title}</h1>
+      <h2 className="text-lg font-semibold">{t.payments.cards}</h2>
       <form
         onSubmit={save}
         noValidate
@@ -122,6 +128,7 @@ export default function CardsPage(): JSX.Element {
             onChange={(event): void => setDueDay(event.currentTarget.value)}
           />
         </label>
+        <BankSelect bank={bank} onChange={setBank} />
         <button className={button} disabled={busy} type="submit">
           {editing ? t.common.save : t.cards.add}
         </button>
@@ -146,7 +153,7 @@ export default function CardsPage(): JSX.Element {
             className="flex flex-wrap items-center gap-3 rounded bg-[var(--ctp-surface0)] p-4"
           >
             <div className="flex-1">
-              <strong>{card.name}</strong>
+              <strong>{card.name}</strong> <BankBadge bank={card.bank} />
               <p className="text-sm">
                 {t.cards.schedule(card.closingDay, card.dueDay)}
               </p>
@@ -157,6 +164,7 @@ export default function CardsPage(): JSX.Element {
               onClick={(): void => {
                 setEditing(card.id);
                 setName(card.name);
+                setBank(card.bank);
                 setClosingDay(String(card.closingDay));
                 setDueDay(String(card.dueDay));
               }}
@@ -198,6 +206,7 @@ export default function CardsPage(): JSX.Element {
           </li>
         ))}
       </ul>
+      <AccountsSection />
     </div>
   );
 }

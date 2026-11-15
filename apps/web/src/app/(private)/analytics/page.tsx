@@ -6,6 +6,7 @@ import {
   EmptyState,
   RankedList,
 } from '@/components/Analytics/AnalyticsPanels';
+import { paymentRanking } from '@/utils/payment.util';
 import { TransactionType } from '@/enums';
 import { useSavings, useTransactions } from '@/hooks';
 import { useI18n } from '@/i18n/useI18n';
@@ -517,6 +518,31 @@ export default function AnalyticsPage(): JSX.Element {
               ) : (
                 <EmptyState />
               )}
+            </AnalyticsCard>
+            <AnalyticsCard title={t.payments.howPaid}>
+              <h3 className="mb-3 text-sm text-[var(--ctp-subtext1)]">
+                {t.payments.method}
+              </h3>
+              <RankedList
+                items={paymentRanking(
+                  expenseRequest.data ?? [],
+                  safeRange,
+                  t.payments.methods,
+                  t.payments.notSet
+                )}
+              />
+              <h3 className="my-3 text-sm text-[var(--ctp-subtext1)]">
+                {t.cards.title}
+              </h3>
+              <RankedList
+                items={paymentRanking(
+                  expenseRequest.data ?? [],
+                  safeRange,
+                  t.payments.methods,
+                  t.payments.notSet,
+                  { card: t.cards.card, account: t.payments.account }
+                )}
+              />
             </AnalyticsCard>
             <AnalyticsCard title={messages.merchants}>
               <RankedList items={data.merchants} />

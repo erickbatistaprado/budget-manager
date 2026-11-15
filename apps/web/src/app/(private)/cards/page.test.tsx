@@ -7,6 +7,11 @@ jest.mock('@/libs/transactionsCache.lib', (): object => ({
   refreshTransactions: jest.fn(),
 }));
 
+jest.mock('@/hooks/useAccounts.hook', (): object => ({
+  __esModule: true,
+  default: (): object => ({ data: [], mutate: jest.fn() }),
+}));
+
 jest.mock('@/hooks/useCards.hook', (): object => ({
   __esModule: true,
   default: (): object => ({

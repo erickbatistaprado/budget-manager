@@ -1,12 +1,37 @@
 import { SavingLocation } from '@/enums';
 
 export const en = {
+  payments: {
+    cards: 'Cards',
+    accountValidation: 'Enter an account name.',
+    method: 'Payment method',
+    receivedBy: 'Received by',
+    account: 'Account',
+    accounts: 'Accounts',
+    bank: 'Bank',
+    howPaid: 'How you paid',
+    notSet: 'Not set',
+    addAccount: 'Add account',
+    deleteAccount: (name: string): string =>
+      `Delete account “${name}”? Transactions will keep their payment method.`,
+    methods: {
+      CREDIT_CARD: 'Credit card',
+      DEBIT_CARD: 'Debit card',
+      PIX: 'Pix',
+      BANK_TRANSFER: 'Transfer (TED/DOC)',
+      BOLETO: 'Boleto',
+      AUTOMATIC_DEBIT: 'Automatic debit',
+      CASH: 'Cash',
+      OTHER: 'Other',
+    },
+  },
   cards: {
+    selectCard: 'Select a card',
     applyBillDates: 'Apply bill date to saved purchases',
     reimportHint:
       'Saved purchases without a bill date will also move to this bill month.',
 
-    title: 'Cards',
+    title: 'Cards and accounts',
     add: 'Add card',
     closingDay: 'Closing day',
     dueDay: 'Due day',

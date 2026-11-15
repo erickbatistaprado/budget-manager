@@ -1,6 +1,7 @@
 'use client';
 
 import { InstallmentPrepayment, Money, NewTransaction } from '@/components';
+import { paymentLabel } from '@/utils/payment.util';
 import { useI18n } from '@/i18n/useI18n';
 import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import { deleteFetcher } from '@/libs/fetchers.lib';
@@ -175,6 +176,9 @@ export default function FinancialMovements({
       </div>
       <div className="truncate">
         {getDate()}
+        <span className="ml-1 text-xs text-[var(--ctp-subtext0)]">
+          {paymentLabel(transaction, t.payments.methods)}
+        </span>
         {transaction.billDueDate && (
           <span className="ml-1 rounded bg-[var(--ctp-blue)]/15 px-1 text-xs">
             {t.cards.billMonth(

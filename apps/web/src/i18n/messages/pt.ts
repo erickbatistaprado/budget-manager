@@ -2,12 +2,37 @@ import { SavingLocation } from '@/enums';
 import type { Messages } from './en';
 
 export const pt: Messages = {
+  payments: {
+    cards: 'Cartões',
+    accountValidation: 'Informe o nome da conta.',
+    method: 'Forma de pagamento',
+    receivedBy: 'Recebido por',
+    account: 'Conta',
+    accounts: 'Contas',
+    bank: 'Banco',
+    howPaid: 'Como você pagou',
+    notSet: 'Não informado',
+    addAccount: 'Adicionar conta',
+    deleteAccount: (name: string): string =>
+      `Excluir a conta “${name}”? As transações manterão a forma de pagamento.`,
+    methods: {
+      CREDIT_CARD: 'Cartão de crédito',
+      DEBIT_CARD: 'Cartão de débito',
+      PIX: 'Pix',
+      BANK_TRANSFER: 'Transferência (TED/DOC)',
+      BOLETO: 'Boleto',
+      AUTOMATIC_DEBIT: 'Débito automático',
+      CASH: 'Dinheiro',
+      OTHER: 'Outro',
+    },
+  },
   cards: {
+    selectCard: 'Selecione um cartão',
     applyBillDates: 'Aplicar vencimento às compras salvas',
     reimportHint:
       'Compras já salvas sem vencimento também serão movidas para o mês desta fatura.',
 
-    title: 'Cartões',
+    title: 'Contas e cartões',
     add: 'Adicionar cartão',
     closingDay: 'Dia do fechamento',
     dueDay: 'Dia do vencimento',

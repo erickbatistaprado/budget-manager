@@ -4,12 +4,19 @@ import { DatePickerDialog, Input, SelectWithTooltip } from '@/components';
 import { RepeatInterval, TransactionType } from '@/enums';
 import { useCategories } from '@/hooks';
 import useCards from '@/hooks/useCards.hook';
+import useAccounts from '@/hooks/useAccounts.hook';
+import { PaymentMethod } from '@budget-manager/api-client';
+import { supportsAccount } from '@/utils/payment.util';
 import { cardBillDueDate } from '@/utils/cardBill.util';
 import { useI18n } from '@/i18n/useI18n';
 import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import { postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import type { Category, Transaction } from '@/types';
-import { getApiDate, parseApiDate } from '@/utils/globalFormats.util';
+import {
+  formatDate,
+  getApiDate,
+  parseApiDate,
+} from '@/utils/globalFormats.util';
 import { monthlyOccurrence, monthKey } from '@/utils/monthlyTransaction.util';
 import clsx from 'clsx';
 import {
@@ -44,6 +51,10 @@ function useIsBrowser(): boolean {
   );
 }
 
+const paymentSelect =
+  'w-full rounded-md text-base border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-3 text-[var(--ctp-text)] shadow-sm transition-colors focus:border-[var(--ctp-blue)] focus:ring-2 focus:ring-[var(--ctp-blue)]/25 focus:outline-none disabled:opacity-50';
+const paymentLabel = 'flex flex-col gap-1 text-sm text-[var(--ctp-subtext1)]';
+
 export interface NewTransactionProps {
   transaction?: Transaction;
   selectedDate?: Date;
@@ -57,6 +68,7 @@ export default function NewTransaction({
 }: Readonly<NewTransactionProps>): JSX.Element {
   const { t, language } = useI18n();
   const { data: cards } = useCards();
+  const { data: accounts } = useAccounts();
   const monthly = transaction?.repeats === RepeatInterval.MONTHLY;
   const month =
     selectedDate ?? (transaction ? parseApiDate(transaction.date) : new Date());
@@ -144,9 +156,18 @@ export default function NewTransaction({
       installments: form.installments ?? null,
       repeats: form.repeats ?? RepeatInterval.NONE,
       category: form.category,
-      cardId: isInstallmentsEnabled
-        ? (form.cardId ?? form.card?.id ?? null) || null
+      paymentMethod: form.paymentMethod || null,
+      accountId: supportsAccount(
+        form.paymentMethod,
+        transactionType === TransactionType.INCOME
+      )
+        ? (form.accountId ?? form.account?.id ?? null) || null
         : null,
+      cardId:
+        isInstallmentsEnabled &&
+        form.paymentMethod === PaymentMethod.CREDIT_CARD
+          ? (form.cardId ?? form.card?.id ?? null) || null
+          : null,
       date: getApiDate(date ?? new Date()),
     });
 
@@ -190,6 +211,20 @@ export default function NewTransaction({
   function handleChange({
     currentTarget: { value, name },
   }: ChangeEvent<HTMLInputElement | HTMLSelectElement>): void {
+    if (
+      name === 'repeats' &&
+      value !== RepeatInterval.NONE &&
+      form.paymentMethod === PaymentMethod.CREDIT_CARD
+    ) {
+      setForm((previous): Partial<Transaction> => ({
+        ...previous,
+        repeats: value as RepeatInterval,
+        paymentMethod: null,
+        cardId: null,
+        card: null,
+      }));
+      return;
+    }
     setForm(
       (prevForm: Partial<Transaction> | undefined): Partial<Transaction> => ({
         ...prevForm,
@@ -211,6 +246,11 @@ export default function NewTransaction({
       ...prevForm,
       category: undefined,
       installmentNumbers: undefined,
+      paymentMethod: null,
+      cardId: null,
+      card: null,
+      accountId: null,
+      account: null,
     }));
   }
 
@@ -361,29 +401,97 @@ export default function NewTransaction({
           ]}
           disabled={!categories?.length || (monthly && scope === 'month')}
         />
-        {isInstallmentsEnabled && (
-          <div className="flex flex-col gap-2">
-            <label htmlFor={`${fieldId}-card`}>{t.cards.paidWith}</label>
+        <label className={paymentLabel}>
+          {transactionType === TransactionType.INCOME
+            ? t.payments.receivedBy
+            : t.payments.method}
+          <select
+            className={paymentSelect}
+            value={form.paymentMethod ?? ''}
+            disabled={monthly && scope === 'month'}
+            onChange={(event): void => {
+              const paymentMethod = event.currentTarget.value as
+                PaymentMethod | '';
+              setForm((previous): Partial<Transaction> => ({
+                ...previous,
+                paymentMethod: paymentMethod || null,
+                cardId: null,
+                card: null,
+                accountId: null,
+                account: null,
+              }));
+            }}
+          >
+            <option value="">{t.payments.notSet}</option>
+            {Object.values(PaymentMethod)
+              .filter((method): boolean => {
+                if (transactionType === TransactionType.INCOME) {
+                  return [
+                    PaymentMethod.PIX,
+                    PaymentMethod.BANK_TRANSFER,
+                    PaymentMethod.CASH,
+                    PaymentMethod.OTHER,
+                  ].includes(method);
+                }
+                return (
+                  isInstallmentsEnabled || method !== PaymentMethod.CREDIT_CARD
+                );
+              })
+              .map((method): JSX.Element => (
+                <option key={method} value={method}>
+                  {t.payments.methods[method]}
+                </option>
+              ))}
+          </select>
+        </label>
+        {supportsAccount(
+          form.paymentMethod,
+          transactionType === TransactionType.INCOME
+        ) && (
+          <label className={paymentLabel}>
+            {t.payments.account}
             <select
-              id={`${fieldId}-card`}
-              name="cardId"
-              value={form.cardId ?? form.card?.id ?? ''}
+              className={paymentSelect}
+              name="accountId"
+              disabled={monthly && scope === 'month'}
+              value={form.accountId ?? form.account?.id ?? ''}
               onChange={handleChange}
             >
-              <option value="">{t.cards.noCard}</option>
-              {cards?.map((card): JSX.Element => (
-                <option key={card.id} value={card.id}>
-                  {card.name}
+              <option value="">{t.payments.notSet}</option>
+              {accounts?.map((account): JSX.Element => (
+                <option key={account.id} value={account.id}>
+                  {account.name}
                 </option>
               ))}
             </select>
-            {billDate && (
-              <p className="text-sm">
-                {t.cards.billDue(billDate.toLocaleDateString('pt-BR'))}
-              </p>
-            )}
-          </div>
+          </label>
         )}
+        {isInstallmentsEnabled &&
+          form.paymentMethod === PaymentMethod.CREDIT_CARD && (
+            <div className={paymentLabel}>
+              <label htmlFor={`${fieldId}-card`}>{t.cards.card}</label>
+              <select
+                className={paymentSelect}
+                id={`${fieldId}-card`}
+                name="cardId"
+                required
+                value={form.cardId ?? form.card?.id ?? ''}
+                onChange={handleChange}
+              >
+                <option value="">{t.cards.selectCard}</option>
+                {cards?.map((card): JSX.Element => (
+                  <option key={card.id} value={card.id}>
+                    {card.name}
+                  </option>
+                ))}
+              </select>
+              {billDate && (
+                <p className="text-sm text-[var(--ctp-subtext1)]">
+                  {t.cards.billDue(formatDate(billDate, language))}
+                </p>
+              )}
+            </div>
+          )}
         {isInstallmentsEnabled && (
           <div className="flex flex-col gap-1">
             <BsFillCreditCard2BackFill

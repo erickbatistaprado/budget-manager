@@ -5,6 +5,11 @@ import { postFetcher } from '@/libs/fetchers.lib';
 import type { Transaction } from '@/types';
 import NewTransaction from './NewTransaction.component';
 
+jest.mock('@/hooks/useAccounts.hook', (): object => ({
+  __esModule: true,
+  default: (): object => ({ data: [], mutate: jest.fn() }),
+}));
+
 jest.mock('@/hooks/useCards.hook', (): object => ({
   __esModule: true,
   default: (): object => ({
@@ -36,10 +41,13 @@ const purchase: Transaction = {
 };
 it('previews the bill and sends cardId for non-monthly expenses', async (): Promise<void> => {
   renderWithI18n(<NewTransaction transaction={purchase} onClose={jest.fn()} />);
-  fireEvent.change(screen.getByLabelText('Paid with'), {
+  fireEvent.change(screen.getByLabelText('Payment method'), {
+    target: { value: 'CREDIT_CARD' },
+  });
+  fireEvent.change(screen.getByLabelText('Card'), {
     target: { value: 'visa' },
   });
-  expect(screen.getByText('Bill due 05/01/2027')).toBeInTheDocument();
+  expect(screen.getByText('Bill due 01/05/2027')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Save' }));
   await waitFor((): void =>
     expect(postFetcher).toHaveBeenCalledWith(
@@ -63,7 +71,7 @@ it('hides the card select for income', (): void => {
       onClose={jest.fn()}
     />
   );
-  expect(screen.queryByLabelText('Paid with')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Card')).not.toBeInTheDocument();
 });
 
 it('hides the card selector after choosing monthly repetition', (): void => {
@@ -71,5 +79,40 @@ it('hides the card selector after choosing monthly repetition', (): void => {
   fireEvent.change(screen.getByRole('combobox', { name: 'Does it repeat?' }), {
     target: { value: RepeatInterval.MONTHLY },
   });
-  expect(screen.queryByLabelText('Paid with')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Card')).not.toBeInTheDocument();
+});
+
+it('shows an optional account for Pix and hides it for cash expenses', (): void => {
+  renderWithI18n(<NewTransaction transaction={purchase} onClose={jest.fn()} />);
+  expect(screen.queryByLabelText('Account')).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Payment method'), {
+    target: { value: 'PIX' },
+  });
+  expect(screen.getByLabelText('Account')).toBeInTheDocument();
+  expect(screen.queryByLabelText('Card')).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Payment method'), {
+    target: { value: 'CASH' },
+  });
+  expect(screen.queryByLabelText('Account')).not.toBeInTheDocument();
+});
+it('allows an income account and excludes expense-only methods', (): void => {
+  renderWithI18n(
+    <NewTransaction
+      transaction={{
+        ...purchase,
+        category: {
+          ...purchase.category,
+          transactionType: TransactionType.INCOME,
+        },
+      }}
+      onClose={jest.fn()}
+    />
+  );
+  fireEvent.change(screen.getByLabelText('Received by'), {
+    target: { value: 'CASH' },
+  });
+  expect(screen.getByLabelText('Account')).toBeInTheDocument();
+  expect(
+    screen.queryByRole('option', { name: 'Credit card' })
+  ).not.toBeInTheDocument();
 });
