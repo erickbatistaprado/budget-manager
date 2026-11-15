@@ -91,6 +91,19 @@ public class Transaction {
             installment.setDueDate(scheduledDueDate(installment.getInstallmentNumber())));
   }
 
+  @Column(nullable = false)
+  @Builder.Default
+  private String source = "MANUAL";
+
+  private UUID financingId;
+
+  public void requireUnmanaged() {
+    if (financingId != null) {
+      throw new IllegalArgumentException(
+          "Manage this transaction through financing " + financingId);
+    }
+  }
+
   private String notes;
 
   @NotNull
@@ -98,7 +111,7 @@ public class Transaction {
   private BigDecimal totalValue;
 
   @Max(value = MAX_INSTALLMENTS, message = "Value cannot exceed 500")
-  @Min(value = MIN_INSTALLMENTS, message = "Minimum value is 2")
+  @Min(value = 1, message = "Minimum value is 1")
   private Integer installmentNumbers;
 
   @OneToMany(
@@ -214,6 +227,7 @@ public class Transaction {
    * also takes the cents left over, so the installments always add up to the total.
    */
   public void scheduleInstallments() {
+    requireUnmanaged();
     if (installments == null) {
       installments = new ArrayList<>();
     }

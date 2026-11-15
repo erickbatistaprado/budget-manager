@@ -15,6 +15,8 @@ public final class TransactionConverter {
   public static TransactionDto entityToDto(Transaction entity) {
     return TransactionDto.builder()
         .id(entity.getId())
+        .source(entity.getSource())
+        .financingId(entity.getFinancingId())
         .paymentMethod(entity.getPaymentMethod())
         .account(entity.getAccount() == null ? null : AccountDto.from(entity.getAccount()))
         .card(

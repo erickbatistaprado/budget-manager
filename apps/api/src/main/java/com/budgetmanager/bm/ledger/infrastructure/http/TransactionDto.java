@@ -17,6 +17,8 @@ import lombok.Builder;
 @Builder
 public record TransactionDto(
     UUID id,
+    String source,
+    UUID financingId,
     UUID cardId,
     PaymentMethod paymentMethod,
     UUID accountId,

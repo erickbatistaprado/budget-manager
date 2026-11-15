@@ -17,6 +17,10 @@ import org.springframework.data.repository.query.Param;
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
   Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
 
+  List<Transaction> findByFinancingId(UUID financingId);
+
+  // Financing boleto reconciliation belongs in a dedicated installment matcher, before purchase
+  // matching.
   @Query(
       """
           SELECT new com.budgetmanager.bm.ledger.application.ExistingTransaction(
@@ -24,7 +28,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
             t.createdAt)
           FROM Transaction t
           JOIN t.category c
-          WHERE t.user.id = :userId AND t.notes IS NOT NULL
+          WHERE t.user.id = :userId AND t.notes IS NOT NULL AND t.financingId IS NULL
       """)
   List<ExistingTransaction> findImportCandidates(@Param("userId") UUID userId);
 

@@ -261,11 +261,14 @@ public class TransactionService {
   }
 
   private Transaction requireOwned(UUID id, User user) {
-    return repository
-        .findByIdAndUserId(id, user.getId())
-        .orElseThrow(() ->
-            new ApplicationException(
-                ApplicationError.NOT_FOUND, "Transaction not found for {}", id));
+    Transaction transaction =
+        repository
+            .findByIdAndUserId(id, user.getId())
+            .orElseThrow(() ->
+                new ApplicationException(
+                    ApplicationError.NOT_FOUND, "Transaction not found for {}", id));
+    monthlyChange(transaction::requireUnmanaged);
+    return transaction;
   }
 
   private String normalizeSortKey(String sortKey) {
