@@ -43,7 +43,15 @@ final class BradescoInvoicePdfParser {
   private static final Pattern CARD =
       Pattern.compile("^(.+?)\\s+Cart[aã]o\\s+\\d{4}\\s+XXXX\\s+XXXX\\s+(\\d{4})\\b");
   private static final Pattern GLUED_INSTALLMENT = Pattern.compile("(?<=\\S)(\\d{2}/\\d{2})$");
-  private static final Pattern AMOUNT = Pattern.compile("^([\\d.]+,\\d{2})\\s*(-)?$");
+
+  /**
+   * The R$ amount ends its cell. The exchange rate of a purchase abroad ({@code 5,4400}) can spill
+   * a digit into the cell ahead of it, so only the last number counts.
+   */
+  private static final Pattern AMOUNT = Pattern.compile("(?:^|\\s)([\\d.]+,\\d{2})\\s*(-)?$");
+
+  /** Purchases abroad print the original amount after the merchant: {@code USD 5,06}. */
+  private static final Pattern FOREIGN_AMOUNT = Pattern.compile("\\s+[A-Z]{3}\\s+[\\d.]+,\\d{2}$");
 
   private BradescoInvoicePdfParser() {}
 
@@ -109,7 +117,10 @@ final class BradescoInvoicePdfParser {
       }
       String description =
           GLUED_INSTALLMENT
-              .matcher(row.cell(DESCRIPTION).replaceAll("\\s+", " ").strip())
+              .matcher(
+                  FOREIGN_AMOUNT
+                      .matcher(row.cell(DESCRIPTION).replaceAll("\\s+", " ").strip())
+                      .replaceFirst(""))
               .replaceFirst(" $1");
       if (isPayment(description)) {
         continue;
@@ -138,7 +149,7 @@ final class BradescoInvoicePdfParser {
   /** {@code 1.029,25} is a charge and {@code 147,60 -} a credit. */
   private static Optional<BigDecimal> amount(String cell) {
     Matcher matcher = AMOUNT.matcher(cell.strip());
-    if (!matcher.matches()) {
+    if (!matcher.find()) {
       return Optional.empty();
     }
     BigDecimal value = StatementText.amount(matcher.group(1)).orElseThrow();

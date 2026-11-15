@@ -51,7 +51,7 @@ class StatementReaderAdapterTest {
   private static final Object[][] BRADESCO_INVOICE_PAGE = {
     {67, 30, "Fatura Mensal"},
     {420, 50, "Total da fatura"},
-    {420, 60, "R$ 1.069,10"},
+    {420, 60, "R$ 1.133,56"},
     {500, 60, "05/11/2026"},
     {45, 100, "Data"},
     {67, 100, "Historico de Lancamentos"},
@@ -78,6 +78,14 @@ class StatementReaderAdapterTest {
     {315, 183, "1.162,10"},
     {45, 198, "SAM EXAMPLE"},
     {150, 198, "Cartão 4066 XXXX XXXX 2222"},
+    {45, 206, "06/07"},
+    {67, 206, "BAKERY LISBOA"},
+    {150, 206, "USD"},
+    {170, 206, "11,85"},
+    {204, 206, "LISBOA"},
+    {253, 206, "11,85"},
+    {290, 206, "5,4400"},
+    {325, 206, "64,46"},
     {45, 213, "11/10"},
     {67, 213, "CINEMA CHAIN EC"},
     {204, 213, "SAO PAULO"},
@@ -88,9 +96,9 @@ class StatementReaderAdapterTest {
     {320, 228, "54,60"},
     {364, 228, "Rotativo 14,99% 434,46%"},
     {45, 243, "Total para SAM EXAMPLE"},
-    {320, 243, "93,00 -"},
+    {320, 243, "28,54 -"},
     {45, 258, "Total da fatura em real"},
-    {315, 258, "1.069,10"},
+    {315, 258, "1.133,56"},
   };
 
   @Test
@@ -99,7 +107,7 @@ class StatementReaderAdapterTest {
 
     assertThat(statement.source()).isEqualTo(StatementSource.BRADESCO_CARD_PDF);
     assertThat(statement.billDueDate()).isEqualTo(java.time.LocalDate.of(2026, 11, 5));
-    assertThat(statement.printedTotal()).isEqualByComparingTo("1069.10");
+    assertThat(statement.printedTotal()).isEqualByComparingTo("1133.56");
     assertThat(statement.totalsMatch()).isTrue();
     assertThat(statement.lines())
         .extracting(
@@ -124,6 +132,13 @@ class StatementReaderAdapterTest {
                 false,
                 9,
                 "ALEX SAMPLE ••1111"),
+            org.assertj.core.groups.Tuple.tuple(
+                java.time.LocalDate.of(2026, 7, 6),
+                "BAKERY LISBOA",
+                new java.math.BigDecimal("64.46"),
+                false,
+                null,
+                "SAM EXAMPLE ••2222"),
             org.assertj.core.groups.Tuple.tuple(
                 java.time.LocalDate.of(2026, 10, 11),
                 "CINEMA CHAIN EC",
