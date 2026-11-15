@@ -43,8 +43,8 @@ class LedgerIntegrationTest extends IntegrationTest {
 
     assertThat(categoryService.findByTransactionType(TransactionType.EXPENSE))
         .extracting(Category::getName)
-        .contains("Groceries", "Restaurants", "Subscriptions", "Other")
-        .hasSize(18);
+        .contains("Groceries", "Restaurants", "Pharmacy", "Gaming", "Rent", "Energy bill", "Other")
+        .hasSize(27);
     assertThat(categoryService.findByTransactionType(TransactionType.INCOME))
         .extracting(Category::getName)
         .containsExactlyInAnyOrder("Salary", "Freelance", "Investments", "Refunds", "Other");
@@ -64,12 +64,12 @@ class LedgerIntegrationTest extends IntegrationTest {
   @Test
   void differentUsersCanUseTheSameCategoryName() {
     signIn(alice);
-    categoryService.save(category("Rent", TransactionType.EXPENSE));
+    categoryService.save(category("Hobbies", TransactionType.EXPENSE));
 
     signIn(bob);
-    Category bobRent = categoryService.save(category("Rent", TransactionType.EXPENSE));
+    Category bobHobbies = categoryService.save(category("Hobbies", TransactionType.EXPENSE));
 
-    assertThat(bobRent.getId()).isNotNull();
+    assertThat(bobHobbies.getId()).isNotNull();
   }
 
   @Test

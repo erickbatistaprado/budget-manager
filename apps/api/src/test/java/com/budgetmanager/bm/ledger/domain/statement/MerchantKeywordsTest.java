@@ -31,12 +31,20 @@ class MerchantKeywordsTest {
         "Ifd*Ifood Club | Subscriptions | ifood club",
         "iFood - NuPay | Food delivery | ifood",
         "IFD*SOME RESTAURANT | Food delivery | ifd",
-        "Ebn *Playstation | Leisure | playstation",
+        "Ebn *Playstation | Gaming | playstation",
         "Google Google*One 01m | Subscriptions | google one",
         "IOF de \"Some Store\" | Fees & taxes | iof de",
         "IOF de \"Wl *Steam Purchase\" | Fees & taxes | iof de",
         "IOF de \"Openai *Chatgpt Subscr\" | Fees & taxes | iof de",
-        "DROGARIA CENTRAL | Health | drogaria",
+        "DROGARIA CENTRAL | Pharmacy | drogaria",
+        "Estapar Shopping | Parking | estapar",
+        "COPEL DIS SA | Energy bill | copel",
+        "SANEPAR CURITIBA | Water bill | sanepar",
+        "COMPAGAS | House gas bill | compagas",
+        "CONDOMINIO EDIFICIO SOL | Condominium fee | condominio",
+        "QUINTOANDAR ALUGUEL | Rent | quintoandar",
+        "BARBEARIA DO CENTRO | Personal care | barbearia",
+        "SMARTFIT UNIDADE 12 | Health | smartfit",
         "Uber *Trip | Transport | uber"
       })
   void suggestsExpenseCategories(String description, String category, String keyword) {
@@ -95,16 +103,21 @@ class MerchantKeywordsTest {
   }
 
   private static Set<String> seededDefaults() throws IOException {
-    try (InputStream migration =
-        MerchantKeywordsTest.class.getResourceAsStream(
-            "/db/migration/V4__seed_default_categories.sql")) {
-      String sql = new String(migration.readAllBytes(), StandardCharsets.UTF_8);
-      Matcher row = Pattern.compile("\\('([^']+)', '(EXPENSE|INCOME)'\\)").matcher(sql);
-      Set<String> defaults = new HashSet<>();
-      while (row.find()) {
-        defaults.add(row.group(2) + ":" + row.group(1));
+    Set<String> defaults = new HashSet<>();
+    for (String file :
+        List.of(
+            "V4__seed_default_categories.sql",
+            "V7__seed_more_default_categories.sql",
+            "V8__seed_home_bill_categories.sql")) {
+      try (InputStream migration =
+          MerchantKeywordsTest.class.getResourceAsStream("/db/migration/" + file)) {
+        String sql = new String(migration.readAllBytes(), StandardCharsets.UTF_8);
+        Matcher row = Pattern.compile("\\('([^']+)', '(EXPENSE|INCOME)'\\)").matcher(sql);
+        while (row.find()) {
+          defaults.add(row.group(2) + ":" + row.group(1));
+        }
       }
-      return defaults;
     }
+    return defaults;
   }
 }

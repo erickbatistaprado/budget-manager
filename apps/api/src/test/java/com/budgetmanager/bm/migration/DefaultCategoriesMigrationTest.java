@@ -34,7 +34,8 @@ class DefaultCategoriesMigrationTest {
           INSERT INTO t_user (id, email, password) VALUES ('%1$s', 'alex@example.com', 'hash');
           INSERT INTO t_category (id, name, transaction_type, user_id) VALUES
             (gen_random_uuid(), 'groceries', 'EXPENSE', '%1$s'),
-            (gen_random_uuid(), 'Coffee', 'EXPENSE', '%1$s');
+            (gen_random_uuid(), 'Coffee', 'EXPENSE', '%1$s'),
+            (gen_random_uuid(), 'Personal Care', 'EXPENSE', '%1$s');
           """
               .formatted(USER));
     }
@@ -44,17 +45,22 @@ class DefaultCategoriesMigrationTest {
     try (Connection connection = connect();
         Statement statement = connection.createStatement()) {
       long defaults = count(statement, "SELECT count(*) FROM t_default_category");
-      assertThat(defaults).isEqualTo(23);
+      assertThat(defaults).isEqualTo(32);
       assertThat(count(statement, "SELECT count(*) FROM t_category WHERE user_id = '" + USER + "'"))
-          .as("their groceries and Coffee, plus the 22 other defaults")
-          .isEqualTo(24);
-      assertThat(
-              count(
-                  statement,
-                  "SELECT count(*) FROM t_category WHERE lower(name) = 'groceries' AND user_id = '"
-                      + USER
-                      + "'"))
-          .isEqualTo(1);
+          .as("their groceries, Coffee and Personal Care, plus the 30 other defaults")
+          .isEqualTo(33);
+      for (String name : new String[] {"groceries", "personal care"}) {
+        assertThat(
+                count(
+                    statement,
+                    "SELECT count(*) FROM t_category WHERE lower(name) = '"
+                        + name
+                        + "' AND user_id = '"
+                        + USER
+                        + "'"))
+            .as(name)
+            .isEqualTo(1);
+      }
     }
   }
 

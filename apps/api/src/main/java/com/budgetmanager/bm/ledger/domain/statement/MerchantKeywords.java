@@ -10,7 +10,8 @@ import java.util.Optional;
 
 /**
  * Well-known Brazilian merchants and words, mapped to the default category names seeded by
- * migration V4. Used to suggest a category for a merchant the user has never categorized.
+ * migrations V4, V7 and V8. Used to suggest a category for a merchant the user has never
+ * categorized.
  *
  * <p>A keyword matches whole words of the description, and a single-word keyword of five letters or
  * more also matches the start of a word ({@code amazon} matches {@code amazonmktplc}). The longest
@@ -87,8 +88,41 @@ public final class MerchantKeywords {
         "bistro",
         "cantina");
     expense("Food delivery", "ifood", "ifd", "rappi", "ze delivery", "aiqfome", "james delivery");
-    expense("Housing", "aluguel", "condominio", "imobiliaria", "quintoandar", "quinto andar");
-    expense("Utilities", "enel", "cemig", "sabesp", "comgas", "energia eletrica");
+    expense("Rent", "aluguel", "imobiliaria", "quintoandar", "quinto andar");
+    expense("Condominium fee", "condominio", "condominial");
+    expense(
+        "Energy bill",
+        "copel",
+        "enel",
+        "cemig",
+        "cpfl",
+        "celesc",
+        "coelba",
+        "energisa",
+        "equatorial",
+        "neoenergia",
+        "energia eletrica");
+    expense(
+        "Water bill",
+        "sanepar",
+        "sabesp",
+        "copasa",
+        "cedae",
+        "embasa",
+        "caesb",
+        "corsan",
+        "compesa",
+        "aguas de");
+    expense(
+        "House gas bill",
+        "compagas",
+        "comgas",
+        "naturgy",
+        "gas natural",
+        "ultragaz",
+        "liquigas",
+        "supergasbras",
+        "copagaz");
     expense(
         "Phone & internet",
         "vivo",
@@ -106,15 +140,13 @@ public final class MerchantKeywords {
         "99app",
         "99pop",
         "cabify",
-        "estacionamento",
-        "estapar",
-        "parking",
         "metro",
         "onibus",
         "pedagio",
         "sem parar",
         "conectcar",
         "veloe");
+    expense("Parking", "estacionamento", "estapar", "parking", "zona azul");
     expense(
         "Car",
         "posto",
@@ -129,14 +161,16 @@ public final class MerchantKeywords {
         "detran",
         "pneus");
     expense(
-        "Health",
+        "Pharmacy",
         "drogaria",
         "drogarias",
         "farmacia",
         "raia",
         "drogasil",
         "pague menos",
-        "panvel",
+        "panvel");
+    expense(
+        "Health",
         "hospital",
         "clinica",
         "laboratorio",
@@ -237,14 +271,23 @@ public final class MerchantKeywords {
         "ingressos",
         "sympla",
         "eventim",
-        "steam",
-        "playstation",
-        "xbox",
-        "nintendo",
         "boliche",
         "teatro",
         "parque",
         "museu");
+    expense("Gaming", "steam", "playstation", "xbox", "nintendo", "epic games", "riot games");
+    expense(
+        "Personal care",
+        "salao",
+        "barbearia",
+        "barbeiro",
+        "cabeleireiro",
+        "cabeleireira",
+        "manicure",
+        "estetica",
+        "boticario",
+        "sephora",
+        "perfumaria");
     expense("Gifts", "presente", "presentes", "floricultura", "flores");
     expense(
         "Fees & taxes",

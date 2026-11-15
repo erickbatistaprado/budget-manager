@@ -57,7 +57,7 @@ class CsrfServerTest {
     String csrfToken = csrfToken();
 
     assertThat(createCategory("Food", csrfToken).statusCode()).isEqualTo(201);
-    assertThat(createCategory("Rent", csrfToken).statusCode()).isEqualTo(201);
+    assertThat(createCategory("Hobbies", csrfToken).statusCode()).isEqualTo(201);
     assertThat(createCategory("Gym", csrfToken).statusCode()).isEqualTo(201);
   }
 
