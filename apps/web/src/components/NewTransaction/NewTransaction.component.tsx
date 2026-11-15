@@ -8,6 +8,7 @@ import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import { postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import type { Category, Transaction } from '@/types';
 import { getApiDate, parseApiDate } from '@/utils/globalFormats.util';
+import { monthlyOccurrence, monthKey } from '@/utils/monthlyTransaction.util';
 import clsx from 'clsx';
 import {
   useId,
@@ -43,21 +44,42 @@ function useIsBrowser(): boolean {
 
 export interface NewTransactionProps {
   transaction?: Transaction;
+  selectedDate?: Date;
   onClose: () => void;
 }
 
 export default function NewTransaction({
   transaction,
+  selectedDate,
   onClose,
 }: Readonly<NewTransactionProps>): JSX.Element {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const monthly = transaction?.repeats === RepeatInterval.MONTHLY;
+  const month =
+    selectedDate ?? (transaction ? parseApiDate(transaction.date) : new Date());
+  const occurrence =
+    monthly && transaction ? monthlyOccurrence(transaction, month) : null;
+  const initial =
+    transaction && occurrence
+      ? {
+          ...transaction,
+          totalValue: occurrence.amount,
+          notes: occurrence.notes,
+          date: getApiDate(occurrence.date),
+        }
+      : transaction;
+  const [scope, setScope] = useState<'month' | 'following' | undefined>();
+  const monthLabel = month.toLocaleDateString(
+    language === 'pt' ? 'pt-BR' : 'en-US',
+    { month: 'long' }
+  );
   const fieldId: string = useId();
   const [form, setForm] = useState<Partial<Transaction>>(
-    transaction ?? { repeats: RepeatInterval.NONE }
+    initial ?? { repeats: RepeatInterval.NONE }
   );
   const isBrowser: boolean = useIsBrowser();
   const [pickedDate, setPickedDate] = useState<Date | undefined>(
-    transaction?.date ? parseApiDate(transaction.date) : undefined
+    initial?.date ? parseApiDate(initial.date) : undefined
   );
   const date: Date | undefined =
     pickedDate ?? (isBrowser ? new Date() : undefined);
@@ -103,6 +125,11 @@ export default function NewTransaction({
       return;
     }
 
+    if (monthly && (!scope || !date || monthKey(date) !== monthKey(month))) {
+      setErrorMessage(t.transactions.dateInMonth);
+      return;
+    }
+
     const body: string = JSON.stringify({
       id: form.id,
       notes: form.notes?.trim() || null,
@@ -119,7 +146,25 @@ export default function NewTransaction({
 
     try {
       setIsSubmitting(true);
-      if (form.id) {
+      if (monthly && form.id) {
+        if (scope === 'month') {
+          await putFetcher<Transaction>(
+            `/transactions/${form.id}/months/${monthKey(month)}`,
+            {
+              body: JSON.stringify({
+                amount: totalValue,
+                date: getApiDate(date ?? month),
+                notes: form.notes?.trim() || null,
+              }),
+            }
+          );
+        } else {
+          await postFetcher<Transaction>(
+            `/transactions/${form.id}/split/${monthKey(month)}`,
+            { body }
+          );
+        }
+      } else if (form.id) {
         await putFetcher<Transaction>('/transactions', { body });
       } else {
         await postFetcher<Transaction>('/transactions', { body });
@@ -178,6 +223,23 @@ export default function NewTransaction({
     !Number.isFinite(totalValue) || totalValue <= 0 || !form.category?.id
   );
 
+  if (monthly && !scope) {
+    return (
+      <div className="flex h-full flex-col justify-center gap-4 p-5">
+        <p>{t.transactions.earlierUnchanged}</p>
+        <button type="button" onClick={(): void => setScope('month')}>
+          {t.transactions.onlyMonth(monthLabel)}
+        </button>
+        <button type="button" onClick={(): void => setScope('following')}>
+          {t.transactions.fromMonth(monthLabel)}
+        </button>
+        <button type="button" onClick={onClose}>
+          {t.common.cancel}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[var(--ctp-surface0)]/55 p-5 text-[var(--ctp-text)] backdrop-blur-xs">
       <div className="flex items-center justify-center">
@@ -195,6 +257,7 @@ export default function NewTransaction({
         <SelectWithTooltip
           id={`${fieldId}-repeats`}
           name="repeats"
+          disabled={monthly}
           tooltip={t.transactions.repeatsTooltip}
           icon={
             <MdEventRepeat className="text-[var(--ctp-yellow)]" size={25} />
@@ -212,6 +275,7 @@ export default function NewTransaction({
         <SelectWithTooltip
           id={`${fieldId}-transactionType`}
           name="transactionType"
+          disabled={monthly}
           tooltip={t.transactions.typeTooltip}
           icon={<GrTransaction className="text-[var(--ctp-green)]" size={25} />}
           value={transactionType}
@@ -244,7 +308,7 @@ export default function NewTransaction({
                 })
               ) ?? []),
           ]}
-          disabled={!categories?.length}
+          disabled={!categories?.length || (monthly && scope === 'month')}
         />
         {isInstallmentsEnabled && (
           <div className="flex flex-col gap-1">

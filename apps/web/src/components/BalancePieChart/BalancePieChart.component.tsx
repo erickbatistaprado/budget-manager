@@ -1,6 +1,7 @@
 'use client';
 
 import { useI18n } from '@/i18n/useI18n';
+import { getProjectedTransactionTotal } from '@/utils/transactionProjection.util';
 import type { Transaction } from '@/types';
 import { PieChart, type ChartsLegendSlotProps } from '@mui/x-charts';
 import { useMemo, type JSX } from 'react';
@@ -14,6 +15,8 @@ interface PieChartDataType {
 interface BalancePieChartProps {
   transactions: Transaction[];
   typography: string;
+  startDate: Date;
+  endDate: Date;
   height?: number;
   width?: number;
 }
@@ -21,6 +24,8 @@ interface BalancePieChartProps {
 export default function BalancePieChart({
   transactions,
   typography,
+  startDate,
+  endDate,
   height = 180,
   width = 180,
 }: Readonly<BalancePieChartProps>): JSX.Element {
@@ -32,21 +37,17 @@ export default function BalancePieChart({
         transactions.reduce(
           (
             accumulator: Partial<Record<string, PieChartDataType>>,
-            {
-              category: { name },
-              totalValue,
-              installments,
-              installmentNumbers,
-            }: Transaction
+            transaction: Transaction
           ): Partial<Record<string, PieChartDataType>> => {
+            const name = transaction.category.name;
             if (!accumulator[name]) {
               accumulator[name] = { id: name, label: name, value: 0 };
             }
-            if (installmentNumbers && installments) {
-              accumulator[name].value += Number(installments[0]?.amount ?? 0);
-            } else {
-              accumulator[name].value += Number(totalValue);
-            }
+            accumulator[name].value += getProjectedTransactionTotal(
+              transaction,
+              startDate,
+              endDate
+            );
             return accumulator;
           },
           {}
@@ -59,7 +60,7 @@ export default function BalancePieChart({
         (firstData: PieChartDataType, secondData: PieChartDataType): number =>
           secondData.value - firstData.value
       );
-    }, [transactions]);
+    }, [transactions, startDate, endDate]);
 
   const darkColors: string[] = [
     'var(--ctp-blue)',

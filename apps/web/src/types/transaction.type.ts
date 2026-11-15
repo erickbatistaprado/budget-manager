@@ -8,6 +8,16 @@ export interface Transaction {
   totalValue: number;
   installmentNumbers?: number | null;
   installments?: Installment[] | null;
+  repeatUntil?: string | null;
+  months?:
+    | {
+        month: string;
+        amount?: number | null;
+        date?: string | null;
+        notes?: string | null;
+        skipped: boolean;
+      }[]
+    | null;
   repeats: RepeatInterval;
   date: string;
 }

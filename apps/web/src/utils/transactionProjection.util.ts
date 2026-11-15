@@ -1,3 +1,4 @@
+import { monthlyOccurrence } from '@/utils/monthlyTransaction.util';
 import { RepeatInterval } from '@/enums';
 import type { Installment, Transaction } from '@/types';
 import { parseApiDate } from '@/utils/globalFormats.util';
@@ -8,31 +9,6 @@ function startOfMonth(date: Date): Date {
 
 function isBetween(date: Date, startDate: Date, endDate: Date): boolean {
   return date >= startDate && date <= endDate;
-}
-
-function monthDifference(startDate: Date, endDate: Date): number {
-  return (
-    (endDate.getFullYear() - startDate.getFullYear()) * 12 +
-    endDate.getMonth() -
-    startDate.getMonth()
-  );
-}
-
-function countMonthlyOccurrences(
-  transactionDate: Date,
-  startDate: Date,
-  endDate: Date
-): number {
-  const firstMonth = startOfMonth(
-    transactionDate > startDate ? transactionDate : startDate
-  );
-  const lastMonth = startOfMonth(endDate);
-
-  if (firstMonth > lastMonth) {
-    return 0;
-  }
-
-  return monthDifference(firstMonth, lastMonth) + 1;
 }
 
 function totalInstallmentsInRange(
@@ -70,10 +46,16 @@ export function getProjectedTransactionTotal(
   const transactionDate = parseApiDate(transaction.date);
 
   if (transaction.repeats === RepeatInterval.MONTHLY) {
-    return (
-      countMonthlyOccurrences(transactionDate, startDate, endDate) *
-      Number(transaction.totalValue)
-    );
+    let total = 0;
+    let month = startOfMonth(startDate);
+    while (month <= endDate) {
+      const occurrence = monthlyOccurrence(transaction, month);
+      if (occurrence && isBetween(occurrence.date, startDate, endDate)) {
+        total += occurrence.amount;
+      }
+      month = new Date(month.getFullYear(), month.getMonth() + 1, 1);
+    }
+    return total;
   }
 
   if (!isBetween(transactionDate, startDate, endDate)) {

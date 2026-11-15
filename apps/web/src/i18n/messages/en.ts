@@ -63,6 +63,13 @@ export const en = {
     noData: 'No transaction data available',
   },
   transactions: {
+    onlyMonth: (month: string): string => `Only ${month}`,
+    fromMonth: (month: string): string => `${month} and the following months`,
+    earlierUnchanged: 'Earlier months stay as they are.',
+    changedThisMonth: 'changed this month',
+    dateInMonth: 'Choose a date inside the selected month.',
+    editAriaLabel: 'Edit transaction',
+
     newTransaction: 'New transaction',
     repeatsTooltip: 'Does it repeat?',
     repeatsNone: 'None',

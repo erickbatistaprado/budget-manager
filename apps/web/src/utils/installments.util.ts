@@ -1,3 +1,4 @@
+import { monthlyOccurrence } from '@/utils/monthlyTransaction.util';
 import type { Installment, Transaction } from '@/types';
 import { parseApiDate, roundNumbersUp } from '@/utils/globalFormats.util';
 
@@ -25,6 +26,9 @@ export function installmentsInMonth(
 
 /** What the transaction costs in the month of `date`. */
 export function amountInMonth(transaction: Transaction, date: Date): number {
+  if (transaction.repeats === 'MONTHLY') {
+    return monthlyOccurrence(transaction, date)?.amount ?? 0;
+  }
   const due: Installment[] = installmentsInMonth(transaction, date);
   if (due.length) {
     return due.reduce(

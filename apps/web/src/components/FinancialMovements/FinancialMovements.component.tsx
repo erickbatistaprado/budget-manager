@@ -5,12 +5,17 @@ import { useI18n } from '@/i18n/useI18n';
 import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import { deleteFetcher } from '@/libs/fetchers.lib';
 import type { Installment, Transaction } from '@/types';
-import { formatDate, parseApiDate } from '@/utils/globalFormats.util';
+import {
+  formatDate,
+  getApiDate,
+  parseApiDate,
+} from '@/utils/globalFormats.util';
 import {
   amountInMonth,
   describeInstallments,
   installmentsInMonth,
 } from '@/utils/installments.util';
+import { monthlyOccurrence, monthKey } from '@/utils/monthlyTransaction.util';
 import clsx from 'clsx';
 import { useMemo, useState, type JSX } from 'react';
 import { BiEdit } from 'react-icons/bi';
@@ -33,7 +38,18 @@ export default function FinancialMovements({
   const [errorMessage, setErrorMessage] = useState('');
   const [isPrepaying, setIsPrepaying] = useState<boolean>(false);
 
-  async function deleteTransaction(): Promise<void> {
+  const monthly = transaction.repeats === 'MONTHLY';
+  const occurrence = monthly
+    ? monthlyOccurrence(transaction, selectedDate)
+    : null;
+  const monthLabel = selectedDate.toLocaleDateString(
+    language === 'pt' ? 'pt-BR' : 'en-US',
+    { month: 'long' }
+  );
+
+  async function deleteTransaction(
+    scope?: 'month' | 'following'
+  ): Promise<void> {
     setErrorMessage('');
 
     if (!isConfirmingDelete) {
@@ -43,7 +59,14 @@ export default function FinancialMovements({
 
     try {
       setIsDeleting(true);
-      await deleteFetcher(`/transactions/${transaction.id}`);
+      let path = `/transactions/${transaction.id}`;
+      if (monthly) {
+        path +=
+          scope === 'following'
+            ? `/from/${monthKey(selectedDate)}`
+            : `/months/${monthKey(selectedDate)}`;
+      }
+      await deleteFetcher(path);
       await refreshTransactions();
     } catch (error: unknown) {
       console.error(error);
@@ -59,6 +82,9 @@ export default function FinancialMovements({
   }
 
   function getDate(): string {
+    if (monthly && occurrence) {
+      return formatDate(getApiDate(occurrence.date), language);
+    }
     if (transaction.repeats !== 'NONE') {
       const day: string = parseApiDate(transaction.date)
         .getDate()
@@ -90,6 +116,10 @@ export default function FinancialMovements({
     [transaction, selectedDate]
   );
 
+  if (monthly && !occurrence) {
+    return <></>;
+  }
+
   return (
     <div className="grid grid-cols-4 border-b-2 border-[var(--ctp-surface1)] text-lg">
       {isEditOpen && (
@@ -99,14 +129,24 @@ export default function FinancialMovements({
         />
       )}
       <div className="flex items-center justify-start gap-2">
-        <BiEdit
-          className="cursor-pointer text-[var(--ctp-subtext1)] transition-colors duration-500 hover:text-[var(--ctp-subtext0)]"
-          size={22}
+        <button
+          type="button"
+          aria-label={t.transactions.editAriaLabel}
           onClick={onEditOrClose}
-        />
+        >
+          <BiEdit
+            className="cursor-pointer text-[var(--ctp-subtext1)] transition-colors duration-500 hover:text-[var(--ctp-subtext0)]"
+            size={22}
+          />
+        </button>
         <span className="truncate">
           {transaction.category.name}{' '}
           {describeInstallments(transaction, selectedDate)}
+          {occurrence?.changed && (
+            <span className="ml-1 text-xs text-[var(--ctp-subtext0)]">
+              {t.transactions.changedThisMonth}
+            </span>
+          )}
           {paidEarlyThisMonth && (
             <span className="ml-1 rounded bg-[var(--ctp-green)]/15 px-1 text-xs text-[var(--ctp-green)]">
               {t.transactions.paidEarly}
@@ -125,7 +165,9 @@ export default function FinancialMovements({
           </button>
         )}
       </div>
-      <div className="truncate">{transaction.notes}</div>
+      <div className="truncate">
+        {occurrence ? occurrence.notes : transaction.notes}
+      </div>
       <div className="truncate">{getDate()}</div>
       <div className="flex items-center justify-end gap-1">
         <Money className="truncate" value={calculateInstallmentAmount} />
@@ -136,13 +178,35 @@ export default function FinancialMovements({
         )}
         {isConfirmingDelete && (
           <div className="flex items-center gap-1">
+            {monthly && (
+              <>
+                <span className="text-xs">
+                  {t.transactions.earlierUnchanged}
+                </span>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={(): void => {
+                    void deleteTransaction('following');
+                  }}
+                >
+                  {t.transactions.fromMonth(monthLabel)}
+                </button>
+              </>
+            )}
             <button
               className="cursor-pointer rounded bg-[var(--ctp-red)]/25 px-2 py-1 text-xs font-semibold text-[var(--ctp-red)]"
               disabled={isDeleting}
-              onClick={deleteTransaction}
+              onClick={(): void => {
+                void deleteTransaction('month');
+              }}
               type="button"
             >
-              {isDeleting ? t.common.deleting : t.common.confirm}
+              {isDeleting && t.common.deleting}
+              {!isDeleting &&
+                (monthly
+                  ? t.transactions.onlyMonth(monthLabel)
+                  : t.common.confirm)}
             </button>
             <button
               className="cursor-pointer rounded bg-[var(--ctp-surface1)] px-2 py-1 text-xs font-semibold text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)]"
@@ -177,7 +241,11 @@ export default function FinancialMovements({
         )}
       >
         {isEditOpen && (
-          <NewTransaction onClose={onEditOrClose} transaction={transaction} />
+          <NewTransaction
+            onClose={onEditOrClose}
+            transaction={transaction}
+            selectedDate={selectedDate}
+          />
         )}
       </div>
       {isPrepaying && (

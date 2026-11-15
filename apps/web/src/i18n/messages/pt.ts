@@ -65,6 +65,13 @@ export const pt: Messages = {
     noData: 'Nenhuma transação encontrada',
   },
   transactions: {
+    onlyMonth: (month: string): string => `Só em ${month}`,
+    fromMonth: (month: string): string => `De ${month} em diante`,
+    earlierUnchanged: 'Os meses anteriores não mudam.',
+    changedThisMonth: 'alterado neste mês',
+    dateInMonth: 'Escolha uma data dentro do mês selecionado.',
+    editAriaLabel: 'Editar lançamento',
+
     newTransaction: 'Nova transação',
     repeatsTooltip: 'Repetir transação?',
     repeatsNone: 'Não repete',

@@ -28,8 +28,18 @@ export default function Charts({
         expenses={expenses}
         incomes={incomes}
       />
-      <BalancePieChart transactions={incomes} typography={t.home.incomes} />
-      <BalancePieChart transactions={expenses} typography={t.home.expenses} />
+      <BalancePieChart
+        startDate={startDate}
+        endDate={endDate}
+        transactions={incomes}
+        typography={t.home.incomes}
+      />
+      <BalancePieChart
+        startDate={startDate}
+        endDate={endDate}
+        transactions={expenses}
+        typography={t.home.expenses}
+      />
     </div>
   );
 }

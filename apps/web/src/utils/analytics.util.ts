@@ -1,3 +1,4 @@
+import { monthlyOccurrence } from '@/utils/monthlyTransaction.util';
 import { RepeatInterval, SavingLocation } from '@/enums';
 import type { Saving, Transaction } from '@/types';
 import { parseApiDate } from '@/utils/globalFormats.util';
@@ -8,7 +9,6 @@ import {
   addWeeks,
   addYears,
   differenceInCalendarDays,
-  differenceInCalendarMonths,
   differenceInCalendarYears,
   endOfMonth,
   endOfWeek,
@@ -205,6 +205,26 @@ export function projectOccurrences(
       }
       continue;
     }
+    if (transaction.repeats === RepeatInterval.MONTHLY) {
+      let month = startOfMonth(range.startDate);
+      while (month <= range.endDate) {
+        const occurrence = monthlyOccurrence(transaction, month);
+        if (
+          occurrence &&
+          occurrence.date >= range.startDate &&
+          occurrence.date <= range.endDate
+        ) {
+          results.push({
+            ...base,
+            date: occurrence.date,
+            amount: occurrence.amount,
+            merchant: occurrence.notes?.trim() ?? '',
+          });
+        }
+        month = addMonths(month, 1);
+      }
+      continue;
+    }
     const origin = parseApiDate(transaction.date);
     if (transaction.repeats === RepeatInterval.NONE) {
       if (origin >= range.startDate && origin <= range.endDate) {
@@ -229,9 +249,6 @@ export function projectOccurrences(
         0,
         Math.floor(differenceInCalendarDays(range.startDate, origin) / 7)
       );
-    }
-    if (transaction.repeats === RepeatInterval.MONTHLY) {
-      index = Math.max(0, differenceInCalendarMonths(range.startDate, origin));
     }
     if (transaction.repeats === RepeatInterval.YEARLY) {
       index = Math.max(0, differenceInCalendarYears(range.startDate, origin));
