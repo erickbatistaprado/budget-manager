@@ -26,6 +26,12 @@ import java.util.UUID;
  * same purchase again with the next installment. Within one file, later lines of a purchase are
  * covered by the first one.
  *
+ * <p>Failing that, an installment line still matches a saved purchase with the same purchase date
+ * and number of installments when one description starts with the other and the amounts differ by
+ * at most a cent per installment. Bills of one bank cut long names at different lengths ({@code
+ * ASSOCIACAO CULTURA I} and {@code ASSOCIACAO CULTURA ING}) and put the leftover cents on the first
+ * installment, while purchases are saved with them on the last.
+ *
  * <p>A matcher is used for one pass over one statement: saved transactions are consumed as lines
  * match them.
  */
@@ -41,6 +47,12 @@ final class DuplicateMatcher {
   private final Map<PlainKey, List<ExistingTransaction>> plain = new HashMap<>();
   private final Map<InstallmentKey, List<ExistingTransaction>> installments = new HashMap<>();
   private final Map<InstallmentKey, List<FileLine>> installmentsInFile = new HashMap<>();
+  private final List<ExistingTransaction> installmentPurchases = new ArrayList<>();
+
+  /** Shortest description prefix trusted to name the same merchant. */
+  private static final int MIN_SHARED_PREFIX = 6;
+
+  private static final BigDecimal CENT = new BigDecimal("0.01");
 
   private record FileLine(int index, UUID categoryId) {}
 
@@ -54,6 +66,7 @@ final class DuplicateMatcher {
                 key -> new ArrayList<>())
             .add(transaction);
       } else {
+        installmentPurchases.add(transaction);
         int count = transaction.installmentNumbers();
         BigDecimal total = money(transaction.totalValue());
         BigDecimal regular = total.divide(BigDecimal.valueOf(count), 2, RoundingMode.DOWN);
@@ -77,7 +90,7 @@ final class DuplicateMatcher {
     if (line.isInstallment()) {
       InstallmentKey key =
           new InstallmentKey(description, line.installmentTotal(), money(line.amount()));
-      for (ExistingTransaction transaction : installments.getOrDefault(key, List.of())) {
+      for (ExistingTransaction transaction : savedPurchases(line)) {
         if (categoryId == null || categoryId.equals(transaction.categoryId())) {
           return new Match(transaction.id(), null, transaction.categoryId());
         }
@@ -112,7 +125,39 @@ final class DuplicateMatcher {
     if (!line.isInstallment()) {
       return Optional.empty();
     }
-    return installments.getOrDefault(purchaseKey(line), List.of()).stream().findFirst();
+    return savedPurchases(line).stream().findFirst();
+  }
+
+  /** Saved purchases a line belongs to: exact matches first, then near ones. */
+  private List<ExistingTransaction> savedPurchases(StatementLine line) {
+    List<ExistingTransaction> found =
+        new ArrayList<>(installments.getOrDefault(purchaseKey(line), List.of()));
+    String description = StatementText.normalize(line.description());
+    for (ExistingTransaction transaction : installmentPurchases) {
+      if (!found.contains(transaction) && isNearPurchase(transaction, line, description)) {
+        found.add(transaction);
+      }
+    }
+    return found;
+  }
+
+  private static boolean isNearPurchase(
+      ExistingTransaction transaction, StatementLine line, String description) {
+    int count = line.installmentTotal();
+    if (transaction.installmentNumbers() != count || !line.date().equals(transaction.date())) {
+      return false;
+    }
+    BigDecimal saved =
+        money(transaction.totalValue()).divide(BigDecimal.valueOf(count), 2, RoundingMode.DOWN);
+    BigDecimal tolerance = CENT.multiply(BigDecimal.valueOf(count));
+    if (saved.subtract(money(line.amount())).abs().compareTo(tolerance) > 0) {
+      return false;
+    }
+    String savedDescription = StatementText.normalize(transaction.notes());
+    String shorter =
+        savedDescription.length() <= description.length() ? savedDescription : description;
+    String longer = shorter.equals(savedDescription) ? description : savedDescription;
+    return shorter.length() >= MIN_SHARED_PREFIX && longer.startsWith(shorter);
   }
 
   /** Lines with equal keys are installments of the same purchase. */
