@@ -18,16 +18,11 @@ export default function ProfileScreen() {
   const [error, setError] = useState<string>();
   useEffect(() => setName(user?.name ?? ''), [user]);
   if (loading || !user) return <LoadingScreen label="Loading profile…" />;
-  const currentUser = user;
   async function save() {
     setBusy(true);
     setError(undefined);
     try {
-      await api.updateUser({
-        id: currentUser.id,
-        email: currentUser.email,
-        name: name.trim(),
-      });
+      await api.updateUser({ name: name.trim() });
       await refresh();
     } catch (error: unknown) {
       setError(
