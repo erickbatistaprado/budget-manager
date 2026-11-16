@@ -1,7 +1,7 @@
 # Goals (metas): things to buy, in order, funded from the month's surplus
 
-Status: planned. Builds on the money flow feature (movements, savings history, month overview) and
-the new Home; start after both are merged.
+Status: phase 1 implemented; phases 2 and 3 planned. Builds on the money flow feature (movements,
+savings history, month overview) and the new Home.
 
 A wishlist that turns into a plan: what the user wants to buy, in which order, when each one will
 be affordable at the current pace, and what could make it sooner.
@@ -107,6 +107,14 @@ created or not, balances), purchase end to end, migration. Web: list reorder by 
 
 ## Phases
 
-1. Goals, ranking, manual allocations, plan and projection, goals page.
+1. Goals, ranking, manual allocations, plan and projection, goals page (implemented).
 2. "Guardar a sobra" on the Home, "Próxima meta", purchase flow.
 3. Savings tips.
+
+## Phase 1 implementation
+
+- **Database (`V17__goals.sql`)**: adds `main_account_id` (`REFERENCES t_account(id) ON DELETE SET NULL`) and `goal_monthly_pace` (`>= 0`) to `t_user`, plus `t_goal` and `t_goal_allocation`. Both tables and the new user preferences are included in the user data export (`UserDataRepository`).
+- **Domain (`goals/domain`)**: `Goal`, `GoalAllocation`, and pure funding/projection logic in `GoalFunding` (6-month average of kept history with negative months clamped to zero, fixed `monthlyAmount` served first then waterfall by rank, 120-month simulation cap, late target-date detection with binary search for minimum extra monthly pace and 1st-place simulation, rank move renumbering, and nonzero allocation/release validation).
+- **Application & HTTP (`goals/application/GoalService`, `goals/infrastructure/http/GoalController`)**: owner-scoped `GET/POST /goals`, `PUT/DELETE /goals/{id}`, `PUT /goals/{id}/position`, `GET/POST /goals/{id}/allocations`, `GET /goals/plan`, and `PUT /goals/pace`, serialized per owner lock. Positive allocations on a goal with a `savingId` create an `INVESTMENT` movement via `MoneyFlowService`; releases (`amount < 0`) reduce the reservation while leaving linked savings invested. Changing a goal's linked saving requires releasing existing allocations first.
+- **Main account preference**: `PUT /users/current/preferences` accepts `mainAccountId` (verified for ownership) alongside `salaryDay`, exposed on `GET /users/current`. Profile > Preferences includes the main account `Select`. The web uses `mainAccountId` as the default account in the goals allocation form, movement form, and Home's "Investir a sobra" prefill (falling back to the account with the most income).
+- **Web (`apps/web/src/app/(private)/goals/page.tsx`, `components/Goals/*`)**: "Metas" / "Goals" in the side menu between Savings and Financing; pace card with inline override and reset to the 6-month average plus reserved and free available balances; ranked goal list with drag-and-drop and keyboard up/down buttons, `Preciso`/`Quero` badges, progress bars, expected month, target-date warnings, and actions to set aside, release, edit, and delete with confirmation.
