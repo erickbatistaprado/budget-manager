@@ -466,7 +466,7 @@ export default function EntryList({
       <div className="w-full min-w-0 overflow-x-auto">
         <table className="w-full text-left">
           <thead className="hidden sm:table-header-group">
-            <tr>
+            <tr className="border-b-2 border-[var(--ctp-surface2)]">
               {columns.map((column): JSX.Element => (
                 <th
                   key={column.key}
