@@ -70,6 +70,8 @@ export const overviewSchema = z.object({
         .nullable(),
       automatic: z.boolean(),
       paid: z.boolean(),
+      creditLimit: z.coerce.number().positive().nullish(),
+      availableLimit: z.coerce.number().nullish(),
     })
   ),
   unassigned: z.object({ count: z.number(), total: z.coerce.number() }),

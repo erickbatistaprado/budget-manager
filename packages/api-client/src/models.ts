@@ -120,6 +120,9 @@ export const cardSchema = z.object({
   dueDay: z.number(),
   paymentAccount: accountSchema.nullish(),
   fundingAccount: accountSchema.nullish(),
+  creditLimit: z.coerce.number().positive().nullish(),
+  usedLimit: z.coerce.number().nullish(),
+  availableLimit: z.coerce.number().nullish(),
 });
 export type Card = z.infer<typeof cardSchema>;
 

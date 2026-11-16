@@ -207,6 +207,7 @@ export type CardWrite = {
     dueDay: number;
     paymentAccountId?: string | null;
     fundingAccountId?: string | null;
+    creditLimit?: number | null;
 };
 
 export type Card = {
@@ -217,6 +218,9 @@ export type Card = {
     dueDay: number;
     paymentAccount?: Account | null;
     fundingAccount?: Account | null;
+    creditLimit?: number | null;
+    usedLimit?: number | null;
+    availableLimit?: number | null;
 };
 
 export type CardSummary = {
@@ -485,6 +489,8 @@ export type OverviewBill = {
     paymentAccount: Account | null;
     automatic: boolean;
     paid: boolean;
+    creditLimit?: number | null;
+    availableLimit?: number | null;
 };
 
 export type Unassigned = {
