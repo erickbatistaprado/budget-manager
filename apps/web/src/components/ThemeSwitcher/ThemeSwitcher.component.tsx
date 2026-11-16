@@ -1,62 +1,27 @@
 'use client';
 
 import clsx from 'clsx';
-import { useSyncExternalStore, type JSX } from 'react';
+import type { JSX } from 'react';
+import { useTheme, type Theme } from '@/hooks/useTheme.hook';
+import { useI18n } from '@/i18n/useI18n';
 
-const themeStorageKey = 'budget-manager-theme';
-const themes = ['latte', 'macchiato'] as const;
-
-type Theme = (typeof themes)[number];
-
-const themeLabels: Record<Theme, string> = {
-  latte: 'Light',
-  macchiato: 'Dark',
-};
-
-function isTheme(value: string | null): value is Theme {
-  return themes.some((theme: Theme): boolean => theme === value);
-}
-
-function applyTheme(theme: Theme): void {
-  document.documentElement.dataset.theme = theme;
-  localStorage.setItem(themeStorageKey, theme);
-  window.dispatchEvent(new Event('theme-change'));
-}
-
-function getThemeSnapshot(): Theme {
-  const storedTheme = localStorage.getItem(themeStorageKey);
-
-  return isTheme(storedTheme) ? storedTheme : 'macchiato';
-}
-
-function getServerThemeSnapshot(): Theme {
-  return 'macchiato';
-}
-
-function subscribeToThemeChange(onStoreChange: () => void): () => void {
-  window.addEventListener('storage', onStoreChange);
-  window.addEventListener('theme-change', onStoreChange);
-
-  return (): void => {
-    window.removeEventListener('storage', onStoreChange);
-    window.removeEventListener('theme-change', onStoreChange);
-  };
-}
+const themes = ['latte', 'macchiato', 'system'] as const;
 
 export default function ThemeSwitcher(): JSX.Element {
-  const selectedTheme = useSyncExternalStore(
-    subscribeToThemeChange,
-    getThemeSnapshot,
-    getServerThemeSnapshot
-  );
-
-  function onThemeClick(theme: Theme): void {
-    applyTheme(theme);
-  }
+  const { theme: selectedTheme, setTheme } = useTheme();
+  const { t } = useI18n();
+  const themeLabels: Record<Theme, string> = {
+    latte: t.profile.light,
+    macchiato: t.profile.dark,
+    system: t.profile.system,
+  };
 
   return (
-    <div aria-label="Theme" className="rounded-lg bg-[var(--ctp-surface0)] p-2">
-      <div className="grid grid-cols-2 gap-2" role="radiogroup">
+    <div
+      aria-label={t.profile.theme}
+      className="rounded-lg bg-[var(--ctp-surface0)] p-2"
+    >
+      <div className="grid grid-cols-3 gap-2" role="radiogroup">
         {themes.map((theme: Theme): JSX.Element => (
           <button
             aria-checked={selectedTheme === theme}
@@ -67,7 +32,7 @@ export default function ThemeSwitcher(): JSX.Element {
                 : 'text-[var(--ctp-text)] hover:bg-[var(--ctp-blue)]/20'
             )}
             key={theme}
-            onClick={(): void => onThemeClick(theme)}
+            onClick={(): void => setTheme(theme)}
             role="radio"
             type="button"
           >

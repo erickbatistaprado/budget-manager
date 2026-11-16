@@ -20,9 +20,14 @@ const themeScript = `
   const themes = ['latte', 'macchiato'];
   const storedTheme = localStorage.getItem('budget-manager-theme');
 
-  document.documentElement.dataset.theme = themes.includes(storedTheme)
-    ? storedTheme
-    : 'macchiato';
+  const resolved = window.matchMedia('(prefers-color-scheme: light)').matches ? 'latte' : 'macchiato';
+  let selectedTheme = 'macchiato';
+  if (storedTheme === 'system') {
+    selectedTheme = resolved;
+  } else if (themes.includes(storedTheme)) {
+    selectedTheme = storedTheme;
+  }
+  document.documentElement.dataset.theme = selectedTheme;
 })();
 `;
 

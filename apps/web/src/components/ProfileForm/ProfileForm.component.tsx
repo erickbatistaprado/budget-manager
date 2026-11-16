@@ -1,269 +1,525 @@
 'use client';
 
-import { Input } from '@/components';
 import { useCurrentUser, useProfileImage } from '@/hooks';
+import { useTheme } from '@/hooks/useTheme.hook';
 import { useI18n } from '@/i18n/useI18n';
-import { deleteFetcher, postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import {
-  arePasswordsEqual,
-  hasValueInside,
-  isValidPassword,
-} from '@/validations/validators.util';
-import clsx from 'clsx';
+  deleteFetcher,
+  getBlobFetcher,
+  getFetcher,
+  postFetcher,
+  putFetcher,
+} from '@/libs/fetchers.lib';
+import { isValidPassword } from '@/validations/validators.util';
+import type { OpenApi } from '@budget-manager/api-client';
+import type { User } from '@/types';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
   type JSX,
 } from 'react';
+import useSWR from 'swr';
 
-interface UpdatedUser {
-  name: string;
-  password: string;
-  confirmPassword: string;
-}
+const panel = 'min-w-0 space-y-4 rounded bg-[var(--ctp-surface0)] p-4';
+const field =
+  'w-full min-w-0 rounded border border-[var(--ctp-surface2)] bg-[var(--ctp-base)] p-2';
+const button =
+  'rounded bg-[var(--ctp-surface1)] px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50';
+type Section = 'name' | 'photo' | 'password' | 'preferences' | 'backup';
+type Message =
+  | 'saved'
+  | 'nameError'
+  | 'passwordError'
+  | 'currentPasswordError'
+  | 'samePasswordError'
+  | 'preferencesError'
+  | 'imageError'
+  | 'imageSizeError'
+  | 'imageTypeError'
+  | 'deleteImageError'
+  | 'backupError';
 
 export default function ProfileForm(): JSX.Element {
   const { t } = useI18n();
-  const [updatedUser, setUpdatedUser] = useState<UpdatedUser>({
-    name: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [updatedImage, setUpdatedImage] = useState<Blob>();
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [isDeletingImage, setIsDeletingImage] = useState<boolean>(false);
+  const { data: user, error } = useCurrentUser();
+  if (error) return <p role="alert">{t.profile.loadError}</p>;
+  if (!user) return <p role="status">{t.profile.loading}</p>;
+  return <ProfileSections user={user} />;
+}
 
-  const { data: currentUser, mutate: mutateUser } = useCurrentUser();
-  const { data: profileImage, mutate: mutateImage } = useProfileImage();
-  const { push } = useRouter();
+function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
+  const { t, language, setLanguage } = useI18n();
+  const { theme, setTheme } = useTheme();
+  const { mutate: mutateUser } = useCurrentUser();
+  const {
+    data: photo,
+    mutate: mutatePhoto,
+    error: photoError,
+  } = useProfileImage();
+  const { data: summary, error: summaryError } = useSWR(
+    '/users/current/data-summary',
+    getFetcher<OpenApi.UserDataSummary>
+  );
+  const [name, setName] = useState(user.name ?? '');
+  const [salaryDay, setSalaryDay] = useState(String(user.salaryDay ?? ''));
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [messages, setMessages] = useState<Partial<Record<Section, Message>>>(
+    {}
+  );
+  const [busy, setBusy] = useState<Partial<Record<Section, boolean>>>({});
+  const photoInput = useRef<HTMLInputElement>(null);
+  const photoUrl = useMemo(
+    (): string | undefined => (photo ? URL.createObjectURL(photo) : undefined),
+    [photo]
+  );
+  useEffect(
+    (): (() => void) => (): void => {
+      if (photoUrl) URL.revokeObjectURL(photoUrl);
+    },
+    [photoUrl]
+  );
 
-  const profileImageUrl: string | undefined = useMemo(():
-    string | undefined => {
-    if (updatedImage) {
-      return URL.createObjectURL(updatedImage);
-    }
-    if (profileImage) {
-      return URL.createObjectURL(profileImage);
-    }
-    return undefined;
-  }, [profileImage, updatedImage]);
-
-  useEffect((): (() => void) | undefined => {
-    if (!profileImageUrl) {
-      return undefined;
-    }
-
-    return (): void => URL.revokeObjectURL(profileImageUrl);
-  }, [profileImageUrl]);
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
-    setErrorMessage('');
-
-    try {
-      const { name, password, confirmPassword } = updatedUser;
-
-      if (updatedImage) {
-        const imageFile: File = new File([updatedImage], 'image.jpeg', {
-          type: updatedImage.type,
-          lastModified: Date.now(),
-        });
-        const formData = new FormData();
-        formData.append('file', imageFile, imageFile.name);
-        await postFetcher<FormData>('/user-image', { body: formData });
-      }
-      if (name || password) {
-        if (!arePasswordsEqual(password, confirmPassword)) {
-          throw new Error('differentPasswords');
-        }
-        if (password && !isValidPassword(password)) {
-          throw new Error('weakPassword');
-        }
-
-        const payload: Partial<Pick<UpdatedUser, 'name' | 'password'>> = {};
-        if (name.trim()) {
-          payload.name = name.trim();
-        }
-        if (password) {
-          payload.password = password;
-        }
-
-        await putFetcher('/users', {
-          body: JSON.stringify(payload),
-        });
-      }
-      setUpdatedUser({ name: '', password: '', confirmPassword: '' });
-      setUpdatedImage(undefined);
-      await mutateImage();
-      await mutateUser();
-      push('/');
-    } catch (error: unknown) {
-      console.error(error);
-      if (error instanceof Error && error.message === 'differentPasswords') {
-        setErrorMessage(t.profile.passwordsMatchError);
-        return;
-      }
-      if (error instanceof Error && error.message === 'weakPassword') {
-        setErrorMessage(t.profile.passwordRequirementsError);
-        return;
-      }
-      setErrorMessage(t.profile.saveError);
-    }
-  }
-
-  function handleChange({
-    currentTarget: { value, id },
-  }: ChangeEvent<HTMLInputElement>): void {
-    setUpdatedUser((prev: UpdatedUser): UpdatedUser => ({
-      ...prev,
-      [id]: value,
-    }));
-  }
-
-  function handleChangeImage({
-    currentTarget: { files },
-  }: ChangeEvent<HTMLInputElement>): void {
-    const file: File | undefined = files?.[0];
-    if (file) {
-      setUpdatedImage(file);
-    }
-  }
-
-  async function handleDeleteImage(): Promise<void> {
-    setErrorMessage('');
-
-    if (updatedImage && !profileImage) {
-      setUpdatedImage(undefined);
-      return;
-    }
-
-    try {
-      setIsDeletingImage(true);
-      await deleteFetcher('/user-image');
-      setUpdatedImage(undefined);
-      await mutateImage(undefined, { revalidate: false });
-    } catch (error: unknown) {
-      console.error(error);
-      setErrorMessage(t.profile.deleteImageError);
-    } finally {
-      setIsDeletingImage(false);
-    }
-  }
-
-  function handleUserImageRender(): JSX.Element {
-    if (profileImageUrl) {
-      return (
-        <Image
-          src={profileImageUrl}
-          alt={t.profile.title}
-          fill
-          className="object-cover"
-        />
-      );
-    }
+  function message(section: Section): JSX.Element {
+    const value = messages[section];
     return (
-      <div className="flex h-full w-full items-center justify-center text-[var(--ctp-subtext0)]">
-        {t.profile.chooseImage}
-      </div>
+      <p
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="text-sm"
+      >
+        {value && t.profile[value]}
+      </p>
     );
   }
-
-  const isSaveButtonDisabled: boolean = useMemo(
-    (): boolean =>
-      !arePasswordsEqual(updatedUser.password, updatedUser.confirmPassword) ||
-      !hasValueInside({ ...updatedUser, updatedImage }),
-    [updatedImage, updatedUser]
-  );
-  const canDeleteImage: boolean = Boolean(profileImage || updatedImage);
-
+  async function run(
+    section: Section,
+    action: () => Promise<void>,
+    failure: Message
+  ): Promise<void> {
+    setBusy((previous): Partial<Record<Section, boolean>> => ({
+      ...previous,
+      [section]: true,
+    }));
+    setMessages((previous): Partial<Record<Section, Message>> => ({
+      ...previous,
+      [section]: undefined,
+    }));
+    try {
+      await action();
+      setMessages((previous): Partial<Record<Section, Message>> => ({
+        ...previous,
+        [section]: 'saved',
+      }));
+    } catch (error: unknown) {
+      let result = failure;
+      if (
+        error instanceof Error &&
+        error.message.includes('Current password is missing or incorrect')
+      )
+        result = 'currentPasswordError';
+      if (
+        error instanceof Error &&
+        error.message.includes('Password must be different')
+      )
+        result = 'samePasswordError';
+      if (error instanceof Error && error.message.startsWith('HTTP 413'))
+        result = 'imageSizeError';
+      setMessages((previous): Partial<Record<Section, Message>> => ({
+        ...previous,
+        [section]: result,
+      }));
+    } finally {
+      setBusy((previous): Partial<Record<Section, boolean>> => ({
+        ...previous,
+        [section]: false,
+      }));
+    }
+  }
+  async function upload(event: ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+    if (!file || !summary) return;
+    let error: Message | undefined;
+    if (!['image/png', 'image/jpeg'].includes(file.type))
+      error = 'imageTypeError';
+    if (file.size > summary.maxProfileImageBytes) error = 'imageSizeError';
+    if (error) {
+      setMessages((previous): Partial<Record<Section, Message>> => ({
+        ...previous,
+        photo: error,
+      }));
+      return;
+    }
+    await run(
+      'photo',
+      async (): Promise<void> => {
+        const body = new FormData();
+        body.append('file', file);
+        await postFetcher('/user-image', { body });
+        await mutatePhoto();
+      },
+      'imageError'
+    );
+  }
+  function saveName(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    void run(
+      'name',
+      async (): Promise<void> => {
+        await putFetcher('/users', {
+          body: JSON.stringify({ name: name.trim() }),
+        });
+        await mutateUser();
+      },
+      'nameError'
+    );
+  }
+  function savePassword(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    void run(
+      'password',
+      async (): Promise<void> => {
+        await putFetcher('/users', {
+          body: JSON.stringify({ currentPassword, password }),
+        });
+        setCurrentPassword('');
+        setPassword('');
+        setConfirmation('');
+      },
+      'passwordError'
+    );
+  }
+  function savePreferences(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    void run(
+      'preferences',
+      async (): Promise<void> => {
+        await putFetcher('/users/current/preferences', {
+          body: JSON.stringify({
+            salaryDay: salaryDay === '' ? null : Number(salaryDay),
+          }),
+        });
+        setSalaryDay(salaryDay === '' ? '' : String(Number(salaryDay)));
+        await mutateUser();
+      },
+      'preferencesError'
+    );
+  }
+  async function download(): Promise<void> {
+    await run(
+      'backup',
+      async (): Promise<void> => {
+        const blob = await getBlobFetcher('/users/current/export');
+        const backup = JSON.parse(await blob.text()) as { exportedAt: string };
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `budget-manager-backup-${backup.exportedAt.slice(0, 10)}.json`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout((): void => URL.revokeObjectURL(url), 1000);
+      },
+      'backupError'
+    );
+  }
+  const rules = [
+    { label: t.profile.ruleLength, met: password.length >= 8 },
+    {
+      label: t.profile.ruleBytes,
+      met: new Blob([password]).size <= 72 && password.length > 0,
+    },
+    { label: t.profile.ruleUpper, met: /[A-Z]/.test(password) },
+    { label: t.profile.ruleLower, met: /[a-z]/.test(password) },
+    { label: t.profile.ruleNumber, met: /\d/.test(password) },
+    { label: t.profile.ruleSpecial, met: /[\W_]/.test(password) },
+  ];
+  const validSalary =
+    salaryDay === '' ||
+    (Number.isInteger(Number(salaryDay)) &&
+      Number(salaryDay) >= 1 &&
+      Number(salaryDay) <= 31);
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="flex flex-col items-center gap-3">
-        <label className="relative h-40 w-40 cursor-pointer overflow-hidden rounded-full border-4 border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)] transition-all hover:border-[var(--ctp-blue)] hover:shadow-lg">
-          <input
-            type="file"
-            accept="image/png, image/jpeg"
-            className="hidden"
-            onChange={handleChangeImage}
-          />
-          {handleUserImageRender()}
-        </label>
-        {canDeleteImage && (
-          <button
-            type="button"
-            onClick={handleDeleteImage}
-            disabled={isDeletingImage}
-            className="cursor-pointer rounded-md bg-[var(--ctp-red)]/25 px-4 py-2 text-sm font-medium text-[var(--ctp-red)] transition hover:bg-[var(--ctp-red)]/35 disabled:cursor-not-allowed disabled:bg-[var(--ctp-surface1)] disabled:text-[var(--ctp-subtext0)]"
-          >
-            {isDeletingImage ? t.common.deleting : t.profile.deleteImage}
-          </button>
-        )}
-      </div>
-      <div className="text-center">
-        {currentUser?.name && (
-          <h2 className="text-xl font-semibold text-[var(--ctp-text)]">
-            {t.profile.greeting(currentUser.name)}
-          </h2>
-        )}
-        {currentUser?.email && (
-          <p className="text-[var(--ctp-subtext0)]">{currentUser.email}</p>
-        )}
-      </div>
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-md space-y-4 rounded-xl border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-6 shadow-md backdrop-blur-md"
-      >
-        <Input
-          id="name"
-          label={t.common.name}
-          type="text"
-          value={updatedUser.name}
-          onChange={handleChange}
-        />
-        <Input
-          id="password"
-          label={t.auth.password}
-          type="password"
-          value={updatedUser.password}
-          onChange={handleChange}
-        />
-        <Input
-          id="confirmPassword"
-          label={t.profile.confirmPassword}
-          type="password"
-          value={updatedUser.confirmPassword}
-          onChange={handleChange}
-        />
-        {errorMessage && (
-          <p className="text-sm text-[var(--ctp-red)]">{errorMessage}</p>
-        )}
-        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-          <button
-            type="button"
-            onClick={(): void => push('/')}
-            className="flex-1 cursor-pointer rounded-lg bg-[var(--ctp-surface1)] py-3 text-lg font-medium text-[var(--ctp-text)] transition hover:bg-[var(--ctp-surface2)]"
-          >
-            {t.common.cancel}
-          </button>
-          <button
-            type="submit"
-            disabled={isSaveButtonDisabled}
-            className={clsx(
-              'flex-1 rounded-lg py-3 text-lg font-medium transition',
-              isSaveButtonDisabled
-                ? 'cursor-not-allowed bg-[var(--ctp-surface2)] text-[var(--ctp-subtext0)]'
-                : 'cursor-pointer bg-[var(--ctp-surface1)] text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)]'
+    <>
+      <section className={panel} aria-labelledby="profile-heading">
+        <h2 id="profile-heading" className="text-lg font-semibold">
+          {t.profile.personal}
+        </h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--ctp-surface1)]">
+            {photoUrl && (
+              <Image
+                src={photoUrl}
+                alt={t.profile.photo}
+                fill
+                className="object-cover"
+              />
             )}
+          </div>
+          <input
+            ref={photoInput}
+            type="file"
+            accept="image/png,image/jpeg"
+            aria-label={t.profile.chooseImage}
+            className="hidden"
+            onChange={(event): void => {
+              void upload(event);
+            }}
+          />
+          <button
+            className={button}
+            disabled={busy.photo || !summary}
+            onClick={(): void => photoInput.current?.click()}
+          >
+            {t.profile.chooseImage}
+          </button>
+          <button
+            className={button}
+            disabled={busy.photo || !photo}
+            onClick={(): void => {
+              void run(
+                'photo',
+                async (): Promise<void> => {
+                  await deleteFetcher('/user-image');
+                  await mutatePhoto(undefined, { revalidate: false });
+                },
+                'deleteImageError'
+              );
+            }}
+          >
+            {t.profile.deleteImage}
+          </button>
+        </div>
+        {summary && (
+          <p className="text-sm text-[var(--ctp-subtext0)]">
+            PNG / JPEG · {summary.maxProfileImageBytes / 1024 / 1024} MiB
+          </p>
+        )}
+        {photoError && <p role="alert">{t.profile.imageError}</p>}
+        {message('photo')}
+        <form onSubmit={saveName} className="space-y-3">
+          <label className="flex flex-col gap-1">
+            {t.common.name}
+            <input
+              className={field}
+              value={name}
+              maxLength={50}
+              autoComplete="name"
+              onChange={(event): void => setName(event.currentTarget.value)}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            {t.auth.email}
+            <input
+              className={field}
+              type="email"
+              value={user.email}
+              readOnly
+              autoComplete="email"
+            />
+          </label>
+          <button
+            className={button}
+            disabled={busy.name || !name.trim() || name.trim() === user.name}
           >
             {t.common.save}
           </button>
-        </div>
-      </form>
-    </div>
+          {message('name')}
+        </form>
+      </section>
+      <section className={panel} aria-labelledby="security-heading">
+        <h2 id="security-heading" className="text-lg font-semibold">
+          {t.profile.security}
+        </h2>
+        <p id="sessions-note" className="text-sm text-[var(--ctp-subtext0)]">
+          {t.profile.sessionsNote}
+        </p>
+        <form
+          onSubmit={savePassword}
+          className="space-y-3"
+          aria-describedby="sessions-note"
+        >
+          <label className="flex flex-col gap-1">
+            {t.profile.currentPassword}
+            <input
+              className={field}
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(event): void =>
+                setCurrentPassword(event.currentTarget.value)
+              }
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            {t.profile.newPassword}
+            <input
+              className={field}
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              aria-describedby="password-rules"
+              onChange={(event): void => setPassword(event.currentTarget.value)}
+            />
+          </label>
+          <ul
+            id="password-rules"
+            aria-label={t.profile.passwordRules}
+            aria-live="polite"
+            className="space-y-1 text-sm"
+          >
+            {rules.map((rule): JSX.Element => (
+              <li key={rule.label}>
+                {rule.met ? '✓' : '○'} {rule.label}
+              </li>
+            ))}
+          </ul>
+          <label className="flex flex-col gap-1">
+            {t.profile.confirmPassword}
+            <input
+              className={field}
+              type="password"
+              autoComplete="new-password"
+              value={confirmation}
+              onChange={(event): void =>
+                setConfirmation(event.currentTarget.value)
+              }
+            />
+          </label>
+          {confirmation && confirmation !== password && (
+            <p role="alert">{t.profile.passwordsMatchError}</p>
+          )}
+          <button
+            className={button}
+            disabled={
+              busy.password ||
+              !currentPassword ||
+              !isValidPassword(password) ||
+              password !== confirmation
+            }
+          >
+            {t.common.save}
+          </button>
+          {message('password')}
+        </form>
+      </section>
+      <section className={panel} aria-labelledby="preferences-heading">
+        <h2 id="preferences-heading" className="text-lg font-semibold">
+          {t.profile.preferences}
+        </h2>
+        <label className="flex flex-col gap-1">
+          {t.profile.language}
+          <select
+            className={field}
+            value={language}
+            onChange={(event): void => {
+              const value = event.currentTarget.value;
+              if (value === 'en' || value === 'pt') {
+                setLanguage(value);
+                setMessages((previous): Partial<Record<Section, Message>> => ({
+                  ...previous,
+                  preferences: 'saved',
+                }));
+              }
+            }}
+          >
+            <option value="pt">Português (Brasil)</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          {t.profile.theme}
+          <select
+            className={field}
+            value={theme}
+            onChange={(event): void => {
+              const value = event.currentTarget.value;
+              if (
+                value === 'latte' ||
+                value === 'macchiato' ||
+                value === 'system'
+              ) {
+                setTheme(value);
+                setMessages((previous): Partial<Record<Section, Message>> => ({
+                  ...previous,
+                  preferences: 'saved',
+                }));
+              }
+            }}
+          >
+            <option value="latte">{t.profile.light}</option>
+            <option value="macchiato">{t.profile.dark}</option>
+            <option value="system">{t.profile.system}</option>
+          </select>
+        </label>
+        <form onSubmit={savePreferences} className="space-y-3">
+          <label className="flex flex-col gap-1">
+            {t.profile.salaryDay}
+            <input
+              className={field}
+              type="number"
+              min={1}
+              max={31}
+              step={1}
+              value={salaryDay}
+              aria-describedby="salary-help"
+              onChange={(event): void =>
+                setSalaryDay(event.currentTarget.value)
+              }
+            />
+          </label>
+          <p id="salary-help" className="text-sm text-[var(--ctp-subtext0)]">
+            {t.profile.optional}
+          </p>
+          <button
+            className={button}
+            disabled={
+              busy.preferences ||
+              !validSalary ||
+              salaryDay === String(user.salaryDay ?? '')
+            }
+          >
+            {t.common.save}
+          </button>
+        </form>
+        {message('preferences')}
+      </section>
+      <section className={panel} aria-labelledby="data-heading">
+        <h2 id="data-heading" className="text-lg font-semibold">
+          {t.profile.data}
+        </h2>
+        {summaryError && <p role="alert">{t.profile.summaryError}</p>}
+        {summary && (
+          <>
+            <p>
+              {summary.entryCount} {t.profile.entries}
+            </p>
+            <p>
+              {summary.firstEntryDate
+                ? `${t.profile.firstEntry} ${new Date(summary.firstEntryDate + 'T12:00:00').toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}`
+                : t.profile.noEntries}
+            </p>
+          </>
+        )}
+        <button
+          className={button}
+          disabled={busy.backup}
+          onClick={(): void => {
+            void download();
+          }}
+        >
+          {t.profile.backup}
+        </button>
+        {message('backup')}
+      </section>
+    </>
   );
 }
