@@ -1,3 +1,11 @@
+import { goalSchema, goalAllocationSchema, goalPlanSchema } from './goals';
+import type {
+  Goal,
+  GoalDraft,
+  GoalAllocation,
+  GoalAllocationDraft,
+  GoalPlan,
+} from './goals';
 import {
   movementSchema,
   balanceResultSchema,
@@ -52,6 +60,56 @@ export class BudgetManagerApi {
 
   constructor(client: BudgetManagerClient) {
     this.client = client;
+  }
+
+  goals(): Promise<Goal[]> {
+    return this.client.request('/goals', z.array(goalSchema));
+  }
+  createGoal(draft: GoalDraft): Promise<Goal> {
+    return this.client.request('/goals', goalSchema, {
+      method: 'POST',
+      body: draft,
+    });
+  }
+  updateGoal(id: string, draft: GoalDraft): Promise<Goal> {
+    return this.client.request(`/goals/${id}`, goalSchema, {
+      method: 'PUT',
+      body: draft,
+    });
+  }
+  deleteGoal(id: string): Promise<void> {
+    return this.client.command(`/goals/${id}`, { method: 'DELETE' });
+  }
+  moveGoal(id: string, position: number): Promise<void> {
+    return this.client.command(`/goals/${id}/position`, {
+      method: 'PUT',
+      body: { position },
+    });
+  }
+  goalAllocations(id: string): Promise<GoalAllocation[]> {
+    return this.client.request(
+      `/goals/${id}/allocations`,
+      z.array(goalAllocationSchema)
+    );
+  }
+  allocateGoal(
+    id: string,
+    draft: GoalAllocationDraft
+  ): Promise<GoalAllocation> {
+    return this.client.request(
+      `/goals/${id}/allocations`,
+      goalAllocationSchema,
+      { method: 'POST', body: draft }
+    );
+  }
+  goalPlan(): Promise<GoalPlan> {
+    return this.client.request('/goals/plan', goalPlanSchema);
+  }
+  setGoalPace(monthlyAmount: number | null): Promise<void> {
+    return this.client.command('/goals/pace', {
+      method: 'PUT',
+      body: { monthlyAmount },
+    });
   }
 
   financings(): Promise<Financing[]> {

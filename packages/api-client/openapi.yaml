@@ -1267,6 +1267,168 @@ paths:
             ],
         },
     }
+  /goals:
+    get:
+      operationId: listGoals
+      tags: [Goals]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                { type: array, items: { $ref: '#/components/schemas/Goal' } }
+        '404':
+          description: Resource not found for the current owner
+    post:
+      operationId: createGoal
+      tags: [Goals]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoalDraft' }
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Goal' }
+        '404':
+          description: Resource not found for the current owner
+  /goals/{id}:
+    put:
+      operationId: updateGoal
+      tags: [Goals]
+      parameters:
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoalDraft' }
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Goal' }
+        '404':
+          description: Resource not found for the current owner
+    delete:
+      operationId: deleteGoal
+      tags: [Goals]
+      parameters:
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+      responses:
+        '204':
+          description: Success
+        '404':
+          description: Resource not found for the current owner
+  /goals/{id}/position:
+    put:
+      operationId: moveGoal
+      tags: [Goals]
+      parameters:
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoalPosition' }
+      responses:
+        '204':
+          description: Success
+        '404':
+          description: Resource not found for the current owner
+  /goals/{id}/allocations:
+    get:
+      operationId: goalAllocations
+      tags: [Goals]
+      parameters:
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                {
+                  type: array,
+                  items: { $ref: '#/components/schemas/GoalAllocation' },
+                }
+        '404':
+          description: Resource not found for the current owner
+    post:
+      operationId: allocateGoal
+      tags: [Goals]
+      parameters:
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoalAllocationDraft' }
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GoalAllocation' }
+        '404':
+          description: Resource not found for the current owner
+  /goals/plan:
+    get:
+      operationId: goalPlan
+      tags: [Goals]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GoalPlan' }
+        '404':
+          description: Resource not found for the current owner
+  /goals/pace:
+    put:
+      operationId: setGoalPace
+      tags: [Goals]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoalPace' }
+      responses:
+        '204':
+          description: Success
+        '404':
+          description: Resource not found for the current owner
+
 components:
   parameters:
     Id:
@@ -1464,13 +1626,16 @@ components:
         }
     User:
       type: object
-      required: [id, name, email, roles, salaryDay]
+      required:
+        [id, name, email, roles, salaryDay, mainAccountId, goalMonthlyPace]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
         email: { type: string, format: email }
         roles: { type: array, items: { $ref: '#/components/schemas/Role' } }
         salaryDay: { type: ['integer', 'null'], minimum: 1, maximum: 31 }
+        mainAccountId: { type: ['string', 'null'], format: uuid }
+        goalMonthlyPace: { type: ['number', 'null'], minimum: 0 }
     UserUpdate:
       type: object
       properties:
@@ -1487,6 +1652,7 @@ components:
       required: [salaryDay]
       properties:
         salaryDay: { type: ['integer', 'null'], minimum: 1, maximum: 31 }
+        mainAccountId: { type: ['string', 'null'], format: uuid }
     UserDataSummary:
       type: object
       required: [firstEntryDate, entryCount, maxProfileImageBytes]
@@ -1512,6 +1678,8 @@ components:
               cards,
               accounts,
               savings,
+              goals,
+              goalAllocations,
               financings,
               financingChanges,
             ]
@@ -2055,3 +2223,111 @@ components:
         savings: { type: number }
         debt: { type: number }
         netWorth: { type: number }
+    GoalDraft:
+      type: object
+      required: [name, price, kind]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        price: { type: number, exclusiveMinimum: 0, multipleOf: 0.01 }
+        kind: { type: string, enum: [NEED, WANT] }
+        link: { type: ['string', 'null'], maxLength: 2000 }
+        notes: { type: ['string', 'null'], maxLength: 4000 }
+        targetDate: { type: ['string', 'null'], pattern: '^\d{4}/\d{2}/\d{2}$' }
+        monthlyAmount:
+          { type: ['number', 'null'], minimum: 0, multipleOf: 0.01 }
+        savingId: { type: ['string', 'null'], format: uuid }
+    Goal:
+      allOf:
+        - { $ref: '#/components/schemas/GoalDraft' }
+        - type: object
+          required: [id, position, status]
+          properties:
+            id: { type: string, format: uuid }
+            position: { type: integer, minimum: 1 }
+            status: { type: string, enum: [ACTIVE, ACHIEVED, CANCELLED] }
+    GoalPosition:
+      type: object
+      required: [position]
+      properties:
+        position: { type: integer, minimum: 1 }
+    GoalPace:
+      type: object
+      required: [monthlyAmount]
+      properties:
+        monthlyAmount:
+          {
+            type: ['number', 'null'],
+            minimum: 0,
+            multipleOf: 0.01,
+            description: Null restores the average of the last six complete months; negative kept counts as zero,
+          }
+    GoalAllocationDraft:
+      type: object
+      required: [date, amount]
+      properties:
+        date: { type: string, pattern: '^\d{4}/\d{2}/\d{2}$' }
+        amount:
+          {
+            type: number,
+            multipleOf: 0.01,
+            description: Positive reserves money; negative releases it without redeeming linked savings. Cannot release more than saved.,
+          }
+        fromAccountId:
+          {
+            type: ['string', 'null'],
+            format: uuid,
+            description: Required for positive allocations with a linked saving,
+          }
+    GoalAllocation:
+      type: object
+      required: [id, goalId, date, amount, movementId]
+      properties:
+        id: { type: string, format: uuid }
+        goalId: { type: string, format: uuid }
+        date: { type: string, pattern: '^\d{4}/\d{2}/\d{2}$' }
+        amount: { type: number }
+        movementId: { type: ['string', 'null'], format: uuid }
+    GoalForecast:
+      type: object
+      required:
+        [
+          id,
+          saved,
+          remaining,
+          expectedMonth,
+          late,
+          extraMonthlyAmount,
+          firstPositionMonth,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        saved: { type: number }
+        remaining: { type: number }
+        expectedMonth:
+          {
+            type: ['string', 'null'],
+            pattern: '^\d{4}-\d{2}$',
+            description: Null means not funded within 120 months; projection starts in the current month,
+          }
+        late: { type: boolean }
+        extraMonthlyAmount:
+          {
+            type: ['number', 'null'],
+            description: Additional monthly pace needed in the current order; null for past targets or targets beyond the horizon,
+          }
+        firstPositionMonth:
+          { type: ['string', 'null'], pattern: '^\d{4}-\d{2}$' }
+    GoalPlan:
+      type: object
+      required: [pace, averagePace, paceOverride, reserved, goals]
+      properties:
+        pace: { type: number }
+        averagePace: { type: number }
+        paceOverride: { type: ['number', 'null'] }
+        reserved:
+          {
+            type: number,
+            description: Allocations without a saving; subtract from account balances for free available money,
+          }
+        goals:
+          { type: array, items: { $ref: '#/components/schemas/GoalForecast' } }

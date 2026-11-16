@@ -3,7 +3,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { BalancesyncsFinancingData, BalancesyncsFinancingErrors, BalancesyncsFinancingResponses, ChangeFinancingDueDayData, ChangeFinancingDueDayErrors, ChangeFinancingDueDayResponses, ChangeTransactionMonthData, ChangeTransactionMonthErrors, ChangeTransactionMonthResponses, CreateAccountData, CreateAccountErrors, CreateAccountResponses, CreateCardData, CreateCardErrors, CreateCardResponses, CreateFinancingData, CreateFinancingErrors, CreateFinancingResponses, CreateMovementData, CreateMovementErrors, CreateMovementResponses, CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteBalanceCheckpointData, DeleteBalanceCheckpointErrors, DeleteBalanceCheckpointResponses, DeleteCardData, DeleteCardErrors, DeleteCardResponses, DeleteFinancingData, DeleteFinancingErrors, DeleteFinancingResponses, DeleteMovementData, DeleteMovementErrors, DeleteMovementResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionFromData, DeleteTransactionFromErrors, DeleteTransactionFromResponses, DeleteTransactionResponses, ExportUserDataData, ExportUserDataResponses, ExtrapaymentsFinancingData, ExtrapaymentsFinancingErrors, ExtrapaymentsFinancingResponses, FinancingScheduleData, FinancingScheduleErrors, FinancingScheduleResponses, GetAccountBalanceData, GetAccountBalanceErrors, GetAccountBalanceResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, GetEvolutionData, GetEvolutionErrors, GetEvolutionResponses, GetFinancingData, GetFinancingErrors, GetFinancingResponses, GetMonthOverviewData, GetMonthOverviewErrors, GetMonthOverviewResponses, GetSavingHistoryData, GetSavingHistoryErrors, GetSavingHistoryResponses, GetUserDataSummaryData, GetUserDataSummaryResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListAccountsData, ListAccountsResponses, ListBalanceCheckpointsData, ListBalanceCheckpointsErrors, ListBalanceCheckpointsResponses, ListCardsData, ListCardsResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListFinancingsData, ListFinancingsErrors, ListFinancingsResponses, ListMovementsData, ListMovementsErrors, ListMovementsResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PayFinancingInstallmentData, PayFinancingInstallmentErrors, PayFinancingInstallmentResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewFinancingData, PreviewFinancingErrors, PreviewFinancingResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, PutFinancingData, PutFinancingErrors, PutFinancingResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, RestoreTransactionMonthData, RestoreTransactionMonthErrors, RestoreTransactionMonthResponses, SaveBalanceCheckpointData, SaveBalanceCheckpointErrors, SaveBalanceCheckpointResponses, SimulateFinancingData, SimulateFinancingErrors, SimulateFinancingResponses, SkipTransactionMonthData, SkipTransactionMonthErrors, SkipTransactionMonthResponses, SplitTransactionData, SplitTransactionErrors, SplitTransactionResponses, UpdateAccountData, UpdateAccountErrors, UpdateAccountResponses, UpdateCardData, UpdateCardErrors, UpdateCardResponses, UpdateMovementData, UpdateMovementErrors, UpdateMovementResponses, UpdateUserData, UpdateUserErrors, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, UpdateUserResponses, ValueSavingData, ValueSavingErrors, ValueSavingResponses } from './types.gen';
+import type { AllocateGoalData, AllocateGoalErrors, AllocateGoalResponses, BalancesyncsFinancingData, BalancesyncsFinancingErrors, BalancesyncsFinancingResponses, ChangeFinancingDueDayData, ChangeFinancingDueDayErrors, ChangeFinancingDueDayResponses, ChangeTransactionMonthData, ChangeTransactionMonthErrors, ChangeTransactionMonthResponses, CreateAccountData, CreateAccountErrors, CreateAccountResponses, CreateCardData, CreateCardErrors, CreateCardResponses, CreateFinancingData, CreateFinancingErrors, CreateFinancingResponses, CreateGoalData, CreateGoalErrors, CreateGoalResponses, CreateMovementData, CreateMovementErrors, CreateMovementResponses, CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteBalanceCheckpointData, DeleteBalanceCheckpointErrors, DeleteBalanceCheckpointResponses, DeleteCardData, DeleteCardErrors, DeleteCardResponses, DeleteFinancingData, DeleteFinancingErrors, DeleteFinancingResponses, DeleteGoalData, DeleteGoalErrors, DeleteGoalResponses, DeleteMovementData, DeleteMovementErrors, DeleteMovementResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionFromData, DeleteTransactionFromErrors, DeleteTransactionFromResponses, DeleteTransactionResponses, ExportUserDataData, ExportUserDataResponses, ExtrapaymentsFinancingData, ExtrapaymentsFinancingErrors, ExtrapaymentsFinancingResponses, FinancingScheduleData, FinancingScheduleErrors, FinancingScheduleResponses, GetAccountBalanceData, GetAccountBalanceErrors, GetAccountBalanceResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, GetEvolutionData, GetEvolutionErrors, GetEvolutionResponses, GetFinancingData, GetFinancingErrors, GetFinancingResponses, GetMonthOverviewData, GetMonthOverviewErrors, GetMonthOverviewResponses, GetSavingHistoryData, GetSavingHistoryErrors, GetSavingHistoryResponses, GetUserDataSummaryData, GetUserDataSummaryResponses, GoalAllocationsData, GoalAllocationsErrors, GoalAllocationsResponses, GoalPlanData, GoalPlanErrors, GoalPlanResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListAccountsData, ListAccountsResponses, ListBalanceCheckpointsData, ListBalanceCheckpointsErrors, ListBalanceCheckpointsResponses, ListCardsData, ListCardsResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListFinancingsData, ListFinancingsErrors, ListFinancingsResponses, ListGoalsData, ListGoalsErrors, ListGoalsResponses, ListMovementsData, ListMovementsErrors, ListMovementsResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, MoveGoalData, MoveGoalErrors, MoveGoalResponses, PayFinancingInstallmentData, PayFinancingInstallmentErrors, PayFinancingInstallmentResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewFinancingData, PreviewFinancingErrors, PreviewFinancingResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, PutFinancingData, PutFinancingErrors, PutFinancingResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, RestoreTransactionMonthData, RestoreTransactionMonthErrors, RestoreTransactionMonthResponses, SaveBalanceCheckpointData, SaveBalanceCheckpointErrors, SaveBalanceCheckpointResponses, SetGoalPaceData, SetGoalPaceErrors, SetGoalPaceResponses, SimulateFinancingData, SimulateFinancingErrors, SimulateFinancingResponses, SkipTransactionMonthData, SkipTransactionMonthErrors, SkipTransactionMonthResponses, SplitTransactionData, SplitTransactionErrors, SplitTransactionResponses, UpdateAccountData, UpdateAccountErrors, UpdateAccountResponses, UpdateCardData, UpdateCardErrors, UpdateCardResponses, UpdateGoalData, UpdateGoalErrors, UpdateGoalResponses, UpdateMovementData, UpdateMovementErrors, UpdateMovementResponses, UpdateUserData, UpdateUserErrors, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, UpdateUserResponses, ValueSavingData, ValueSavingErrors, ValueSavingResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -340,6 +340,59 @@ export const payFinancingInstallment = <ThrowOnError extends boolean = false>(op
 
 export const changeFinancingDueDay = <ThrowOnError extends boolean = false>(options: Options<ChangeFinancingDueDayData, ThrowOnError>): RequestResult<ChangeFinancingDueDayResponses, ChangeFinancingDueDayErrors, ThrowOnError> => (options.client ?? client).post<ChangeFinancingDueDayResponses, ChangeFinancingDueDayErrors, ThrowOnError>({
     url: '/financings/{id}/due-day-changes',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const listGoals = <ThrowOnError extends boolean = false>(options?: Options<ListGoalsData, ThrowOnError>): RequestResult<ListGoalsResponses, ListGoalsErrors, ThrowOnError> => (options?.client ?? client).get<ListGoalsResponses, ListGoalsErrors, ThrowOnError>({ url: '/goals', ...options });
+
+export const createGoal = <ThrowOnError extends boolean = false>(options: Options<CreateGoalData, ThrowOnError>): RequestResult<CreateGoalResponses, CreateGoalErrors, ThrowOnError> => (options.client ?? client).post<CreateGoalResponses, CreateGoalErrors, ThrowOnError>({
+    url: '/goals',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteGoal = <ThrowOnError extends boolean = false>(options: Options<DeleteGoalData, ThrowOnError>): RequestResult<DeleteGoalResponses, DeleteGoalErrors, ThrowOnError> => (options.client ?? client).delete<DeleteGoalResponses, DeleteGoalErrors, ThrowOnError>({ url: '/goals/{id}', ...options });
+
+export const updateGoal = <ThrowOnError extends boolean = false>(options: Options<UpdateGoalData, ThrowOnError>): RequestResult<UpdateGoalResponses, UpdateGoalErrors, ThrowOnError> => (options.client ?? client).put<UpdateGoalResponses, UpdateGoalErrors, ThrowOnError>({
+    url: '/goals/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const moveGoal = <ThrowOnError extends boolean = false>(options: Options<MoveGoalData, ThrowOnError>): RequestResult<MoveGoalResponses, MoveGoalErrors, ThrowOnError> => (options.client ?? client).put<MoveGoalResponses, MoveGoalErrors, ThrowOnError>({
+    url: '/goals/{id}/position',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const goalAllocations = <ThrowOnError extends boolean = false>(options: Options<GoalAllocationsData, ThrowOnError>): RequestResult<GoalAllocationsResponses, GoalAllocationsErrors, ThrowOnError> => (options.client ?? client).get<GoalAllocationsResponses, GoalAllocationsErrors, ThrowOnError>({ url: '/goals/{id}/allocations', ...options });
+
+export const allocateGoal = <ThrowOnError extends boolean = false>(options: Options<AllocateGoalData, ThrowOnError>): RequestResult<AllocateGoalResponses, AllocateGoalErrors, ThrowOnError> => (options.client ?? client).post<AllocateGoalResponses, AllocateGoalErrors, ThrowOnError>({
+    url: '/goals/{id}/allocations',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const goalPlan = <ThrowOnError extends boolean = false>(options?: Options<GoalPlanData, ThrowOnError>): RequestResult<GoalPlanResponses, GoalPlanErrors, ThrowOnError> => (options?.client ?? client).get<GoalPlanResponses, GoalPlanErrors, ThrowOnError>({ url: '/goals/plan', ...options });
+
+export const setGoalPace = <ThrowOnError extends boolean = false>(options: Options<SetGoalPaceData, ThrowOnError>): RequestResult<SetGoalPaceResponses, SetGoalPaceErrors, ThrowOnError> => (options.client ?? client).put<SetGoalPaceResponses, SetGoalPaceErrors, ThrowOnError>({
+    url: '/goals/pace',
     ...options,
     headers: {
         'Content-Type': 'application/json',

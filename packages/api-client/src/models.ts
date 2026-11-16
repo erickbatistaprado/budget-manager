@@ -182,6 +182,8 @@ export const roleSchema = z.object({
 
 export const userSchema = z.object({
   salaryDay: z.number().int().min(1).max(31).nullish(),
+  mainAccountId: z.string().nullish(),
+  goalMonthlyPace: z.coerce.number().nullish(),
   id: z.string(),
   name: z.string(),
   email: z.string(),

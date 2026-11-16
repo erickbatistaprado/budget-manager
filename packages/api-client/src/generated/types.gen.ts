@@ -112,6 +112,8 @@ export type User = {
     email: string;
     roles: Array<Role>;
     salaryDay: number | null;
+    mainAccountId: string | null;
+    goalMonthlyPace: number | null;
 };
 
 export type UserUpdate = {
@@ -128,6 +130,7 @@ export type UserUpdate = {
 
 export type UserPreferences = {
     salaryDay: number | null;
+    mainAccountId?: string | null;
 };
 
 export type UserDataSummary = {
@@ -526,6 +529,81 @@ export type Evolution = {
     savings: number;
     debt: number;
     netWorth: number;
+};
+
+export type GoalDraft = {
+    name: string;
+    price: number;
+    kind: 'NEED' | 'WANT';
+    link?: string | null;
+    notes?: string | null;
+    targetDate?: string | null;
+    monthlyAmount?: number | null;
+    savingId?: string | null;
+};
+
+export type Goal = GoalDraft & {
+    id: string;
+    position: number;
+    status: 'ACTIVE' | 'ACHIEVED' | 'CANCELLED';
+};
+
+export type GoalPosition = {
+    position: number;
+};
+
+export type GoalPace = {
+    /**
+     * Null restores the average of the last six complete months; negative kept counts as zero
+     */
+    monthlyAmount: number | null;
+};
+
+export type GoalAllocationDraft = {
+    date: string;
+    /**
+     * Positive reserves money; negative releases it without redeeming linked savings. Cannot release more than saved.
+     */
+    amount: number;
+    /**
+     * Required for positive allocations with a linked saving
+     */
+    fromAccountId?: string | null;
+};
+
+export type GoalAllocation = {
+    id: string;
+    goalId: string;
+    date: string;
+    amount: number;
+    movementId: string | null;
+};
+
+export type GoalForecast = {
+    id: string;
+    saved: number;
+    remaining: number;
+    /**
+     * Null means not funded within 120 months; projection starts in the current month
+     */
+    expectedMonth: string | null;
+    late: boolean;
+    /**
+     * Additional monthly pace needed in the current order; null for past targets or targets beyond the horizon
+     */
+    extraMonthlyAmount: number | null;
+    firstPositionMonth: string | null;
+};
+
+export type GoalPlan = {
+    pace: number;
+    averagePace: number;
+    paceOverride: number | null;
+    /**
+     * Allocations without a saving; subtract from account balances for free available money
+     */
+    reserved: number;
+    goals: Array<GoalForecast>;
 };
 
 export type TransactionWritable = TransactionWrite & {
@@ -1991,3 +2069,220 @@ export type ChangeFinancingDueDayResponses = {
 };
 
 export type ChangeFinancingDueDayResponse = ChangeFinancingDueDayResponses[keyof ChangeFinancingDueDayResponses];
+
+export type ListGoalsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/goals';
+};
+
+export type ListGoalsErrors = {
+    /**
+     * Resource not found for the current owner
+     */
+    404: unknown;
+};
+
+export type ListGoalsResponses = {
+    /**
+     * Success
+     */
+    200: Array<Goal>;
+};
+
+export type ListGoalsResponse = ListGoalsResponses[keyof ListGoalsResponses];
+
+export type CreateGoalData = {
+    body: GoalDraft;
+    path?: never;
+    query?: never;
+    url: '/goals';
+};
+
+export type CreateGoalErrors = {
+    /**
+     * Resource not found for the current owner
+     */
+    404: unknown;
+};
+
+export type CreateGoalResponses = {
+    /**
+     * Success
+     */
+    201: Goal;
+};
+
+export type CreateGoalResponse = CreateGoalResponses[keyof CreateGoalResponses];
+
+export type DeleteGoalData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/goals/{id}';
+};
+
+export type DeleteGoalErrors = {
+    /**
+     * Resource not found for the current owner
+     */
+    404: unknown;
+};
+
+export type DeleteGoalResponses = {
+    /**
+     * Success
+     */
+    204: void;
+};
+
+export type DeleteGoalResponse = DeleteGoalResponses[keyof DeleteGoalResponses];
+
+export type UpdateGoalData = {
+    body: GoalDraft;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/goals/{id}';
+};
+
+export type UpdateGoalErrors = {
+    /**
+     * Resource not found for the current owner
+     */
+    404: unknown;
+};
+
+export type UpdateGoalResponses = {
+    /**
+     * Success
+     */
+    200: Goal;
+};
+
+export type UpdateGoalResponse = UpdateGoalResponses[keyof UpdateGoalResponses];
+
+export type MoveGoalData = {
+    body: GoalPosition;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/goals/{id}/position';
+};
+
+export type MoveGoalErrors = {
+    /**
+     * Resource not found for the current owner
+     */
+    404: unknown;
+};
+
+export type MoveGoalResponses = {
+    /**
+     * Success
+     */
+    204: void;
+};
+
+export type MoveGoalResponse = MoveGoalResponses[keyof MoveGoalResponses];
+
+export type GoalAllocationsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/goals/{id}/allocations';
+};
+
+export type GoalAllocationsErrors = {
+    /**
+     * Resource not found for the current owner
+     */
+    404: unknown;
+};
+
+export type GoalAllocationsResponses = {
+    /**
+     * Success
+     */
+    200: Array<GoalAllocation>;
+};
+
+export type GoalAllocationsResponse = GoalAllocationsResponses[keyof GoalAllocationsResponses];
+
+export type AllocateGoalData = {
+    body: GoalAllocationDraft;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/goals/{id}/allocations';
+};
+
+export type AllocateGoalErrors = {
+    /**
+     * Resource not found for the current owner
+     */
+    404: unknown;
+};
+
+export type AllocateGoalResponses = {
+    /**
+     * Success
+     */
+    200: GoalAllocation;
+};
+
+export type AllocateGoalResponse = AllocateGoalResponses[keyof AllocateGoalResponses];
+
+export type GoalPlanData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/goals/plan';
+};
+
+export type GoalPlanErrors = {
+    /**
+     * Resource not found for the current owner
+     */
+    404: unknown;
+};
+
+export type GoalPlanResponses = {
+    /**
+     * Success
+     */
+    200: GoalPlan;
+};
+
+export type GoalPlanResponse = GoalPlanResponses[keyof GoalPlanResponses];
+
+export type SetGoalPaceData = {
+    body: GoalPace;
+    path?: never;
+    query?: never;
+    url: '/goals/pace';
+};
+
+export type SetGoalPaceErrors = {
+    /**
+     * Resource not found for the current owner
+     */
+    404: unknown;
+};
+
+export type SetGoalPaceResponses = {
+    /**
+     * Success
+     */
+    204: void;
+};
+
+export type SetGoalPaceResponse = SetGoalPaceResponses[keyof SetGoalPaceResponses];

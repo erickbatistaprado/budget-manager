@@ -47,3 +47,5 @@ export type {
 export * from './financing';
 
 export * from './money-flow';
+
+export * from './goals';
