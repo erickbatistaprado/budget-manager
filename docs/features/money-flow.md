@@ -190,10 +190,11 @@ Other changed files:
 Home replaces the two transaction tables and the old Balance/Charts blocks with:
 
 - A month picker and New entry drawer, followed by income, expenses and surplus.
-  The surplus split shows net investments and money kept in accounts. Invest the
-  surplus opens the movement drawer with the kept amount, the account receiving
-  the most income, and the earlier of today and month end. It still requires a
-  saving destination. Negative months show the shortfall and net account cash
+  The surplus split shows net investments and money kept in accounts. Save the
+  surplus opens the Goals split drawer with the unreserved kept amount, the main
+  account (falling back to the account receiving most income), and the earlier of
+  today and month end. Goal lines follow the funding rules; an investment portion
+  requires a saving destination. See [Goals](goals.md). Negative months show the shortfall and net account cash
   outflows (including bill payments and movements); these are ledger flows, not
   confirmation that the bank settled a particular expense. Unassigned entries
   cannot be attributed to an account.
@@ -211,9 +212,9 @@ Home replaces the two transaction tables and the old Balance/Charts blocks with:
   open a prefilled replacement form; recorded movements can be edited or deleted.
 
 The expense category pie is omitted here because Analytics already provides it.
-Summary actions and subsequent blocks remain separate components for the upcoming
-Goals feature; no goals are implemented. English and Brazilian Portuguese share
-all controls. No API or shared-client changes are required. Existing transaction
+Summary actions and subsequent blocks remain separate components. Goals now adds
+the surplus split and next-goal card; see [Goals](goals.md). English and Brazilian Portuguese share
+all controls. The Goals extension adds API and shared-client contracts. Existing transaction
 and money-flow refresh helpers revalidate the overview after mutations.
 
 Home verification: web formatting, ESLint, strict TypeScript and all 218 Jest tests

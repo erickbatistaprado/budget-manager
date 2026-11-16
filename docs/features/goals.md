@@ -1,6 +1,6 @@
 # Goals (metas): things to buy, in order, funded from the month's surplus
 
-Status: phase 1 implemented; phases 2 and 3 planned. Builds on the money flow feature (movements,
+Status: phases 1, 2 and 3 implemented. Builds on the money flow feature (movements,
 savings history, month overview) and the new Home.
 
 A wishlist that turns into a plan: what the user wants to buy, in which order, when each one will
@@ -108,8 +108,8 @@ created or not, balances), purchase end to end, migration. Web: list reorder by 
 ## Phases
 
 1. Goals, ranking, manual allocations, plan and projection, goals page (implemented).
-2. "Guardar a sobra" on the Home, "Próxima meta", purchase flow.
-3. Savings tips.
+2. "Guardar a sobra" on the Home, "Próxima meta", purchase flow (implemented).
+3. Savings tips (implemented).
 
 ## Phase 1 implementation
 
@@ -118,3 +118,68 @@ created or not, balances), purchase end to end, migration. Web: list reorder by 
 - **Application & HTTP (`goals/application/GoalService`, `goals/infrastructure/http/GoalController`)**: owner-scoped `GET/POST /goals`, `PUT/DELETE /goals/{id}`, `PUT /goals/{id}/position`, `GET/POST /goals/{id}/allocations`, `GET /goals/plan`, and `PUT /goals/pace`, serialized per owner lock. Positive allocations on a goal with a `savingId` create an `INVESTMENT` movement via `MoneyFlowService`; releases (`amount < 0`) reduce the reservation while leaving linked savings invested. Changing a goal's linked saving requires releasing existing allocations first.
 - **Main account preference**: `PUT /users/current/preferences` accepts `mainAccountId` (verified for ownership) alongside `salaryDay`, exposed on `GET /users/current`. Profile > Preferences includes the main account `Select`. The web uses `mainAccountId` as the default account in the goals allocation form, movement form, and Home's "Investir a sobra" prefill (falling back to the account with the most income).
 - **Web (`apps/web/src/app/(private)/goals/page.tsx`, `components/Goals/*`)**: "Metas" / "Goals" in the side menu between Savings and Financing; pace card with inline override and reset to the 6-month average plus reserved and free available balances; ranked goal list with drag-and-drop and keyboard up/down buttons, `Preciso`/`Quero` badges, progress bars, expected month, target-date warnings, and actions to set aside, release, edit, and delete with confirmation.
+
+## Phases 2 and 3 implementation
+
+- **Migration V19** adds nullable `t_category.fixed_cost` and purchase snapshots
+  `t_goal.saved_at_purchase` / `actual_price`. Existing `achieved_at` and
+  `expense_transaction_id` record the purchase date and ledger transaction. Export's
+  owner-scoped `SELECT *` sections already include all these new columns.
+- **Surplus split**: `POST /goals/allocate` accepts `date` (`yyyy/MM/dd`), `amount`,
+  `fromAccountId`, `preview`, and optional `allocations` (goal ID to amount). The
+  default uses fixed monthly contributions followed by the ranked waterfall. It
+  returns `goals`, `investmentAmount` and `saved`. Preview locks the owner for a
+  consistent calculation but writes no allocations or movements. Confirmation
+  saves only the goal lines; linked savings receive ordinary investment movements.
+  The server rejects amounts above the month's kept value less that month's active
+  reservations without a saving, and rejects negative or excessive split lines.
+- Home's **Guardar a sobra** drawer loads that month's existing reservations,
+  previews the remaining surplus and allows editing every goal and the investment
+  amount. It displays the total and unassigned remainder. The account defaults to
+  `mainAccountId`, falling back to the account receiving most income; date is the
+  earlier of today and month end. Investment defaults to the last used saving,
+  otherwise none. The investment portion uses the existing movements endpoint.
+  These are two requests: if the investment request fails after goals are saved,
+  the drawer locks the split and offers a retry without duplicating allocations.
+- **Próxima meta** shows the first active goal, progress, and expected month beside
+  the summary on large screens and below it on small screens. The empty invitation
+  opens the Goals page's new-goal form.
+- **Purchase**: `POST /goals/{id}/purchase` accepts `price`, `date`, `categoryId`,
+  `paymentMethod`, `cardId` or `accountId`, and optional credit-card `installments`.
+  It calls `TransactionService.save`, validates an expense category, redeems the
+  entire saved allocation into the paying account (main account for credit cards,
+  or `redemptionAccountId` when there is none),
+  releases the entire reservation, records purchase snapshots and marks the goal
+  achieved, then renumbers the active goals, in one transaction. Cash/other
+  payments can supply `redemptionAccountId` without assigning a bank account to the
+  expense. A linked saving must have enough value for redemption. Repeating a
+  purchase or moving an achieved goal is refused. Achieved goals follow active
+  goals in the API and appear in the collapsed **Conquistadas** section.
+- **Savings tips**: `GET /goals/savings-tips?month=yyyy-MM` defaults to the last
+  complete month and compares it against the six months **before** that month,
+  including zero-spend months. Pure `GoalSavingsTips` arithmetic counts spending
+  by purchase month: a single card purchase counts when it was made, not when its
+  bill is due, while installments keep their own months. Monthly series, financing
+  and fixed categories are excluded.
+  Results are the top three by absolute excess above average (stable category/ID
+  tie breaking). The excess increases the existing goal pace for a new projection
+  starting this month; results include both forecast months and months gained.
+  Percentage is null when the historical average is zero; months gained is null
+  if there is no active goal or a forecast exceeds the 120-month horizon.
+- The tips card includes a month switcher and fixed-cost category settings using
+  owner-scoped `PUT /categories/{id}/fixed-cost` with nullable `fixedCost`. All new
+  controls use the shared kit and messages in English and Brazilian Portuguese.
+
+### Verification
+
+Domain tests cover split remainder and limits, controllable-category exclusions,
+ranking of tips and forecast gains. Purchase service tests cover ledger expenses,
+redemption destinations, releases, snapshots and renumbering. Testcontainers tests
+cover preview vs confirmation, purchase balances, card installments, tips, ownership
+and migration. Web tests exercise both languages for the split, next goal, purchase,
+achieved list and tips/settings.
+
+Verified with `./mvnw clean verify` (Testcontainers included), `npm run check` in the
+client and web, the production web build, and screenshots of Home, the split drawer, the
+Goals page, the purchase drawer and the achieved list at 1440px and 375px (no sideways
+scroll).
