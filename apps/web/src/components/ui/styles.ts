@@ -11,11 +11,14 @@ export const buttonStyles = {
       'bg-[var(--ctp-red)]/15 text-[var(--ctp-red)] hover:enabled:bg-[var(--ctp-red)]/25',
     nav: 'w-full !justify-start !gap-3 text-[var(--ctp-text)] hover:enabled:bg-[var(--ctp-blue)]/20',
     ghost: 'text-[var(--ctp-blue)] hover:enabled:bg-[var(--ctp-surface1)]',
+    rail: 'h-11 w-11 shrink-0 !justify-start text-[var(--ctp-text)] hover:enabled:bg-[var(--ctp-blue)]/20',
+    quiet: 'text-[var(--ctp-subtext0)] hover:enabled:text-[var(--ctp-text)]',
   },
   sizes: {
     sm: 'min-h-8 px-2 py-1 text-sm',
     md: 'min-h-10 px-3 py-2 text-sm',
     lg: 'min-h-12 px-4 py-3 font-bold',
+    field: 'h-14 px-4 font-bold',
   },
 };
 export const control =

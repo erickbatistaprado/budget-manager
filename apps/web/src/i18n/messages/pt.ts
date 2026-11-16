@@ -291,6 +291,7 @@ export const pt: Messages = {
       'Compras já salvas sem vencimento também serão movidas para o mês desta fatura.',
 
     title: 'Contas e cartões',
+    creditCards: 'Cartões de crédito',
     add: 'Adicionar cartão',
     closingDay: 'Dia do fechamento',
     dueDay: 'Dia do vencimento',
@@ -310,6 +311,10 @@ export const pt: Messages = {
       `${count} compras movidas para o mês da fatura`,
   },
   common: {
+    invalidAmount: 'Informe um valor válido, com até duas casas decimais.',
+    amountAtLeast: (amount: string): string =>
+      `Informe pelo menos R$ ${amount}.`,
+    amountAtMost: (amount: string): string => `Informe no máximo R$ ${amount}.`,
     cancel: 'Cancelar',
     save: 'Salvar',
     saving: 'Salvando...',
@@ -338,6 +343,10 @@ export const pt: Messages = {
     savings: 'Reservas',
     import: 'Importar extrato',
     profile: 'Perfil',
+    accounts: 'Contas',
+    settings: 'Configurações',
+    collapse: 'Recolher menu',
+    expand: 'Expandir menu',
     signOut: 'Sair',
     theme: 'Tema',
     language: 'Idioma',
@@ -505,7 +514,7 @@ export const pt: Messages = {
   profile: {
     mainAccount: 'Conta principal',
     noMainAccount: 'Automática (conta com mais receitas)',
-    title: 'Perfil e preferências',
+    title: 'Configurações',
     chooseImage: 'Trocar foto',
     deleteImage: 'Remover foto',
     greeting: (name: string): string => `Olá, ${name} 👋`,
@@ -595,6 +604,7 @@ export const pt: Messages = {
     newCategory: 'Nova categoria',
     newCategoryName: 'Nome da categoria',
     newCategoryType: 'Tipo da categoria',
+    categoryKind: 'Tipo',
     addCategory: 'Criar categoria',
     summary: (
       total: number,

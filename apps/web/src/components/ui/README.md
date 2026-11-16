@@ -5,8 +5,8 @@ All controls pass native attributes, event handlers, and refs to their native
 control. `Panel` and `Field` accept native refs through React 19's ref prop.
 Appearance tokens live in `styles.ts`; callers supply layout classes only.
 
-- `Button`: `variant="primary" | "secondary" | "danger" | "ghost"`,
-  `size="sm" | "md" | "lg"`, `fullWidth`, and optional `selected`.
+- `Button`: `variant="primary" | "secondary" | "danger" | "ghost" | "quiet" (no background, for toolbar icons) | "rail" (square icon button of the compact side menu)`,
+  `size="sm" | "md" | "lg" | "field"` (field: the 56px height of the outlined fields, for a button in a row of fields), `fullWidth`, and optional `selected`.
   Defaults: secondary, md, `type="button"`. Pressed/checked buttons also receive
   the shared selected styling.
 - `IconButton`: Button props plus required `aria-label`; defaults to sm.
@@ -22,6 +22,20 @@ Appearance tokens live in `styles.ts`; callers supply layout classes only.
 - `Badge`: native span props.
 - `DismissOverlay`: a backdrop button with required `aria-label`, native button
   props, and default `type="button"`.
+- `MoneyInput`: amount field in reais. Takes `value` (number or plain `"1234.56"`)
+  and `onValueChange(value: string)`; accepts the separators of the current
+  language (`1.234,56` / `1,234.56`), shows the amount formatted when not being
+  edited, and reports invalid amounts and `min`/`max` through form validation.
+  Use it for every money field; `parseMoney`/`formatMoney` are the same rules.
+- `SidePanel`: the modal side panel for forms, from the left (full width on
+  phones). `title` names it; closes on Escape, a press outside and its close
+  button. Every panel uses it.
+- `Page`: the content area of every page, with the Home's gutters.
+- `SegmentedControl`: mutually exclusive options in one rounded container
+  (`label`, `options`, `value`, `onChange`, optional `fullWidth`), the chosen
+  one raised. Use it for periods, ranges and filter types, not a row of
+  separate buttons.
+- `DateField`, `MonthSwitcher`: date entry and month navigation (see `dates.tsx`).
 
 `buttonClassName()` and `panelStyle` from `styles.ts` also style Next.js links
 without changing navigation into button behavior.
@@ -50,11 +64,10 @@ Components (paths relative to `src/components`):
 - `Financing/ExtraPaymentDialog.tsx`
 - `Goals/AllocationForm.tsx`, `Goals/GoalForm.tsx`
 - `Header/Header.component.tsx`, `HeaderCell/HeaderCell.component.tsx`
-- `Home/Drawer.tsx`, `Home/EntryList.tsx`, `Home/Evolution.tsx`,
+- `Home/EntryList.tsx`, `Home/Evolution.tsx`,
   `Home/MonthSummary.tsx`, `Home/MovementRow.tsx`
 - `Input/Input.component.tsx`
 - `InstallmentPrepayment/InstallmentPrepayment.component.tsx`
-- `LanguageSwitcher/LanguageSwitcher.component.tsx`
 - `LoginForm/LoginForm.component.tsx`, `MenuButton/MenuButton.component.tsx`
 - `MoneyFlow/BalanceAdjust.tsx`, `MoneyFlow/MovementForm.tsx`,
   `MoneyFlow/SavingActions.tsx`

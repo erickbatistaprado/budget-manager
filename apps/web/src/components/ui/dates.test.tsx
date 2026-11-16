@@ -150,3 +150,40 @@ it('uses the system date input on coarse pointers', (): void => {
     else Reflect.deleteProperty(window, 'matchMedia');
   }
 });
+
+it('closes the calendar on a press outside or Escape from anywhere, without closing the drawer around it', (): void => {
+  const onDrawerKey = jest.fn();
+  render(
+    <I18nProvider initialLanguage="en">
+      <div onKeyDown={onDrawerKey}>
+        <DateExample />
+        <button type="button">Outside</button>
+      </div>
+    </I18nProvider>
+  );
+  const input = screen.getByLabelText('Date');
+  fireEvent.keyDown(input, { key: 'ArrowDown', altKey: true });
+  fireEvent.pointerDown(screen.getByRole('dialog'));
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  fireEvent.pointerDown(screen.getByRole('button', { name: 'Outside' }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  fireEvent.keyDown(input, { key: 'ArrowDown', altKey: true });
+  fireEvent.keyDown(document.body, { key: 'Escape' });
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(onDrawerKey).not.toHaveBeenCalledWith(
+    expect.objectContaining({ key: 'Escape' })
+  );
+});
+
+it('closes the month picker on a press outside', (): void => {
+  render(
+    <I18nProvider initialLanguage="en">
+      <MonthSwitcher value={new Date(2026, 10, 1)} onChange={jest.fn()} />
+      <button type="button">Outside</button>
+    </I18nProvider>
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'November 2026' }));
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  fireEvent.pointerDown(screen.getByRole('button', { name: 'Outside' }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});

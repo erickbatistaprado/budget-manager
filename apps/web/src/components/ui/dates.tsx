@@ -1,8 +1,16 @@
 'use client';
 
 import clsx from 'clsx';
-import { useEffect, useId, useRef, useState, type JSX } from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type JSX,
+  type RefObject,
+} from 'react';
 import DatePicker from 'react-datepicker';
+import { FiCalendar, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { enUS } from 'date-fns/locale/en-US';
 import { ptBR } from 'date-fns/locale/pt-BR';
 import { useI18n } from '@/i18n/useI18n';
@@ -20,6 +28,40 @@ export interface DateFieldProps extends OutlineProps {
   required?: boolean;
   'aria-label'?: string;
 }
+/**
+ * Closes a popup on Escape (wherever focus is) or on a press outside its container. Escape is
+ * caught before a surrounding drawer sees it, so only the popup closes.
+ */
+function useDismiss(
+  open: boolean,
+  container: RefObject<HTMLElement | null>,
+  close: (fromKeyboard: boolean) => void
+): void {
+  const latest = useRef(close);
+  useEffect((): void => {
+    latest.current = close;
+  });
+  useEffect((): (() => void) | undefined => {
+    if (!open) return undefined;
+    function onPointer(event: PointerEvent): void {
+      if (!container.current?.contains(event.target as Node))
+        latest.current(false);
+    }
+    function onKey(event: KeyboardEvent): void {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      latest.current(true);
+    }
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey, true);
+    return (): void => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey, true);
+    };
+  }, [open, container]);
+}
+
 function nativeDate(value: Date | null): string {
   if (!value) return '';
   return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
@@ -51,6 +93,32 @@ export function DateField({
   const input = useRef<HTMLInputElement>(null);
   const dialog = useId();
   const calendar = useRef<HTMLDivElement>(null);
+  const field = useRef<HTMLDivElement>(null);
+  const [alignEnd, setAlignEnd] = useState(false);
+  /** Opens toward the side with room, so a field on the right of a form or drawer keeps the
+   * calendar inside the nearest clipping container instead of cutting it off. */
+  function show(): void {
+    const element = field.current;
+    if (element) {
+      const box = element.getBoundingClientRect();
+      const width =
+        parseFloat(getComputedStyle(document.documentElement).fontSize) * 17;
+      let limit = window.innerWidth;
+      for (
+        let parent = element.parentElement;
+        parent;
+        parent = parent.parentElement
+      ) {
+        const style = getComputedStyle(parent);
+        if (style.overflowX !== 'visible' || style.overflowY !== 'visible') {
+          limit = Math.min(limit, parent.getBoundingClientRect().right);
+          break;
+        }
+      }
+      setAlignEnd(box.left + width > limit && box.right - width >= 0);
+    }
+    setOpen(true);
+  }
   useEffect((): void => {
     if (open)
       calendar.current
@@ -82,6 +150,9 @@ export function DateField({
     setOpen(false);
     input.current?.focus();
   }
+  useDismiss(open, field, (fromKeyboard): void =>
+    fromKeyboard ? close() : setOpen(false)
+  );
   function choose(date: Date | null): void {
     onChange(date);
     setDraft(display(date));
@@ -93,17 +164,11 @@ export function DateField({
     : 'Enter a valid date within the allowed range.';
   return (
     <div
+      ref={field}
       className={clsx(
         'relative min-w-0',
         props.fullWidth !== false && 'w-full'
       )}
-      onKeyDown={(event): void => {
-        if (event.key === 'Escape' && open) {
-          event.preventDefault();
-          event.stopPropagation();
-          close();
-        }
-      }}
     >
       <TextInput
         {...props}
@@ -116,7 +181,7 @@ export function DateField({
             !props.disabled
           ) {
             event.preventDefault();
-            setOpen(true);
+            show();
           }
         }}
         type={coarse ? 'date' : 'text'}
@@ -134,9 +199,9 @@ export function DateField({
               disabled={props.disabled}
               aria-expanded={open}
               aria-controls={dialog}
-              onClick={(): void => setOpen(!open)}
+              onClick={(): void => (open ? setOpen(false) : show())}
             >
-              ▦
+              <FiCalendar size={18} aria-hidden />
             </IconButton>
           )
         }
@@ -187,7 +252,10 @@ export function DateField({
           id={dialog}
           role="dialog"
           aria-label={portuguese ? 'Calendário' : 'Calendar'}
-          className="absolute left-0 z-50 w-[17rem] max-w-full rounded-md border border-[var(--ctp-surface2)] bg-[var(--ctp-base)] p-2"
+          className={clsx(
+            'absolute z-50 w-[17rem] max-w-[calc(100vw-2rem)] rounded-md border border-[var(--ctp-surface2)] bg-[var(--ctp-base)] p-2',
+            alignEnd ? 'right-0' : 'left-0'
+          )}
         >
           <DatePicker
             inline
@@ -224,29 +292,26 @@ export function MonthSwitcher({
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(value.getFullYear());
   const trigger = useRef<HTMLButtonElement>(null);
+  const switcher = useRef<HTMLDivElement>(null);
   const today = new Date();
   function close(): void {
     setOpen(false);
     trigger.current?.focus();
   }
+  useDismiss(open, switcher, (fromKeyboard): void =>
+    fromKeyboard ? close() : setOpen(false)
+  );
   return (
-    <div
-      className="relative flex items-center gap-2"
-      onKeyDown={(event): void => {
-        if (event.key === 'Escape' && open) {
-          event.preventDefault();
-          event.stopPropagation();
-          close();
-        }
-      }}
-    >
+    <div ref={switcher} className="relative flex items-center gap-2">
       <IconButton
         aria-label={portuguese ? 'Mês anterior' : 'Previous month'}
+        size="md"
+        className="w-10 !px-0"
         onClick={(): void =>
           onChange(new Date(value.getFullYear(), value.getMonth() - 1, 1))
         }
       >
-        ‹
+        <FiChevronLeft size={18} aria-hidden />
       </IconButton>
       <Button
         ref={trigger}
@@ -256,18 +321,35 @@ export function MonthSwitcher({
           setOpen(!open);
         }}
       >
-        {value.toLocaleDateString(portuguese ? 'pt-BR' : 'en-US', {
-          month: 'long',
-          year: 'numeric',
-        })}
+        {/* Every month of the year shares one grid cell, only the current one visible, so the
+            button keeps the width of the longest name instead of resizing on each step. */}
+        <span className="grid">
+          {Array.from({ length: 12 }, (unusedValue, month): JSX.Element => (
+            <span
+              key={month}
+              aria-hidden={month !== value.getMonth() || undefined}
+              className={clsx(
+                'col-start-1 row-start-1',
+                month !== value.getMonth() && 'invisible'
+              )}
+            >
+              {new Date(value.getFullYear(), month, 1).toLocaleDateString(
+                portuguese ? 'pt-BR' : 'en-US',
+                { month: 'long', year: 'numeric' }
+              )}
+            </span>
+          ))}
+        </span>
       </Button>
       <IconButton
         aria-label={portuguese ? 'Próximo mês' : 'Next month'}
+        size="md"
+        className="w-10 !px-0"
         onClick={(): void =>
           onChange(new Date(value.getFullYear(), value.getMonth() + 1, 1))
         }
       >
-        ›
+        <FiChevronRight size={18} aria-hidden />
       </IconButton>
       {open && (
         <div

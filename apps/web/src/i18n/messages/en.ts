@@ -288,7 +288,8 @@ export const en = {
     reimportHint:
       'Saved purchases without a bill date will also move to this bill month.',
 
-    title: 'Cards and accounts',
+    title: 'Accounts and cards',
+    creditCards: 'Credit cards',
     add: 'Add card',
     closingDay: 'Closing day',
     dueDay: 'Due day',
@@ -307,6 +308,9 @@ export const en = {
     moved: (count: number): string => `moved ${count} to their bill month`,
   },
   common: {
+    invalidAmount: 'Enter a valid amount, with up to two decimals.',
+    amountAtLeast: (amount: string): string => `Enter at least R$ ${amount}.`,
+    amountAtMost: (amount: string): string => `Enter at most R$ ${amount}.`,
     cancel: 'Cancel',
     save: 'Save',
     saving: 'Saving...',
@@ -334,6 +338,10 @@ export const en = {
     savings: 'Savings',
     import: 'Import',
     profile: 'Profile',
+    accounts: 'Accounts',
+    settings: 'Settings',
+    collapse: 'Collapse menu',
+    expand: 'Expand menu',
     signOut: 'Sign Out',
     theme: 'Theme',
     language: 'Language',
@@ -493,7 +501,7 @@ export const en = {
   profile: {
     mainAccount: 'Main account',
     noMainAccount: 'Automatic (account with the most income)',
-    title: 'Profile and preferences',
+    title: 'Settings',
     chooseImage: 'Change photo',
     deleteImage: 'Remove photo',
     greeting: (name: string): string => `Hello, ${name} 👋`,
@@ -580,6 +588,7 @@ export const en = {
     newCategory: 'New category',
     newCategoryName: 'New category name',
     newCategoryType: 'New category type',
+    categoryKind: 'Type',
     addCategory: 'Add category',
     summary: (
       total: number,

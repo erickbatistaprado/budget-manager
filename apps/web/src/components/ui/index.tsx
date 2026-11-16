@@ -71,6 +71,10 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
 export { TextInput, NumberInput, Select } from './outlined';
 export type { SelectProps, TextInputProps, OutlineProps } from './outlined';
 export type { DateFieldProps } from './dates';
+export { MoneyInput, parseMoney, formatMoney } from './money';
+export { SidePanel } from './side-panel';
+export { SegmentedControl } from './segmented';
+export type { MoneyInputProps } from './money';
 export {
   DateField,
   MonthSwitcher,
@@ -264,6 +268,29 @@ export function ProgressBar({
         )}
         style={{ width: `${percent}%` }}
       />
+    </div>
+  );
+}
+
+/**
+ * The content area of every page: full width with the same gutters as the Home. The layout
+ * already provides the <main> landmark, so this is a plain container.
+ */
+export function Page({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}): JSX.Element {
+  return (
+    <div
+      className={clsx(
+        'flex w-full min-w-0 flex-col gap-4 p-3 text-[var(--ctp-text)] sm:p-5',
+        className
+      )}
+    >
+      {children}
     </div>
   );
 }

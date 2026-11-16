@@ -281,7 +281,7 @@ input[type='number'] {
   transform: translateY(-50%);
   transform-origin: left center;
   pointer-events: none;
-  color: var(--ctp-subtext0);
+  color: var(--ctp-overlay1);
   transition:
     top 150ms,
     transform 150ms,
@@ -313,6 +313,14 @@ input[type='number'] {
 .outlined-box:focus-within > label {
   top: 0;
   transform: translateY(-50%) scale(0.75);
+}
+/* A chosen option reads apart from an empty select, whose label sits inside in a dimmer tone. */
+.outlined-field[data-filled='true'] select {
+  color: var(--ctp-lavender);
+  font-weight: 600;
+}
+.outlined-field[data-filled='true'] label {
+  color: var(--ctp-subtext0);
 }
 .outlined-field[data-filled='true'] legend,
 .outlined-box:focus-within legend {
@@ -349,13 +357,23 @@ input[type='number'] {
   margin: 4px 14px 0;
   font-size: 0.75rem;
 }
+/* The icon slot has a fixed width so the value and the resting label start at the same place
+   (52px) whatever the icon is. */
 .outlined-start {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
+  box-sizing: border-box;
+  width: 44px;
   padding-left: 12px;
 }
+.outlined-box:has(.outlined-start) > input,
+.outlined-box:has(.outlined-start) > select {
+  padding-left: 8px;
+}
 .outlined-box:has(.outlined-start) > label {
-  left: 40px;
-  max-width: calc(100% - 96px);
+  left: 52px;
+  max-width: calc(100% - 108px);
 }
 .outlined-box:has(.outlined-start):focus-within > label,
 .outlined-field[data-filled='true'] .outlined-box > label {
@@ -366,6 +384,19 @@ input[type='number'] {
   align-items: center;
   flex-shrink: 0;
   padding-right: 12px;
+}
+/* A button at the end of a field (calendar, filters) fills that end edge to edge: full height,
+   flush right, split from the input by a thin line. The outline is drawn above it. */
+.outlined-end:has(> button) {
+  align-self: stretch;
+  padding-right: 0;
+}
+.outlined-end > button {
+  height: 100%;
+  min-height: 0;
+  padding: 0 16px;
+  border-left: 1px solid var(--ctp-surface2);
+  border-radius: 0 6px 6px 0;
 }
 .outlined-box > select ~ .outlined-end {
   position: absolute;

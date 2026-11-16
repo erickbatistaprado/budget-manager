@@ -1,4 +1,5 @@
-import { createRef } from 'react';
+import { createRef, useState, type JSX } from 'react';
+import { renderWithI18n } from '@/i18n/testing';
 import { fireEvent, render, screen } from '@testing-library/react';
 import {
   Badge,
@@ -10,6 +11,10 @@ import {
   Panel,
   Select,
   TextInput,
+  MoneyInput,
+  parseMoney,
+  SidePanel,
+  SegmentedControl,
 } from './index';
 
 describe('shared controls', (): void => {
@@ -185,4 +190,126 @@ describe('shared controls', (): void => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
+});
+
+describe('parseMoney', (): void => {
+  it.each([
+    ['1.234,56', 'pt-BR', '1234.56'],
+    ['1234,5', 'pt-BR', '1234.5'],
+    ['12.5', 'pt-BR', '12.5'],
+    ['1.500', 'pt-BR', '1500'],
+    ['R$ 344,08', 'pt-BR', '344.08'],
+    ['1,234.56', 'en-US', '1234.56'],
+    ['12,5', 'en-US', '12.5'],
+    ['1,500', 'en-US', '1500'],
+    ['-75', 'en-US', '-75'],
+    ['', 'en-US', ''],
+  ] as const)('reads %s in %s as %s', (text, locale, expected): void => {
+    expect(parseMoney(text, locale)).toBe(expected);
+  });
+
+  it.each([
+    ['12,345', 'pt-BR'],
+    ['abc', 'en-US'],
+    ['1.2.3,4.5', 'pt-BR'],
+  ] as const)('refuses %s in %s', (text, locale): void => {
+    expect(parseMoney(text, locale)).toBeNull();
+  });
+});
+
+it.each([
+  ['en', '1,234.56', '1234.56'],
+  ['pt', '1.234,56', '1234.56'],
+] as const)(
+  'types an amount with the %s separators and shows it formatted',
+  (language, typed, expected): void => {
+    const onValueChange = jest.fn();
+    function Example(): JSX.Element {
+      const [value, setValue] = useState('');
+      return (
+        <MoneyInput
+          label="Amount"
+          min={0.01}
+          value={value}
+          onValueChange={(next): void => {
+            onValueChange(next);
+            setValue(next);
+          }}
+        />
+      );
+    }
+    renderWithI18n(<Example />, { language });
+    const input = screen.getByRole('textbox', { name: 'Amount' });
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: typed } });
+    expect(onValueChange).toHaveBeenLastCalledWith(expected);
+    fireEvent.blur(input);
+    expect(input).toHaveValue(typed);
+    expect(input).toBeValid();
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '0' } });
+    expect(input).toBeInvalid();
+  }
+);
+
+it.each(['en', 'pt'] as const)(
+  'closes the side panel with its button, Escape and a press outside, in %s',
+  (language): void => {
+    const onClose = jest.fn();
+    renderWithI18n(
+      <SidePanel title="Form" onClose={onClose} testId="panel">
+        <button type="button">Inside</button>
+      </SidePanel>,
+      { language }
+    );
+    const panel = screen.getByTestId('panel');
+    expect(panel).toHaveClass('left-0');
+    fireEvent.click(screen.getByRole('button', { name: 'Inside' }));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: language === 'pt' ? 'Fechar' : 'Close',
+      })
+    );
+    expect(onClose).toHaveBeenCalledTimes(1);
+    fireEvent(panel, new Event('cancel', { cancelable: true }));
+    expect(onClose).toHaveBeenCalledTimes(2);
+    jest.spyOn(panel, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      right: 500,
+      top: 0,
+      bottom: 800,
+      width: 500,
+      height: 800,
+      x: 0,
+      y: 0,
+      toJSON: (): object => ({}),
+    });
+    fireEvent.click(panel, { clientX: 900, clientY: 300 });
+    expect(onClose).toHaveBeenCalledTimes(3);
+    fireEvent.click(panel, { clientX: 200, clientY: 300 });
+    expect(onClose).toHaveBeenCalledTimes(3);
+  }
+);
+
+it('marks the chosen segment and reports a new choice', (): void => {
+  const onChange = jest.fn();
+  render(
+    <SegmentedControl
+      label="Range"
+      value="year"
+      onChange={onChange}
+      options={[
+        { value: 'year', label: '12 months' },
+        { value: 'all', label: 'All time' },
+      ]}
+    />
+  );
+  expect(screen.getByRole('group', { name: 'Range' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '12 months' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'All time' }));
+  expect(onChange).toHaveBeenCalledWith('all');
 });
