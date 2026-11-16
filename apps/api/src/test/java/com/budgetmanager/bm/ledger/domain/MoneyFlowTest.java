@@ -230,7 +230,11 @@ class MoneyFlowTest {
                 card().getId(),
                 PaymentMethod.CREDIT_CARD));
     assertThat(MoneyFlow.balance(FROM, JAN.minusDays(1), List.of(checkpoint), entries, List.of()))
-        .isEqualByComparingTo("10");
+        .as("before the first checkpoint, the day's expense is added back")
+        .isEqualByComparingTo("510");
+    assertThat(MoneyFlow.balance(FROM, JAN.minusDays(2), List.of(checkpoint), entries, List.of()))
+        .as("and the income of the day before is taken out")
+        .isEqualByComparingTo("500");
     assertThat(MoneyFlow.balance(FROM, JAN, List.of(checkpoint), entries, List.of()))
         .isEqualByComparingTo("500");
     Movement transfer = movement(MovementKind.TRANSFER);

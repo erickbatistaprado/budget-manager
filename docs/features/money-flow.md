@@ -55,8 +55,10 @@ statement imports remain a future feature.
 ## Account balances
 
 A checkpoint is the bank's end-of-day balance, unique per account/date. A dated
-balance starts with the latest checkpoint on/before that date (else zero), then adds
-flows strictly after the checkpoint date through the requested date. Income adds;
+balance starts with the latest checkpoint on/before that date, then adds flows strictly
+after the checkpoint date through the requested date. Before an account's first
+checkpoint, the balance is that checkpoint minus the flows in between, so entering
+today's balance once gives every earlier month too; with no checkpoint it starts at zero. Income adds;
 non-card expenses subtract. Card purchases/credits never affect accounts directly.
 Movements apply their source/destination effects. Negative balances are supported.
 

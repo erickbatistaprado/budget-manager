@@ -126,6 +126,12 @@ public final class MoneyFlow {
         .max(Comparator.comparing(AccountBalance::getDate));
   }
 
+  /**
+   * The account's balance at the end of a day: from the latest checkpoint on or before it plus the
+   * flows after it; before the first checkpoint, from the first checkpoint minus the flows in
+   * between, so one known balance (today's, say) is enough to see every month; with no checkpoint
+   * at all, from zero.
+   */
   public static BigDecimal balance(
       UUID accountId,
       LocalDate date,
@@ -133,21 +139,42 @@ public final class MoneyFlow {
       List<TransactionOccurrence> entries,
       List<Movement> movements) {
     var checkpoint = checkpoint(checkpoints, accountId, date);
+    if (checkpoint.isEmpty()) {
+      var first =
+          checkpoints.stream()
+              .filter(candidate -> accountId.equals(candidate.getAccountId()))
+              .min(Comparator.comparing(AccountBalance::getDate));
+      if (first.isPresent()) {
+        return first
+            .get()
+            .getBalance()
+            .subtract(flows(accountId, date, first.get().getDate(), entries, movements));
+      }
+    }
     LocalDate after = checkpoint.map(AccountBalance::getDate).orElse(LocalDate.MIN);
     BigDecimal value = checkpoint.map(AccountBalance::getBalance).orElse(BigDecimal.ZERO);
-    value =
-        value.add(
-            entries.stream()
-                .filter(entry ->
-                    accountId.equals(entry.accountId())
-                        && entry.date().isAfter(after)
-                        && !entry.date().isAfter(date))
-                .map(TransactionOccurrence::accountEffect)
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
-    return value.add(
+    return value.add(flows(accountId, after, date, entries, movements));
+  }
+
+  /** What moved in or out of the account after {@code after} up to and including {@code until}. */
+  private static BigDecimal flows(
+      UUID accountId,
+      LocalDate after,
+      LocalDate until,
+      List<TransactionOccurrence> entries,
+      List<Movement> movements) {
+    BigDecimal fromEntries =
+        entries.stream()
+            .filter(entry ->
+                accountId.equals(entry.accountId())
+                    && entry.date().isAfter(after)
+                    && !entry.date().isAfter(until))
+            .map(TransactionOccurrence::accountEffect)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    return fromEntries.add(
         movements.stream()
             .filter(
-                movement -> movement.getDate().isAfter(after) && !movement.getDate().isAfter(date))
+                movement -> movement.getDate().isAfter(after) && !movement.getDate().isAfter(until))
             .map(movement -> movement.effectOn(accountId))
             .reduce(BigDecimal.ZERO, BigDecimal::add));
   }
