@@ -2,7 +2,8 @@
 
 Movements track money between accounts, card bills and savings. They are separate
 from transactions and never enter income/expense totals, categories or Analytics.
-The existing Home layout is unchanged; overview endpoints support its next iteration.
+Home uses the overview endpoints for its monthly summary, account balances, bills
+and evolution, alongside a unified searchable transaction and movement list.
 
 ## Ledger and automatic bills
 
@@ -178,3 +179,40 @@ Other changed files:
 - apps/web/src/components/MoneyFlow (forms, styles and tests), NewTransaction,
   AccountsSection, SavingEntry, cards/savings settings pages, saving type, transaction
   and money-flow cache helpers, and both i18n message files.
+
+## Home: month at a glance
+
+Home replaces the two transaction tables and the old Balance/Charts blocks with:
+
+- A month picker and New entry drawer, followed by income, expenses and surplus.
+  The surplus split shows net investments and money kept in accounts. Invest the
+  surplus opens the movement drawer with the kept amount, the account receiving
+  the most income, and the earlier of today and month end. It still requires a
+  saving destination. Negative months show the shortfall and net account cash
+  outflows (including bill payments and movements); these are ledger flows, not
+  confirmation that the bank settled a particular expense. Unassigned entries
+  cannot be attributed to an account.
+- Today's account balances, latest checkpoint dates, the existing balance
+  adjustment dialog, and a shortcut to entries without an account.
+- Monthly card bills with payment account, automatic/recorded and due/paid status,
+  plus financing installments linking to their contracts.
+- Surplus and investment bars and a net-worth line, with a 12-month/all-time
+  switch, localized BRL tooltips and compact axes. Current-month end figures are
+  projections, as in the overview API.
+- One searchable month list with income, expense and movement filters, category,
+  payment instrument and unassigned filters. All API pages load before filtered
+  totals are shown; only 30 matching rows render per page. Transaction rows retain
+  monthly scopes, installment actions and payment labels. Automatic movement rows
+  open a prefilled replacement form; recorded movements can be edited or deleted.
+
+The expense category pie is omitted here because Analytics already provides it.
+Summary actions and subsequent blocks remain separate components for the upcoming
+Goals feature; no goals are implemented. English and Brazilian Portuguese share
+all controls. No API or shared-client changes are required. Existing transaction
+and money-flow refresh helpers revalidate the overview after mutations.
+
+Home verification: web formatting, ESLint, strict TypeScript and all 218 Jest tests
+pass. Production build passes. This sandbox still requires the external TypeScript
+configuration preload described above and `--watchman=false` for Jest. API and
+shared client are unchanged. Responsive row grids and drawers fit small viewports;
+no live-bank reconciliation or browser screenshot validation was performed.

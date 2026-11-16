@@ -7,7 +7,8 @@ card or account returns 404, including when referenced by a transaction write.
 
 Transactions accept nullable `paymentMethod`, `cardId` and `accountId`. Responses
 include an account summary (id, name, bank). Unknown methods remain null.
-Credit card payments require a card and cannot have an account or repeat monthly.
+Credit card payments require a card and cannot have an account; they may repeat
+monthly (each month in that month's bill) but not daily, weekly or yearly.
 Debit card, Pix, transfers, boleto and automatic debit may have an account.
 Expenses paid with cash or other cannot have an account. Income supports Pix,
 transfers, cash and other; all four may reference an account. This treats the
