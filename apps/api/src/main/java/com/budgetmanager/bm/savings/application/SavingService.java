@@ -18,6 +18,9 @@ public class SavingService {
 
   private final SavingRepository repository;
   private final UserService userService;
+  private final org.springframework.context.ApplicationEventPublisher events;
+  private final SavingValuationService money;
+  private final java.time.Clock clock;
 
   @Transactional(readOnly = true)
   public List<Saving> findAll() {
@@ -34,7 +37,14 @@ public class SavingService {
             .user(getCurrentUser())
             .build();
     place(saving, draft);
-    return repository.saveAndFlush(saving);
+    repository.saveAndFlush(saving);
+    events.publishEvent(
+        new SavingOpened(
+            saving.getId(),
+            saving.getUser().getId(),
+            saving.getAmount(),
+            java.time.LocalDate.now(clock)));
+    return saving;
   }
 
   @Transactional
@@ -51,7 +61,9 @@ public class SavingService {
                 new ApplicationException(
                     ApplicationError.NOT_FOUND, "Saving not found for {}", changes.getId()));
     saving.setName(changes.getName().trim());
-    saving.setAmount(changes.getAmount());
+    if (saving.getAmount().compareTo(changes.getAmount()) != 0) {
+      money.value(saving.getId(), java.time.LocalDate.now(clock), changes.getAmount());
+    }
     place(saving, changes);
     return repository.saveAndFlush(saving);
   }

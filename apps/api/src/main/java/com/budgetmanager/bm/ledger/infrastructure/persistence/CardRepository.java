@@ -7,6 +7,8 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CardRepository extends JpaRepository<Card, UUID> {
+  @org.springframework.data.jpa.repository.EntityGraph(
+      attributePaths = {"paymentAccount", "fundingAccount"})
   List<Card> findByUserIdOrderByNameAsc(UUID userId);
 
   Optional<Card> findByIdAndUserId(UUID id, UUID userId);

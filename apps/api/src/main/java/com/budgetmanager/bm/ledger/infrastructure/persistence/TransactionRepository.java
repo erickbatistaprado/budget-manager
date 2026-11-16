@@ -15,6 +15,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
+  @Query(
+      "SELECT DISTINCT t FROM Transaction t JOIN FETCH t.category LEFT JOIN FETCH t.account LEFT JOIN FETCH t.card LEFT JOIN FETCH t.installments WHERE t.user.id = :userId")
+  List<Transaction> findMoneyFlowData(UUID userId);
+
+  @Query("SELECT DISTINCT t FROM Transaction t LEFT JOIN FETCH t.months WHERE t.user.id = :userId")
+  List<Transaction> loadMoneyFlowMonths(UUID userId);
+
   Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
 
   List<Transaction> findByFinancingId(UUID financingId);

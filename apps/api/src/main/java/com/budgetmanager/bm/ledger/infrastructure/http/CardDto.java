@@ -10,9 +10,17 @@ public record CardDto(
     @NotNull Bank bank,
     @NotBlank @Size(max = 255) String name,
     @NotNull @Min(1) @Max(31) Integer closingDay,
-    @NotNull @Min(1) @Max(31) Integer dueDay) {
+    @NotNull @Min(1) @Max(31) Integer dueDay,
+    AccountDto paymentAccount,
+    AccountDto fundingAccount) {
   public static CardDto from(Card card) {
     return new CardDto(
-        card.getId(), card.getBank(), card.getName(), card.getClosingDay(), card.getDueDay());
+        card.getId(),
+        card.getBank(),
+        card.getName(),
+        card.getClosingDay(),
+        card.getDueDay(),
+        card.getPaymentAccount() == null ? null : AccountDto.from(card.getPaymentAccount()),
+        card.getFundingAccount() == null ? null : AccountDto.from(card.getFundingAccount()));
   }
 }

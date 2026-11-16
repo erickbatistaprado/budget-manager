@@ -32,6 +32,14 @@ public class Card {
   @Builder.Default
   private Bank bank = Bank.OTHER;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "payment_account_id")
+  private Account paymentAccount;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "funding_account_id")
+  private Account fundingAccount;
+
   private int closingDay;
   private int dueDay;
 

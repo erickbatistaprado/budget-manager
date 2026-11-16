@@ -66,6 +66,7 @@ public class Transaction {
     boolean income = category != null && category.getTransactionType() == TransactionType.INCOME;
     if (income
         && paymentMethod != null
+        && paymentMethod != PaymentMethod.CREDIT_CARD
         && paymentMethod != PaymentMethod.PIX
         && paymentMethod != PaymentMethod.BANK_TRANSFER
         && paymentMethod != PaymentMethod.CASH
@@ -184,6 +185,15 @@ public class Transaction {
         .findFirst()
         .map(change -> change.isSkipped() ? BigDecimal.ZERO : change.getAmount())
         .orElse(totalValue);
+  }
+
+  public LocalDate dateIn(YearMonth month) {
+    requireMonth(month);
+    return months.stream()
+        .filter(change -> change.getMonth().equals(month.atDay(1)) && change.getDate() != null)
+        .findFirst()
+        .map(TransactionMonth::getDate)
+        .orElseGet(() -> month.atDay(Math.min(date.getDayOfMonth(), month.lengthOfMonth())));
   }
 
   public void endBefore(YearMonth month) {

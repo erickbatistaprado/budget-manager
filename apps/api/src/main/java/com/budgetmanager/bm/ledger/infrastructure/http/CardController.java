@@ -21,17 +21,31 @@ public class CardController {
   }
 
   @PostMapping
-  public ResponseEntity<CardDto> create(@Valid @RequestBody CardDto draft) {
+  public ResponseEntity<CardDto> create(@Valid @RequestBody CardDraft draft) {
     CardDto saved =
         CardDto.from(
-            service.save(null, draft.name(), draft.closingDay(), draft.dueDay(), draft.bank()));
+            service.save(
+                null,
+                draft.name(),
+                draft.closingDay(),
+                draft.dueDay(),
+                draft.bank(),
+                draft.paymentAccountId(),
+                draft.fundingAccountId()));
     return ResponseEntity.created(URI.create("/cards/" + saved.id())).body(saved);
   }
 
   @PutMapping("/{id}")
-  public CardDto update(@PathVariable UUID id, @Valid @RequestBody CardDto draft) {
+  public CardDto update(@PathVariable UUID id, @Valid @RequestBody CardDraft draft) {
     return CardDto.from(
-        service.save(id, draft.name(), draft.closingDay(), draft.dueDay(), draft.bank()));
+        service.save(
+            id,
+            draft.name(),
+            draft.closingDay(),
+            draft.dueDay(),
+            draft.bank(),
+            draft.paymentAccountId(),
+            draft.fundingAccountId()));
   }
 
   @DeleteMapping("/{id}")

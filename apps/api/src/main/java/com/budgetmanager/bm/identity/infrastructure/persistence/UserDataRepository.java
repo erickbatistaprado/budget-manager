@@ -37,7 +37,14 @@ public class UserDataRepository {
               Map.entry("financings", "SELECT * FROM t_financing WHERE user_id = :owner"),
               Map.entry(
                   "financingChanges",
-                  "SELECT child.* FROM t_financing_change child JOIN t_financing parent ON parent.id = child.financing_id WHERE parent.user_id = :owner")));
+                  "SELECT child.* FROM t_financing_change child JOIN t_financing parent ON parent.id = child.financing_id WHERE parent.user_id = :owner"),
+              Map.entry("movements", "SELECT * FROM t_movement WHERE user_id = :owner"),
+              Map.entry(
+                  "accountBalances",
+                  "SELECT child.* FROM t_account_balance child JOIN t_account parent ON parent.id = child.account_id WHERE parent.user_id = :owner"),
+              Map.entry(
+                  "savingValuations",
+                  "SELECT child.* FROM t_saving_valuation child JOIN t_saving parent ON parent.id = child.saving_id WHERE parent.user_id = :owner")));
 
   private final JdbcClient jdbc;
   private final ObjectReader reader;

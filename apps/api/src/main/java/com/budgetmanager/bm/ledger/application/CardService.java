@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CardService {
   private final CardRepository repository;
+  private final AccountService accounts;
   private final UserService userService;
+  private final com.budgetmanager.bm.ledger.infrastructure.persistence.MovementRepository movements;
 
   @Transactional(readOnly = true)
   public List<Card> list() {
@@ -37,7 +39,24 @@ public class CardService {
 
   @Transactional
   public Card save(UUID id, String name, int closingDay, int dueDay, Bank bank) {
+    return save(id, name, closingDay, dueDay, bank, null, null);
+  }
+
+  @Transactional
+  public Card save(
+      UUID id,
+      String name,
+      int closingDay,
+      int dueDay,
+      Bank bank,
+      UUID paymentAccountId,
+      UUID fundingAccountId) {
     User user = userService.requireCurrentUser();
+    if (fundingAccountId != null
+        && (paymentAccountId == null || fundingAccountId.equals(paymentAccountId))) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST, "Funding account must differ from the payment account");
+    }
     Card card = id == null ? Card.builder().user(user).build() : requireOwned(id, user);
     if (name == null
         || name.isBlank()
@@ -60,6 +79,10 @@ public class CardService {
     if (bank == null) {
       throw new ApplicationException(ApplicationError.BAD_REQUEST, "Bank is required");
     }
+    card.setPaymentAccount(
+        paymentAccountId == null ? null : accounts.requireOwned(paymentAccountId, user));
+    card.setFundingAccount(
+        fundingAccountId == null ? null : accounts.requireOwned(fundingAccountId, user));
     card.setBank(bank);
     card.setName(name.trim());
     card.setClosingDay(closingDay);
@@ -69,6 +92,11 @@ public class CardService {
 
   @Transactional
   public void delete(UUID id) {
-    repository.delete(requireOwned(id, userService.requireCurrentUser()));
+    var owned = requireOwned(id, userService.requireCurrentUser());
+    if (movements.existsByCardId(id)) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST, "Card is referenced by movements; remove them first");
+    }
+    repository.delete(owned);
   }
 }

@@ -4,7 +4,7 @@ import com.budgetmanager.bm.savings.domain.Saving;
 
 public class SavingConverter {
 
-  public static Saving dtoToEntity(SavingDto dto) {
+  public static Saving dtoToEntity(SavingDraft dto) {
     return Saving.builder()
         .id(dto.id())
         .name(dto.name())

@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AccountService {
   private final AccountRepository repository;
   private final UserService userService;
+  private final com.budgetmanager.bm.ledger.infrastructure.persistence.MovementRepository movements;
 
   @Transactional(readOnly = true)
   public List<Account> list() {
@@ -53,6 +54,11 @@ public class AccountService {
 
   @Transactional
   public void delete(UUID id) {
-    repository.delete(requireOwned(id, userService.requireCurrentUser()));
+    var owned = requireOwned(id, userService.requireCurrentUser());
+    if (movements.existsByFromAccountIdOrToAccountId(id, id)) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST, "Account is referenced by movements; remove them first");
+    }
+    repository.delete(owned);
   }
 }

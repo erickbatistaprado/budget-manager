@@ -9,5 +9,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SavingRepository extends JpaRepository<Saving, UUID> {
   List<Saving> findAllByUserIdOrderByLocationAscNameAsc(UUID userId);
 
+  @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+  @org.springframework.data.jpa.repository.Query(
+      "SELECT saving FROM Saving saving WHERE saving.id = :id AND saving.user.id = :userId")
+  Optional<Saving> lockByIdAndUserId(UUID id, UUID userId);
+
   Optional<Saving> findByIdAndUserId(UUID id, UUID userId);
 }

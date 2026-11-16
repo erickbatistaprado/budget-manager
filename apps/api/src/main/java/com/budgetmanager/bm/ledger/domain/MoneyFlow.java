@@ -1,0 +1,132 @@
+package com.budgetmanager.bm.ledger.domain;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+
+public final class MoneyFlow {
+  private MoneyFlow() {}
+
+  public record Bill(
+      UUID cardId,
+      String cardName,
+      LocalDate dueDate,
+      BigDecimal total,
+      UUID paymentAccountId,
+      UUID fundingAccountId) {
+    public Bill(Card card, LocalDate dueDate, BigDecimal total) {
+      this(
+          card.getId(),
+          card.getName(),
+          dueDate,
+          total,
+          card.getPaymentAccount() == null ? null : card.getPaymentAccount().getId(),
+          card.getFundingAccount() == null ? null : card.getFundingAccount().getId());
+    }
+  }
+
+  public static List<Bill> bills(List<TransactionOccurrence> entries, List<Card> cards) {
+    Map<UUID, Map<LocalDate, BigDecimal>> totals = new HashMap<>();
+    entries.stream()
+        .filter(entry -> entry.cardId() != null)
+        .forEach(entry ->
+            totals
+                .computeIfAbsent(entry.cardId(), ignored -> new TreeMap<>())
+                .merge(
+                    entry.date(),
+                    entry.type() == TransactionType.EXPENSE
+                        ? entry.amount()
+                        : entry.amount().negate(),
+                    BigDecimal::add));
+    List<Bill> bills = new ArrayList<>();
+    cards.forEach(card ->
+        totals
+            .getOrDefault(card.getId(), Map.of())
+            .forEach((date, total) -> bills.add(new Bill(card, date, total))));
+    return bills;
+  }
+
+  public static List<Movement> movements(
+      List<Movement> stored, List<Bill> bills, LocalDate firstTransaction) {
+    List<Movement> result = new ArrayList<>(stored);
+    if (firstTransaction == null) {
+      return result;
+    }
+    for (Bill bill : bills) {
+      if (bill.paymentAccountId() == null
+          || bill.total().signum() <= 0
+          || bill.dueDate().isBefore(firstTransaction)) {
+        continue;
+      }
+      boolean payment =
+          stored.stream()
+              .anyMatch(movement ->
+                  sameBill(movement, bill) && movement.getKind() == MovementKind.CARD_BILL_PAYMENT);
+      boolean funding =
+          stored.stream()
+              .anyMatch(movement ->
+                  sameBill(movement, bill) && movement.getKind() == MovementKind.TRANSFER);
+      if (!payment) {
+        result.add(derived(bill, MovementKind.CARD_BILL_PAYMENT, bill.paymentAccountId(), null));
+      }
+      if (!funding && bill.fundingAccountId() != null) {
+        result.add(
+            derived(bill, MovementKind.TRANSFER, bill.fundingAccountId(), bill.paymentAccountId()));
+      }
+    }
+    result.sort(Comparator.comparing(Movement::getDate).thenComparing(Movement::getKind));
+    return result;
+  }
+
+  public static boolean sameBill(Movement movement, Bill bill) {
+    return bill.cardId().equals(movement.getCardId())
+        && bill.dueDate().equals(movement.getBillDueDate());
+  }
+
+  private static Movement derived(Bill bill, MovementKind kind, UUID from, UUID to) {
+    return Movement.builder()
+        .kind(kind)
+        .date(bill.dueDate())
+        .amount(bill.total())
+        .fromAccountId(from)
+        .toAccountId(to)
+        .cardId(bill.cardId())
+        .billDueDate(bill.dueDate())
+        .automatic(true)
+        .build();
+  }
+
+  public static Optional<AccountBalance> checkpoint(
+      List<AccountBalance> checkpoints, UUID accountId, LocalDate date) {
+    return checkpoints.stream()
+        .filter(checkpoint ->
+            accountId.equals(checkpoint.getAccountId()) && !checkpoint.getDate().isAfter(date))
+        .max(Comparator.comparing(AccountBalance::getDate));
+  }
+
+  public static BigDecimal balance(
+      UUID accountId,
+      LocalDate date,
+      List<AccountBalance> checkpoints,
+      List<TransactionOccurrence> entries,
+      List<Movement> movements) {
+    var checkpoint = checkpoint(checkpoints, accountId, date);
+    LocalDate after = checkpoint.map(AccountBalance::getDate).orElse(LocalDate.MIN);
+    BigDecimal value = checkpoint.map(AccountBalance::getBalance).orElse(BigDecimal.ZERO);
+    value =
+        value.add(
+            entries.stream()
+                .filter(entry ->
+                    accountId.equals(entry.accountId())
+                        && entry.date().isAfter(after)
+                        && !entry.date().isAfter(date))
+                .map(TransactionOccurrence::accountEffect)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+    return value.add(
+        movements.stream()
+            .filter(
+                movement -> movement.getDate().isAfter(after) && !movement.getDate().isAfter(date))
+            .map(movement -> movement.effectOn(accountId))
+            .reduce(BigDecimal.ZERO, BigDecimal::add));
+  }
+}

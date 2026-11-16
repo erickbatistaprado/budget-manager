@@ -18,4 +18,6 @@ public record SavingDto(
     @NotNull @DecimalMin(value = "0.00") BigDecimal amount,
     @NotNull SavingLocation location,
     InvestmentType investmentType,
-    Instant updatedAt) {}
+    Instant updatedAt,
+    BigDecimal invested,
+    BigDecimal gain) {}
