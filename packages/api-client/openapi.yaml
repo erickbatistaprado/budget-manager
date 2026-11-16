@@ -208,11 +208,19 @@ paths:
           content:
             {
               application/json:
-                { schema: { $ref: '#/components/schemas/UserWrite' } },
+                { schema: { $ref: '#/components/schemas/UserUpdate' } },
             },
         }
       responses:
-        '204': { description: Updated }
+        '204':
+          {
+            description: Updated; other refresh sessions revoked on password change,
+          }
+        '400':
+          {
+            description: Current password is missing or incorrect,
+            or new password is invalid,
+          }
   /users/current:
     get:
       operationId: getCurrentUser
@@ -226,6 +234,42 @@ paths:
                   { schema: { $ref: '#/components/schemas/User' } },
               },
           }
+  /users/current/preferences:
+    put:
+      operationId: updateUserPreferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserPreferences' }
+      responses:
+        '204': { description: Preferences saved }
+        '400': { description: Salary day must be between 1 and 31 }
+  /users/current/data-summary:
+    get:
+      operationId: getUserDataSummary
+      responses:
+        '200':
+          description: Entry statistics and configured image limit
+          headers:
+            Cache-Control: { schema: { type: string }, example: no-store }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserDataSummary' }
+  /users/current/export:
+    get:
+      operationId: exportUserData
+      responses:
+        '200':
+          description: Owner-scoped backup, excluding credentials, sessions and image bytes. Child sections reference their parent IDs. Extend sections for new tables.
+          headers:
+            Cache-Control: { schema: { type: string }, example: no-store }
+            Content-Disposition:
+              schema: { type: string }
+              example: attachment; filename="budget-manager-backup-2026-11-15.json"
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserBackup' }
   /categories/type/{transactionType}:
     get:
       operationId: listCategoriesByType
@@ -1169,19 +1213,66 @@ components:
         }
     User:
       type: object
-      required: [id, name, email, roles]
+      required: [id, name, email, roles, salaryDay]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
         email: { type: string, format: email }
         roles: { type: array, items: { $ref: '#/components/schemas/Role' } }
+        salaryDay: { type: ['integer', 'null'], minimum: 1, maximum: 31 }
+    UserUpdate:
+      type: object
+      properties:
+        name: { type: string, maxLength: 50 }
+        password:
+          { type: string, description: New password; requires currentPassword }
+        currentPassword:
+          {
+            type: string,
+            description: Required for password changes; missing and wrong values return the same 400 message,
+          }
+    UserPreferences:
+      type: object
+      required: [salaryDay]
+      properties:
+        salaryDay: { type: ['integer', 'null'], minimum: 1, maximum: 31 }
+    UserDataSummary:
+      type: object
+      required: [firstEntryDate, entryCount, maxProfileImageBytes]
+      properties:
+        firstEntryDate: { type: ['string', 'null'], format: date }
+        entryCount: { type: integer, format: int64 }
+        maxProfileImageBytes: { type: integer, format: int64 }
+    UserBackup:
+      type: object
+      required: [version, exportedAt, sections]
+      properties:
+        version: { type: integer, example: 1 }
+        exportedAt: { type: string, format: date-time }
+        sections:
+          type: object
+          required:
+            [
+              profile,
+              categories,
+              transactions,
+              installments,
+              monthlyOverrides,
+              cards,
+              accounts,
+              savings,
+              financings,
+              financingChanges,
+            ]
+          additionalProperties:
+            type: array
+            items: { type: object, additionalProperties: true }
     UserWrite:
       type: object
-      required: [email]
+      required: [email, password]
       properties:
         {
-          id: { type: string, format: uuid },
-          name: { type: string },
+          name: { type: string, maxLength: 50 },
           email: { type: string, format: email },
           password: { type: string },
         }

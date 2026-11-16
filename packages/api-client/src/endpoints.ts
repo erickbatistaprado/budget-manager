@@ -139,10 +139,10 @@ export class BudgetManagerApi {
   }
 
   updateUser(user: {
-    readonly id: string;
-    readonly email: string;
-    readonly name: string;
-  }) {
+    readonly name?: string;
+    readonly password?: string;
+    readonly currentPassword?: string;
+  }): Promise<void> {
     return this.client.command('/users', { method: 'PUT', body: user });
   }
 

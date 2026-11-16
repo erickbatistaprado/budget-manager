@@ -172,6 +172,7 @@ export const roleSchema = z.object({
 });
 
 export const userSchema = z.object({
+  salaryDay: z.number().int().min(1).max(31).nullish(),
   id: z.string(),
   name: z.string(),
   email: z.string(),

@@ -111,13 +111,45 @@ export type User = {
     name: string;
     email: string;
     roles: Array<Role>;
+    salaryDay: number | null;
+};
+
+export type UserUpdate = {
+    name?: string;
+    /**
+     * New password; requires currentPassword
+     */
+    password?: string;
+    /**
+     * Required for password changes; missing and wrong values return the same 400 message
+     */
+    currentPassword?: string;
+};
+
+export type UserPreferences = {
+    salaryDay: number | null;
+};
+
+export type UserDataSummary = {
+    firstEntryDate: string | null;
+    entryCount: number;
+    maxProfileImageBytes: number;
+};
+
+export type UserBackup = {
+    version: number;
+    exportedAt: string;
+    sections: {
+        [key: string]: Array<{
+            [key: string]: unknown;
+        }>;
+    };
 };
 
 export type UserWrite = {
-    id?: string;
     name?: string;
     email: string;
-    password?: string;
+    password: string;
 };
 
 export type Category = {
@@ -648,15 +680,22 @@ export type CreateUserResponses = {
 export type CreateUserResponse = CreateUserResponses[keyof CreateUserResponses];
 
 export type UpdateUserData = {
-    body: UserWrite;
+    body: UserUpdate;
     path?: never;
     query?: never;
     url: '/users';
 };
 
+export type UpdateUserErrors = {
+    /**
+     * Current password is missing or incorrect
+     */
+    400: unknown;
+};
+
 export type UpdateUserResponses = {
     /**
-     * Updated
+     * Updated; other refresh sessions revoked on password change
      */
     204: void;
 };
@@ -678,6 +717,61 @@ export type GetCurrentUserResponses = {
 };
 
 export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
+
+export type UpdateUserPreferencesData = {
+    body: UserPreferences;
+    path?: never;
+    query?: never;
+    url: '/users/current/preferences';
+};
+
+export type UpdateUserPreferencesErrors = {
+    /**
+     * Salary day must be between 1 and 31
+     */
+    400: unknown;
+};
+
+export type UpdateUserPreferencesResponses = {
+    /**
+     * Preferences saved
+     */
+    204: void;
+};
+
+export type UpdateUserPreferencesResponse = UpdateUserPreferencesResponses[keyof UpdateUserPreferencesResponses];
+
+export type GetUserDataSummaryData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/current/data-summary';
+};
+
+export type GetUserDataSummaryResponses = {
+    /**
+     * Entry statistics and configured image limit
+     */
+    200: UserDataSummary;
+};
+
+export type GetUserDataSummaryResponse = GetUserDataSummaryResponses[keyof GetUserDataSummaryResponses];
+
+export type ExportUserDataData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/users/current/export';
+};
+
+export type ExportUserDataResponses = {
+    /**
+     * Owner-scoped backup, excluding credentials, sessions and image bytes. Child sections reference their parent IDs. Extend sections for new tables.
+     */
+    200: UserBackup;
+};
+
+export type ExportUserDataResponse = ExportUserDataResponses[keyof ExportUserDataResponses];
 
 export type ListCategoriesByTypeData = {
     body?: never;
