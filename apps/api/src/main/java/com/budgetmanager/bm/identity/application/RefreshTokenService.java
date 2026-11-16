@@ -106,6 +106,15 @@ public class RefreshTokenService {
     repository.deleteAllByUserId(userId);
   }
 
+  @Transactional
+  public void revokeOthers(UUID userId, String presentedToken) {
+    if (presentedToken == null || presentedToken.isBlank()) {
+      revokeAll(userId);
+    } else {
+      repository.deleteOthersByUserId(userId, hash(presentedToken));
+    }
+  }
+
   private String newToken() {
     byte[] bytes = new byte[TOKEN_BYTES];
     secureRandom.nextBytes(bytes);

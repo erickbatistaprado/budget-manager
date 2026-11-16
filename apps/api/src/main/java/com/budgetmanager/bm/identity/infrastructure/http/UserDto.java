@@ -12,8 +12,8 @@ public record UserDto(
     UUID id,
     @Size(max = 50) String name,
     @Email @NotBlank String email,
-    @NotBlank String password,
-    Set<RoleDto> roles) {
+    Set<RoleDto> roles,
+    Integer salaryDay) {
 
   public UserDto {
     roles = roles == null ? Set.of() : Set.copyOf(roles);

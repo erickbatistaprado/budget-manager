@@ -32,6 +32,8 @@ public class User {
 
   private String password;
 
+  private Integer salaryDay;
+
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "t_user_roles",

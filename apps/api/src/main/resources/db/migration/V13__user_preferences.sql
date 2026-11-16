@@ -1,0 +1,1 @@
+ALTER TABLE t_user ADD COLUMN salary_day INTEGER CHECK (salary_day BETWEEN 1 AND 31);

@@ -141,7 +141,7 @@ class AuthIntegrationTest extends IntegrationTest {
     Cookie refreshCookie = login(user.getEmail()).getResponse().getCookie("refresh_token");
 
     signIn(user);
-    userService.updateProfile(null, "N3w!Password");
+    userService.updateProfile(null, "N3w!Password", PASSWORD, null);
 
     refresh(refreshCookie).andExpect(status().isUnauthorized());
   }

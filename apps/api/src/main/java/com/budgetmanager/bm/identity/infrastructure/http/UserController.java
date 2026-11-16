@@ -19,7 +19,7 @@ public class UserController {
   private final UserService service;
 
   @PostMapping
-  public ResponseEntity<UserDto> save(@Valid @RequestBody UserDto userDto) {
+  public ResponseEntity<UserDto> save(@Valid @RequestBody UserRegistrationRequest userDto) {
     User user = service.register(userDto.name(), userDto.email(), userDto.password());
 
     URI uri =
@@ -32,8 +32,16 @@ public class UserController {
   }
 
   @PutMapping
-  public ResponseEntity<Void> updateUser(@RequestBody UserDto dto) {
-    service.updateProfile(dto.name(), dto.password());
+  public ResponseEntity<Void> updateUser(
+      @Valid @RequestBody UserUpdateRequest dto,
+      @CookieValue(name = "refresh_token", required = false) String refreshToken) {
+    service.updateProfile(dto.name(), dto.password(), dto.currentPassword(), refreshToken);
+    return noContent().build();
+  }
+
+  @PutMapping("/current/preferences")
+  public ResponseEntity<Void> updatePreferences(@Valid @RequestBody UserPreferencesRequest dto) {
+    service.updatePreferences(dto.salaryDay());
     return noContent().build();
   }
 

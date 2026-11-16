@@ -51,20 +51,39 @@ public class UserService {
   }
 
   @Transactional
-  public void updateProfile(String name, String password) {
+  public void updateProfile(
+      String name, String password, String currentPassword, String refreshToken) {
     User user = requireCurrentUser();
-    if (name != null && !name.isBlank()) {
-      user.setName(name);
-    }
     if (password != null && !password.isBlank()) {
+      if (currentPassword == null
+          || currentPassword.isBlank()
+          || currentPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72
+          || !encoder.matches(currentPassword, user.getPassword())) {
+        throw new ApplicationException(
+            ApplicationError.BAD_REQUEST, "Current password is missing or incorrect");
+      }
       requireValidPassword(password);
       if (encoder.matches(password, user.getPassword())) {
         throw new ApplicationException(
             ApplicationError.BAD_REQUEST, "Password must be different from before");
       }
       user.setPassword(encoder.encode(password));
-      refreshTokenService.revokeAll(user.getId());
+      refreshTokenService.revokeOthers(user.getId(), refreshToken);
     }
+    if (name != null && !name.isBlank()) {
+      user.setName(name.trim());
+    }
+    repository.save(user);
+  }
+
+  @Transactional
+  public void updatePreferences(Integer salaryDay) {
+    if (salaryDay != null && (salaryDay < 1 || salaryDay > 31)) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST, "Salary day must be between 1 and 31");
+    }
+    User user = requireCurrentUser();
+    user.setSalaryDay(salaryDay);
     repository.save(user);
   }
 

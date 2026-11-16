@@ -1,6 +1,5 @@
 package com.budgetmanager.bm.identity.infrastructure.http;
 
-import com.budgetmanager.bm.identity.domain.Role;
 import com.budgetmanager.bm.identity.domain.User;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,25 +13,9 @@ public final class UserConverter {
         .id(entity.getId())
         .email(entity.getEmail())
         .name(entity.getName())
+        .salaryDay(entity.getSalaryDay())
         .roles(checkRoles(entity))
         .build();
-  }
-
-  public static User dtoToEntity(UserDto dto) {
-    return User.builder()
-        .id(dto.id())
-        .email(dto.email())
-        .name(dto.name())
-        .password(dto.password())
-        .roles(checkRoles(dto))
-        .build();
-  }
-
-  public static Set<Role> checkRoles(UserDto dto) {
-    if (dto.roles() != null) {
-      return dto.roles().stream().map(RoleConverter::dtoToEntity).collect(Collectors.toSet());
-    }
-    return Set.of();
   }
 
   public static Set<RoleDto> checkRoles(User user) {
