@@ -39,7 +39,10 @@ import {
   getApiDate,
   parseApiDate,
   formatDate,
+  getLocation,
 } from '@/utils/globalFormats.util';
+import NextGoal from '@/components/Goals/NextGoal';
+import SurplusDialog from '@/components/Goals/SurplusDialog';
 import { monthKey } from '@/utils/monthlyTransaction.util';
 import { bankColors } from '@/utils/payment.util';
 import { formatBRL } from '@/utils/analytics.util';
@@ -50,6 +53,8 @@ export default function Body(): JSX.Element {
   const [unassigned, setUnassigned] = useState(false);
   const [drawer, setDrawer] = useState<'entry' | 'movement'>();
   const [draft, setDraft] = useState<Partial<MovementDraft>>({});
+  const [surplusDraft, setSurplusDraft] =
+    useState<Partial<MovementDraft> | null>(null);
   const [adjust, setAdjust] = useState<string>();
   const range = useMemo(
     (): DateRangeTransactions => getStartOfTheMonthAndEndOfTheMonth(date),
@@ -138,6 +143,12 @@ export default function Body(): JSX.Element {
     financings.error;
   return (
     <main className="flex min-w-0 flex-col gap-4 p-3 text-[var(--ctp-text)] sm:p-5">
+      {surplusDraft && (
+        <SurplusDialog
+          draft={surplusDraft}
+          onClose={(): void => setSurplusDraft(null)}
+        />
+      )}
       <header className="flex flex-wrap items-center justify-between gap-2">
         <MonthSwitcher value={date} onChange={setDate} />
       </header>
@@ -147,16 +158,19 @@ export default function Body(): JSX.Element {
       )}
       {overview.data && (
         <>
-          <MonthSummary
-            overview={overview.data}
-            incomes={incomeEntries}
-            month={date}
-            salaryDay={user?.salaryDay}
-            mainAccountId={user?.mainAccountId}
-            onInvest={openMovement}
-            outflows={accountOutflows(entries)}
-            ready={!loading}
-          />
+          <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <MonthSummary
+              overview={overview.data}
+              incomes={incomeEntries}
+              month={date}
+              salaryDay={user?.salaryDay}
+              mainAccountId={user?.mainAccountId}
+              onInvest={setSurplusDraft}
+              outflows={accountOutflows(entries)}
+              ready={!loading}
+            />
+            <NextGoal />
+          </div>
           <Panel
             className="flex w-full flex-col gap-3"
             aria-labelledby="accounts"
@@ -178,10 +192,10 @@ export default function Body(): JSX.Element {
                       {labels.updated}{' '}
                       {parseApiDate(
                         account.balanceCheckpointDate
-                      ).toLocaleDateString(
-                        language === 'pt' ? 'pt-BR' : 'en-US',
-                        { day: '2-digit', month: '2-digit' }
-                      )}
+                      ).toLocaleDateString(getLocation(language), {
+                        day: '2-digit',
+                        month: '2-digit',
+                      })}
                     </small>
                   )}
                   <Button

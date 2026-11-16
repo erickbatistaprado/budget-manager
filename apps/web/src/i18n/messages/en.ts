@@ -2,6 +2,39 @@ import { SavingLocation } from '@/enums';
 
 export const en = {
   goals: {
+    redemptionAccount: 'Redemption account',
+    keep: 'Save the surplus',
+    investInto: 'Invest in',
+    next: 'Next goal',
+    purchase: 'Bought it',
+    achieved: 'Achieved',
+    actualPrice: 'Actual price',
+    total: 'Total',
+    unassigned: 'Unassigned',
+    investment: 'Investment',
+    overLimit: 'The total exceeds the kept amount.',
+    tips: 'How to get there sooner',
+    fixedCost: 'Fixed cost',
+    settings: 'Fixed categories',
+    noTips: 'No controllable categories above your average.',
+    newBaseline: 'No spending in the previous six months',
+    tipAmount: 'this month',
+    cut: 'Potential monthly saving',
+    investmentError: 'Goals saved. Investment failed; retry the investment.',
+    retryInvestment: 'Retry investment',
+    above: 'above your average',
+    category: 'Expense category',
+    payment: 'Payment method',
+    card: 'Card',
+    installments: 'Installments (1 for a single payment)',
+    payAccount: 'Paying account',
+    tipsHelp:
+      'Compares with the six preceding months. Monthly series, financing and fixed costs are excluded.',
+    gained: (name: string, months: number): string => {
+      if (months === 0)
+        return `This saving does not change the forecast for ${name}.`;
+      return `Cutting this difference brings ${name} forward by ${months} ${months === 1 ? 'month' : 'months'}.`;
+    },
     title: 'Goals',
     new: 'New goal',
     empty: 'Goals turn things you need or want into a ranked savings plan.',
@@ -61,7 +94,7 @@ export const en = {
     invested: 'Invested',
     kept: 'Kept in accounts',
     shortfall: 'Shortfall',
-    invest: 'Invest the surplus',
+    invest: 'Save the surplus',
     accounts: 'Accounts',
     available: 'Total available',
     updated: 'Updated on',

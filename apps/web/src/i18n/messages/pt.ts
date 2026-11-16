@@ -3,6 +3,40 @@ import type { Messages } from './en';
 
 export const pt: Messages = {
   goals: {
+    redemptionAccount: 'Conta para o resgate',
+    keep: 'Guardar a sobra',
+    investInto: 'Investir em',
+    next: 'Próxima meta',
+    purchase: 'Comprei',
+    achieved: 'Conquistadas',
+    actualPrice: 'Preço real',
+    total: 'Total',
+    unassigned: 'Sem destino',
+    investment: 'Investimento',
+    overLimit: 'O total ultrapassa a sobra do mês.',
+    tips: 'Como chegar lá mais rápido',
+    fixedCost: 'Gasto fixo',
+    settings: 'Categorias fixas',
+    noTips: 'Nenhuma categoria ajustável acima da sua média.',
+    newBaseline: 'Sem gastos nos seis meses anteriores',
+    tipAmount: 'neste mês',
+    cut: 'Economia mensal possível',
+    investmentError:
+      'Metas salvas. O investimento falhou; tente investir novamente.',
+    retryInvestment: 'Tentar investir novamente',
+    above: 'acima da sua média',
+    category: 'Categoria de despesa',
+    payment: 'Forma de pagamento',
+    card: 'Cartão',
+    installments: 'Parcelas (1 para pagar à vista)',
+    payAccount: 'Conta de pagamento',
+    tipsHelp:
+      'Compara com os seis meses anteriores. Séries mensais, financiamentos e gastos fixos ficam de fora.',
+    gained: (name: string, months: number): string => {
+      if (months === 0)
+        return `Essa economia não altera a previsão de ${name}.`;
+      return `Cortar essa diferença antecipa ${name} em ${months} ${months === 1 ? 'mês' : 'meses'}.`;
+    },
     title: 'Metas',
     new: 'Nova meta',
     empty:
@@ -63,7 +97,7 @@ export const pt: Messages = {
     invested: 'Investido',
     kept: 'Ficou nas contas',
     shortfall: 'Faltaram',
-    invest: 'Investir a sobra',
+    invest: 'Guardar a sobra',
     accounts: 'Contas',
     available: 'Total disponível',
     updated: 'Atualizado em',

@@ -238,10 +238,12 @@ export function ProgressBar({
   value,
   label,
   danger = false,
+  success = false,
 }: {
   value: number;
   label: string;
   danger?: boolean;
+  success?: boolean;
 }): JSX.Element {
   const percent = Math.max(0, Math.min(100, value));
   return (
@@ -256,8 +258,9 @@ export function ProgressBar({
     >
       <div
         className={clsx(
-          'h-full',
-          danger ? 'bg-[var(--ctp-red)]' : 'bg-[var(--ctp-blue)]'
+          'h-full bg-[var(--ctp-blue)]',
+          success && 'bg-[var(--ctp-green)]',
+          danger && 'bg-[var(--ctp-red)]'
         )}
         style={{ width: `${percent}%` }}
       />

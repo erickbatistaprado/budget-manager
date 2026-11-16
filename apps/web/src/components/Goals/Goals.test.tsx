@@ -109,6 +109,14 @@ jest.mock('@/libs/moneyFlowCache.lib', (): object => ({
   refreshMoneyFlow: jest.fn(),
 }));
 
+beforeAll((): void => {
+  HTMLDialogElement.prototype.showModal = function (): void {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function (): void {
+    this.removeAttribute('open');
+  };
+});
 beforeEach((): void => {
   jest.clearAllMocks();
   currentGoals = mockGoals;
@@ -212,3 +220,28 @@ it('shows the empty state and resets pace override', async (): Promise<void> => 
     })
   );
 });
+
+it.each(['en', 'pt'] as const)(
+  'keeps achieved goals collapsed and outside the ranking in %s',
+  (language): void => {
+    const labels = { en, pt }[language].goals;
+    currentGoals = [
+      ...mockGoals,
+      {
+        ...mockGoals[0],
+        id: 'done',
+        name: 'Bought keyboard',
+        status: 'ACHIEVED',
+        savedAtPurchase: 400,
+        actualPrice: 350,
+        achievedAt: '2026/10/10',
+      },
+    ];
+    renderWithI18n(<GoalsPage />, { language });
+    expect(screen.getByText('Bought keyboard')).not.toBeVisible();
+    expect(screen.getByText('Bought keyboard')).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('button', { name: labels.purchase })
+    ).toHaveLength(2);
+  }
+);

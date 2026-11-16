@@ -9,8 +9,12 @@ import {
   NumberInput,
   Panel,
   Badge,
+  ProgressBar,
 } from '@/components/ui';
 import GoalForm from '@/components/Goals/GoalForm';
+import PurchaseForm from '@/components/Goals/PurchaseForm';
+import SavingsTips from '@/components/Goals/SavingsTips';
+import Drawer from '@/components/Home/Drawer';
 import AllocationForm from '@/components/Goals/AllocationForm';
 import useSavings from '@/hooks/useSavings.hook';
 import useAccounts from '@/hooks/useAccounts.hook';
@@ -29,7 +33,8 @@ import type { Goal, GoalPlan } from '@budget-manager/api-client';
 type Editor =
   | { kind: 'goal'; goal?: Goal }
   | { kind: 'allocation'; goal: Goal; release: boolean }
-  | { kind: 'delete'; goal: Goal };
+  | { kind: 'delete'; goal: Goal }
+  | { kind: 'purchase'; goal: Goal };
 export default function GoalsPage(): JSX.Element {
   const { t, language } = useI18n();
   const labels = t.goals;
@@ -45,14 +50,19 @@ export default function GoalsPage(): JSX.Element {
   } = useSWR('/goals/plan', getFetcher<GoalPlan>);
   const { data: savings } = useSavings();
   const { data: accounts } = useAccounts();
-  const [editor, setEditor] = useState<Editor | null>(null);
+  const [editor, setEditor] = useState<Editor | null>((): Editor | null =>
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).has('new')
+      ? { kind: 'goal' }
+      : null
+  );
   const [pace, setPace] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [dragged, setDragged] = useState<string | null>(null);
-  const ranked = [...(goals ?? [])].sort(
-    (left, right): number => left.position - right.position
-  );
+  const ranked = [...(goals ?? [])]
+    .filter((goal): boolean => goal.status === 'ACTIVE')
+    .sort((left, right): number => left.position - right.position);
   async function run(
     action: () => Promise<unknown>,
     close = true
@@ -158,66 +168,88 @@ export default function GoalsPage(): JSX.Element {
         {labels.new}
       </Button>
       {editor && (
-        <Panel title={editor.kind === 'goal' ? labels.new : editor.goal.name}>
-          {editor.kind === 'goal' && (
-            <GoalForm
-              key={editor.goal?.id ?? 'new'}
-              goal={editor.goal}
-              busy={busy}
-              onCancel={(): void => setEditor(null)}
-              onSave={(draft): Promise<void> =>
-                run((): Promise<unknown> =>
-                  editor.goal
-                    ? putFetcher(`/goals/${editor.goal.id}`, {
-                        body: JSON.stringify(draft),
-                      })
-                    : postFetcher('/goals', { body: JSON.stringify(draft) })
-                )
-              }
-            />
-          )}
-          {editor.kind === 'allocation' && (
-            <AllocationForm
-              key={`${editor.goal.id}-${editor.release}`}
-              goal={editor.goal}
-              release={editor.release}
-              saved={
-                plan.goals.find((item): boolean => item.id === editor.goal.id)
-                  ?.saved ?? 0
-              }
-              busy={busy}
-              onCancel={(): void => setEditor(null)}
-              onSave={(draft): Promise<void> =>
-                run((): Promise<unknown> =>
-                  postFetcher(`/goals/${editor.goal.id}/allocations`, {
-                    body: JSON.stringify(draft),
-                  })
-                )
-              }
-            />
-          )}
-          {editor.kind === 'delete' && (
-            <div className="space-y-3">
-              <p>{labels.confirm}</p>
-              <div className="flex gap-2">
-                <Button
-                  variant="danger"
-                  disabled={busy}
-                  onClick={(): void => {
-                    void run((): Promise<void> =>
-                      deleteFetcher(`/goals/${editor.goal.id}`)
-                    );
-                  }}
-                >
-                  {labels.delete}
-                </Button>
-                <Button disabled={busy} onClick={(): void => setEditor(null)}>
-                  {labels.cancel}
-                </Button>
+        <Drawer
+          title={editor.kind === 'goal' ? labels.new : editor.goal.name}
+          onClose={(): void => setEditor(null)}
+        >
+          <Panel
+            className="space-y-4"
+            title={editor.kind === 'goal' ? labels.new : editor.goal.name}
+          >
+            {editor.kind === 'goal' && (
+              <GoalForm
+                key={editor.goal?.id ?? 'new'}
+                goal={editor.goal}
+                busy={busy}
+                onCancel={(): void => setEditor(null)}
+                onSave={(draft): Promise<void> =>
+                  run((): Promise<unknown> =>
+                    editor.goal
+                      ? putFetcher(`/goals/${editor.goal.id}`, {
+                          body: JSON.stringify(draft),
+                        })
+                      : postFetcher('/goals', { body: JSON.stringify(draft) })
+                  )
+                }
+              />
+            )}
+            {editor.kind === 'allocation' && (
+              <AllocationForm
+                key={`${editor.goal.id}-${editor.release}`}
+                goal={editor.goal}
+                release={editor.release}
+                saved={
+                  plan.goals.find((item): boolean => item.id === editor.goal.id)
+                    ?.saved ?? 0
+                }
+                busy={busy}
+                onCancel={(): void => setEditor(null)}
+                onSave={(draft): Promise<void> =>
+                  run((): Promise<unknown> =>
+                    postFetcher(`/goals/${editor.goal.id}/allocations`, {
+                      body: JSON.stringify(draft),
+                    })
+                  )
+                }
+              />
+            )}
+            {editor.kind === 'purchase' && (
+              <PurchaseForm
+                goal={editor.goal}
+                busy={busy}
+                onCancel={(): void => setEditor(null)}
+                onSave={(draft): Promise<void> =>
+                  run((): Promise<unknown> =>
+                    postFetcher(`/goals/${editor.goal.id}/purchase`, {
+                      body: JSON.stringify(draft),
+                    })
+                  )
+                }
+              />
+            )}
+            {editor.kind === 'delete' && (
+              <div className="space-y-3">
+                <p>{labels.confirm}</p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="danger"
+                    disabled={busy}
+                    onClick={(): void => {
+                      void run((): Promise<void> =>
+                        deleteFetcher(`/goals/${editor.goal.id}`)
+                      );
+                    }}
+                  >
+                    {labels.delete}
+                  </Button>
+                  <Button disabled={busy} onClick={(): void => setEditor(null)}>
+                    {labels.cancel}
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </Panel>
+            )}
+          </Panel>
+        </Drawer>
       )}
       {ranked.length === 0 && (
         <Panel>
@@ -277,21 +309,11 @@ export default function GoalsPage(): JSX.Element {
                 {goal.savingId ? labels.saved : labels.reserved}: {money(saved)}{' '}
                 / {money(goal.price)}
               </p>
-              <div
-                role="progressbar"
-                aria-label={goal.name}
-                aria-valuemin={0}
-                aria-valuemax={goal.price}
-                aria-valuenow={Math.min(saved, goal.price)}
-                className="h-2 overflow-hidden rounded bg-[var(--ctp-surface1)]"
-              >
-                <div
-                  className="h-full bg-[var(--ctp-green)]"
-                  style={{
-                    width: `${Math.min(100, (saved / goal.price) * 100)}%`,
-                  }}
-                />
-              </div>
+              <ProgressBar
+                success
+                label={goal.name}
+                value={(saved / goal.price) * 100}
+              />
               <p>
                 {labels.forecast}:{' '}
                 {forecast?.expectedMonth
@@ -332,6 +354,12 @@ export default function GoalsPage(): JSX.Element {
               <div className="flex flex-wrap gap-2">
                 <Button
                   disabled={busy}
+                  onClick={(): void => setEditor({ kind: 'purchase', goal })}
+                >
+                  {labels.purchase}
+                </Button>
+                <Button
+                  disabled={busy}
                   onClick={(): void =>
                     setEditor({ kind: 'allocation', goal, release: false })
                   }
@@ -364,6 +392,33 @@ export default function GoalsPage(): JSX.Element {
           );
         })}
       </ol>
+      <details>
+        <summary>{labels.achieved}</summary>
+        <ul className="mt-3 space-y-3">
+          {goals
+            .filter((goal): boolean => goal.status === 'ACHIEVED')
+            .map((goal): JSX.Element => (
+              <Panel
+                as="li"
+                key={goal.id}
+                className="min-w-0 space-y-2 break-words"
+              >
+                <strong>{goal.name}</strong>
+                <p>
+                  {labels.saved}: {money(goal.savedAtPurchase ?? 0)} ·{' '}
+                  {labels.actualPrice}: {money(goal.actualPrice ?? goal.price)}
+                </p>
+                <p>
+                  {goal.achievedAt &&
+                    new Date(
+                      `${goal.achievedAt.replaceAll('/', '-')}T12:00:00`
+                    ).toLocaleDateString(getLocation(language))}
+                </p>
+              </Panel>
+            ))}
+        </ul>
+      </details>
+      <SavingsTips />
     </main>
   );
 }
