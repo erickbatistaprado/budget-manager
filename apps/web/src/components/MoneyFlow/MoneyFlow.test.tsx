@@ -271,7 +271,9 @@ it.each(['en', 'pt'] as const)(
       />,
       { language }
     );
-    expect(screen.getByLabelText(labels.amount)).toHaveValue(321.5);
+    expect(screen.getByLabelText(labels.amount)).toHaveValue(
+      language === 'pt' ? '321,50' : '321.50'
+    );
     expect(screen.getByLabelText(labels.from)).toHaveValue('checking');
     fireEvent.change(screen.getByLabelText(labels.saving), {
       target: { value: 'saving' },

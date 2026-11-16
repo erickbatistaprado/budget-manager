@@ -13,6 +13,8 @@ import {
   DateField,
   parseFieldDate,
   formatFieldDate,
+  MoneyInput,
+  SegmentedControl,
 } from '@/components/ui';
 import { BiChevronUp, BiChevronDown, BiSearch, BiFilter } from 'react-icons/bi';
 import { useEffect, useState, useRef, useId, type JSX } from 'react';
@@ -329,21 +331,18 @@ export default function EntryList({
             className="fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] flex-col gap-5 overflow-y-auto rounded-t-xl border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-5 shadow-xl sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:bottom-auto sm:mt-2 sm:w-[min(36rem,90vw)] sm:rounded-xl"
           >
             <div className="flex flex-col gap-3">
-              <div className="flex flex-wrap gap-2">
-                {(['all', 'income', 'expenses', 'movements'] as const).map(
-                  (type): JSX.Element => (
-                    <Button
-                      variant="secondary"
-                      key={type}
-                      selected={filters.type === type}
-                      aria-pressed={filters.type === type}
-                      onClick={(): void => change('type', type)}
-                    >
-                      {labels[type]}
-                    </Button>
-                  )
-                )}
-              </div>
+              <SegmentedControl
+                fullWidth
+                label={labels.filters}
+                value={filters.type}
+                onChange={(type): void => change('type', type)}
+                options={(
+                  ['all', 'income', 'expenses', 'movements'] as const
+                ).map((type): { value: typeof type; label: string } => ({
+                  value: type,
+                  label: labels[type],
+                }))}
+              />
               <Checkbox
                 label={labels.noAccount}
                 checked={unassigned}
@@ -382,15 +381,13 @@ export default function EntryList({
             </div>
             <div className="grid grid-cols-2 gap-4">
               {(['minimum', 'maximum'] as const).map((key): JSX.Element => (
-                <TextInput
+                <MoneyInput
                   key={key}
                   size="small"
-                  type="number"
                   min="0"
-                  step="0.01"
                   label={amountLabels[key]}
                   value={filters[key]}
-                  onChange={(event): void => change(key, event.target.value)}
+                  onValueChange={(value): void => change(key, value)}
                 />
               ))}
             </div>

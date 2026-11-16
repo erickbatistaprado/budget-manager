@@ -69,7 +69,7 @@ it.each([
     ).toBeInTheDocument();
     expect(screen.queryByLabelText('Value')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: choice }));
-    expect(screen.getByLabelText('Value')).toHaveValue(680);
+    expect(screen.getByLabelText('Value')).toHaveValue('680.00');
     expect(screen.getByLabelText('Notes')).toHaveValue('Discount');
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor((): void => expect(onClose).toHaveBeenCalled());

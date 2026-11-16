@@ -3,10 +3,11 @@
 import {
   Panel,
   TextInput,
-  NumberInput,
   Select,
   Button,
   Field,
+  Page,
+  MoneyInput,
 } from '@/components/ui';
 import CardLimit from '@/components/Bank/CardLimit';
 import { refreshMoneyFlow } from '@/libs/moneyFlowCache.lib';
@@ -20,7 +21,7 @@ import { BankSelect, BankBadge } from '@/components/Bank/Bank';
 import { Bank, type Card } from '@budget-manager/api-client';
 import { useState, type FormEvent, type JSX } from 'react';
 
-export default function CardsPage(): JSX.Element {
+export default function AccountsPage(): JSX.Element {
   const { t } = useI18n();
   const { data: cards, error, mutate } = useCards();
   const { data: accounts } = useAccounts();
@@ -120,9 +121,10 @@ export default function CardsPage(): JSX.Element {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-5">
+    <Page>
       <h1 className="text-xl font-semibold">{t.cards.title}</h1>
-      <h2 className="text-lg font-semibold">{t.payments.cards}</h2>
+      <AccountsSection />
+      <h2 className="text-lg font-semibold">{t.cards.creditCards}</h2>
       <Panel
         as="form"
         onSubmit={save}
@@ -156,13 +158,10 @@ export default function CardsPage(): JSX.Element {
         </Field>
         <BankSelect bank={bank} onChange={setBank} />
         <Field label={t.cards.creditLimit}>
-          <NumberInput
+          <MoneyInput
             min="0.01"
-            step="0.01"
             value={creditLimit}
-            onChange={(event): void =>
-              setCreditLimit(event.currentTarget.value)
-            }
+            onValueChange={setCreditLimit}
           />
         </Field>
         <Field label={t.moneyFlow.paymentAccount} className="sm:col-span-2">
@@ -225,7 +224,7 @@ export default function CardsPage(): JSX.Element {
               ))}
           </Select>
         </Field>
-        <Button variant="primary" size="lg" disabled={busy} type="submit">
+        <Button variant="primary" size="field" disabled={busy} type="submit">
           {editing ? t.common.save : t.cards.add}
         </Button>
         {editing && (
@@ -242,14 +241,14 @@ export default function CardsPage(): JSX.Element {
       {(message || error) && (
         <p role="alert">{message || t.common.errorGeneric}</p>
       )}
-      <ul className="flex flex-col gap-3">
+      <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {cards?.map((card): JSX.Element => (
           <Panel
             as="li"
             key={card.id}
-            className="flex flex-wrap items-center gap-3"
+            className="flex flex-wrap content-between items-center gap-3"
           >
-            <div className="flex-1">
+            <div className="min-w-0 flex-1 basis-full">
               <strong>{card.name}</strong> <BankBadge bank={card.bank} />
               <p className="text-sm">
                 {t.cards.schedule(card.closingDay, card.dueDay)}
@@ -331,7 +330,6 @@ export default function CardsPage(): JSX.Element {
           </Panel>
         ))}
       </ul>
-      <AccountsSection />
-    </div>
+    </Page>
   );
 }

@@ -139,35 +139,19 @@ describe('i18n system', (): void => {
     });
   });
 
-  describe('side menu language switch', (): void => {
-    it('switches the whole side menu text when toggling EN and PT', (): void => {
-      renderWithI18n(<SideMenu onClose={jest.fn()} />, { language: 'en' });
-
-      expect(screen.getByText('Home')).toBeInTheDocument();
-      expect(screen.getByText('Sign Out')).toBeInTheDocument();
-
-      const ptRadio: HTMLElement = screen.getByRole('radio', { name: 'PT' });
-      fireEvent.click(ptRadio);
-
-      expect(screen.getByText('Início')).toBeInTheDocument();
-      expect(screen.getByText('Sair')).toBeInTheDocument();
-      expect(document.documentElement.lang).toBe('pt-BR');
-    });
-  });
-
   describe('component rendered in each language', (): void => {
     it('renders SideMenu in English', (): void => {
       renderWithI18n(<SideMenu onClose={jest.fn()} />, { language: 'en' });
       expect(screen.getByText('Home')).toBeInTheDocument();
       expect(screen.getByText('Import')).toBeInTheDocument();
-      expect(screen.getByText('Profile')).toBeInTheDocument();
+      expect(screen.getByText('Settings')).toBeInTheDocument();
     });
 
     it('renders SideMenu in Portuguese', (): void => {
       renderWithI18n(<SideMenu onClose={jest.fn()} />, { language: 'pt' });
       expect(screen.getByText('Início')).toBeInTheDocument();
       expect(screen.getByText('Importar extrato')).toBeInTheDocument();
-      expect(screen.getByText('Perfil')).toBeInTheDocument();
+      expect(screen.getByText('Configurações')).toBeInTheDocument();
     });
   });
 });

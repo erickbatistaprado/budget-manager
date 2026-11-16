@@ -7,7 +7,6 @@ import {
   putFetcher,
 } from '@/libs/fetchers.lib';
 import ProfileForm from './ProfileForm.component';
-import LanguageSwitcher from '@/components/LanguageSwitcher/LanguageSwitcher.component';
 
 const mockMutate = jest.fn().mockResolvedValue(undefined);
 const mockSummary = {
@@ -202,23 +201,18 @@ it('validates salary day and saves main account preferences', async (): Promise<
   });
 });
 
-it('keeps language and theme selects synchronized with the header controls, in both languages', (): void => {
-  renderWithI18n(
-    <>
-      <ProfileForm />
-      <LanguageSwitcher />
-    </>,
-    { language: 'pt' }
-  );
+it('switches language and theme from the preferences, in both languages', (): void => {
+  renderWithI18n(<ProfileForm />, { language: 'pt' });
   expect(
     screen.getByRole('region', { name: 'Seus dados' })
   ).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Idioma', { selector: 'select' }), {
     target: { value: 'en' },
   });
-  expect(screen.getByRole('radio', { name: 'EN' })).toBeChecked();
   expect(screen.getByRole('region', { name: 'Your data' })).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('radio', { name: 'PT' }));
+  fireEvent.change(screen.getByLabelText('Language', { selector: 'select' }), {
+    target: { value: 'pt' },
+  });
   expect(screen.getByLabelText('Idioma', { selector: 'select' })).toHaveValue(
     'pt'
   );

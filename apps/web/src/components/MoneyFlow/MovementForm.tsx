@@ -10,6 +10,7 @@ import {
   DateField,
   parseFieldDate,
   formatFieldDate,
+  MoneyInput,
 } from '@/components/ui';
 import { useState, type FormEvent, type JSX } from 'react';
 import useCurrentUser from '@/hooks/useCurrentUser.hook';
@@ -232,13 +233,11 @@ export default function MovementForm({
         </Field>
       )}
       <Field label={labels.amount}>
-        <TextInput
+        <MoneyInput
           required
-          type="number"
           min="0.01"
-          step="0.01"
           value={amount}
-          onChange={(event): void => setAmount(event.currentTarget.value)}
+          onValueChange={setAmount}
         />
       </Field>
       {kind === 'INVESTMENT' && (

@@ -3,11 +3,11 @@
 import {
   Button,
   Panel,
-  TextInput,
   Field,
   DateField,
   parseFieldDate,
   formatFieldDate,
+  MoneyInput,
 } from '@/components/ui';
 import { useState, type FormEvent, type JSX } from 'react';
 import useSWR from 'swr';
@@ -89,13 +89,11 @@ export default function SavingActions({
       {action === 'value' && (
         <Panel className="flex w-full flex-col gap-3" as="form" onSubmit={save}>
           <Field label={labels.current}>
-            <TextInput
+            <MoneyInput
               required
-              type="number"
               min="0"
-              step="0.01"
               value={value}
-              onChange={(event): void => setValue(event.currentTarget.value)}
+              onValueChange={setValue}
             />
           </Field>
           <Field label={labels.date}>

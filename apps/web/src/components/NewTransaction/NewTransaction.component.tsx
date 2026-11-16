@@ -1,6 +1,6 @@
 'use client';
 
-import { DateField, Button, Select, Field } from '@/components/ui';
+import { DateField, Button, Select, MoneyInput } from '@/components/ui';
 
 import MovementForm from '@/components/MoneyFlow/MovementForm';
 import { Input, SelectWithTooltip } from '@/components';
@@ -34,7 +34,8 @@ import {
 import { BsFillCreditCard2BackFill } from 'react-icons/bs';
 import { FcCurrencyExchange, FcIdea, FcSurvey } from 'react-icons/fc';
 import { GrTransaction } from 'react-icons/gr';
-import { MdEventRepeat } from 'react-icons/md';
+import { MdEventRepeat, MdPayments } from 'react-icons/md';
+import { PiBank, PiCreditCard } from 'react-icons/pi';
 
 function subscribeToNothing(): () => void {
   return (): void => {};
@@ -279,7 +280,7 @@ export default function NewTransaction({
 
   if (monthly && !scope) {
     return (
-      <div className="flex h-full w-full flex-col justify-center gap-5 bg-[var(--ctp-surface0)]/55 p-5 text-[var(--ctp-text)] backdrop-blur-xs">
+      <div className="flex w-full flex-col justify-center gap-5 text-[var(--ctp-text)]">
         <div className="flex flex-col gap-1">
           <MdEventRepeat className="text-[var(--ctp-yellow)]" size={25} />
           <h2 className="text-lg font-semibold">
@@ -338,19 +339,19 @@ export default function NewTransaction({
   }
   if (movement)
     return (
-      <div className="w-full p-5">
+      <div className="w-full">
         <MovementForm onClose={onClose} variant="drawer" />
       </div>
     );
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[var(--ctp-surface0)]/55 p-5 text-[var(--ctp-text)] backdrop-blur-xs">
+    <div className="flex w-full flex-col items-center gap-5 text-[var(--ctp-text)]">
       <div className="flex w-full items-center justify-center">
         {date ? (
           <DateField
             form={`${fieldId}-form`}
             required
-            label={language === 'pt' ? 'Data' : 'Date'}
+            label={t.common.date}
             value={date}
             onChange={(value): void => {
               if (value) setDate(value);
@@ -427,72 +428,77 @@ export default function NewTransaction({
           ]}
           disabled={!categories?.length || (monthly && scope === 'month')}
         />
-        <Field
+        <Select
           label={
             transactionType === TransactionType.INCOME
               ? t.payments.receivedBy
               : t.payments.method
           }
+          startAdornment={
+            <MdPayments className="text-[var(--ctp-teal)]" size={25} />
+          }
+          value={form.paymentMethod ?? ''}
+          disabled={monthly && scope === 'month'}
+          onChange={(event): void => {
+            const paymentMethod = event.currentTarget.value as
+              PaymentMethod | '';
+            setForm((previous): Partial<Transaction> => ({
+              ...previous,
+              paymentMethod: paymentMethod || null,
+              cardId: null,
+              card: null,
+              accountId: null,
+              account: null,
+            }));
+          }}
         >
-          <Select
-            value={form.paymentMethod ?? ''}
-            disabled={monthly && scope === 'month'}
-            onChange={(event): void => {
-              const paymentMethod = event.currentTarget.value as
-                PaymentMethod | '';
-              setForm((previous): Partial<Transaction> => ({
-                ...previous,
-                paymentMethod: paymentMethod || null,
-                cardId: null,
-                card: null,
-                accountId: null,
-                account: null,
-              }));
-            }}
-          >
-            <option value="">{t.payments.notSet}</option>
-            {Object.values(PaymentMethod)
-              .filter((method): boolean => {
-                if (transactionType === TransactionType.INCOME) {
-                  return [
-                    PaymentMethod.PIX,
-                    PaymentMethod.BANK_TRANSFER,
-                    PaymentMethod.CASH,
-                    PaymentMethod.OTHER,
-                  ].includes(method);
-                }
-                return isCardEnabled || method !== PaymentMethod.CREDIT_CARD;
-              })
-              .map((method): JSX.Element => (
-                <option key={method} value={method}>
-                  {t.payments.methods[method]}
-                </option>
-              ))}
-          </Select>
-        </Field>
+          <option value="">{t.payments.notSet}</option>
+          {Object.values(PaymentMethod)
+            .filter((method): boolean => {
+              if (transactionType === TransactionType.INCOME) {
+                return [
+                  PaymentMethod.PIX,
+                  PaymentMethod.BANK_TRANSFER,
+                  PaymentMethod.CASH,
+                  PaymentMethod.OTHER,
+                ].includes(method);
+              }
+              return isCardEnabled || method !== PaymentMethod.CREDIT_CARD;
+            })
+            .map((method): JSX.Element => (
+              <option key={method} value={method}>
+                {t.payments.methods[method]}
+              </option>
+            ))}
+        </Select>
         {supportsAccount(
           form.paymentMethod,
           transactionType === TransactionType.INCOME
         ) && (
-          <Field label={t.payments.account}>
-            <Select
-              name="accountId"
-              disabled={monthly && scope === 'month'}
-              value={form.accountId ?? form.account?.id ?? ''}
-              onChange={handleChange}
-            >
-              <option value="">{t.payments.notSet}</option>
-              {accounts?.map((account): JSX.Element => (
-                <option key={account.id} value={account.id}>
-                  {account.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <Select
+            label={t.payments.account}
+            startAdornment={
+              <PiBank className="text-[var(--ctp-blue)]" size={25} />
+            }
+            name="accountId"
+            disabled={monthly && scope === 'month'}
+            value={form.accountId ?? form.account?.id ?? ''}
+            onChange={handleChange}
+          >
+            <option value="">{t.payments.notSet}</option>
+            {accounts?.map((account): JSX.Element => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </Select>
         )}
         {isCardEnabled && form.paymentMethod === PaymentMethod.CREDIT_CARD && (
           <div>
             <Select
+              startAdornment={
+                <PiCreditCard className="text-[var(--ctp-mauve)]" size={25} />
+              }
               label={t.cards.card}
               id={`${fieldId}-card`}
               name="cardId"
@@ -521,11 +527,13 @@ export default function NewTransaction({
         )}
         {isInstallmentsEnabled && (
           <div className="flex flex-col gap-1">
-            <BsFillCreditCard2BackFill
-              className="text-[var(--ctp-mauve)]"
-              size={25}
-            />
             <Input
+              startAdornment={
+                <BsFillCreditCard2BackFill
+                  className="text-[var(--ctp-mauve)]"
+                  size={25}
+                />
+              }
               id={`${fieldId}-installmentNumbers`}
               name="installmentNumbers"
               label={t.transactions.numberOfInstallments}
@@ -549,17 +557,19 @@ export default function NewTransaction({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Input
+          <MoneyInput
             startAdornment={<FcCurrencyExchange size={25} />}
-            className="no-spinner"
             id={`${fieldId}-totalValue`}
             name="totalValue"
             label={t.common.value}
-            type="number"
             min={0.01}
-            step={0.01}
             value={form.totalValue?.toString() ?? ''}
-            onChange={handleChange}
+            onValueChange={(value): void =>
+              setForm((previous): Partial<Transaction> => ({
+                ...previous,
+                totalValue: value === '' ? undefined : Number(value),
+              }))
+            }
           />
         </div>
         {errorMessage && (

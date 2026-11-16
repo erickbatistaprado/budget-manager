@@ -8,8 +8,7 @@ import type {
   Movement,
   MovementDraft,
 } from '@budget-manager/api-client';
-import Drawer from '@/components/Home/Drawer';
-import { Button, Field, NumberInput, Panel, Select } from '@/components/ui';
+import { Button, Field, Select, MoneyInput, SidePanel } from '@/components/ui';
 import useAccounts from '@/hooks/useAccounts.hook';
 import useSavings from '@/hooks/useSavings.hook';
 import { useI18n } from '@/i18n/useI18n';
@@ -148,8 +147,8 @@ export default function SurplusDialog({
     }
   }
   return (
-    <Drawer title={labels.keep} onClose={onClose}>
-      <Panel title={labels.keep} className="min-w-0 space-y-3">
+    <SidePanel title={labels.keep} onClose={onClose}>
+      <div className="min-w-0 space-y-3">
         {(previewError || reservationsError || error) && (
           <p role="alert">
             {goalsSaved ? labels.investmentError : labels.error}
@@ -176,29 +175,25 @@ export default function SurplusDialog({
           ?.filter((goal): boolean => goal.status === 'ACTIVE')
           .map((goal): JSX.Element => (
             <Field key={goal.id} label={goal.name}>
-              <NumberInput
+              <MoneyInput
                 disabled={busy || goalsSaved}
                 min="0"
-                step="0.01"
                 value={lines[goal.id] ?? 0}
-                onChange={(event): void =>
+                onValueChange={(value): void =>
                   setEdited({
                     ...lines,
-                    [goal.id]: Number(event.currentTarget.value),
+                    [goal.id]: Number(value),
                   })
                 }
               />
             </Field>
           ))}
         <Field label={labels.investment}>
-          <NumberInput
+          <MoneyInput
             disabled={busy || goalsSaved}
             min="0"
-            step="0.01"
             value={investmentAmount}
-            onChange={(event): void =>
-              setInvestment(Number(event.currentTarget.value))
-            }
+            onValueChange={(value): void => setInvestment(Number(value))}
           />
         </Field>
         <Field label={labels.investInto}>
@@ -243,7 +238,7 @@ export default function SurplusDialog({
         >
           {goalsSaved ? labels.retryInvestment : labels.submit}
         </Button>
-      </Panel>
-    </Drawer>
+      </div>
+    </SidePanel>
   );
 }

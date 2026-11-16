@@ -14,6 +14,11 @@ export default function proxy({
   const protectedRoutes: string[] = [
     '/',
     '/profile',
+    '/settings',
+    '/goals',
+    '/cards',
+    '/accounts',
+    '/financings',
     '/analytics',
     '/savings',
     '/import',
@@ -38,6 +43,11 @@ export const config = {
   matcher: [
     '/',
     '/profile/:path*',
+    '/settings/:path*',
+    '/goals/:path*',
+    '/cards/:path*',
+    '/accounts/:path*',
+    '/financings/:path*',
     '/analytics/:path*',
     '/savings/:path*',
     '/import/:path*',

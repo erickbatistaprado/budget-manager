@@ -28,7 +28,7 @@ describe('SideMenu', (): void => {
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('Analytics')).toBeInTheDocument();
     expect(screen.getByText('Import')).toBeInTheDocument();
-    expect(screen.getByText('Profile')).toBeInTheDocument();
+    expect(screen.getByText('Settings')).toBeInTheDocument();
     expect(screen.getByText('Sign Out')).toBeInTheDocument();
   });
 
@@ -68,17 +68,46 @@ describe('SideMenu', (): void => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith('/analytics');
 
-    const profileButton: HTMLElement = screen.getByText('Profile');
-    fireEvent.click(profileButton);
+    const settingsButton: HTMLElement = screen.getByText('Settings');
+    fireEvent.click(settingsButton);
     expect(mockOnClose).toHaveBeenCalledTimes(2);
-    expect(mockPush).toHaveBeenCalledWith('/profile');
+    expect(mockPush).toHaveBeenCalledWith('/settings');
   });
 
-  it('renders the language switcher with EN and PT options', (): void => {
+  it('leaves language and theme to Settings', (): void => {
     render(<SideMenu onClose={mockOnClose} />);
 
-    expect(screen.getByRole('radio', { name: 'EN' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'PT' })).toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+  });
+
+  it('shows icons only with accessible names when compact, and toggles', (): void => {
+    const onToggle = jest.fn();
+    const onNewEntry = jest.fn();
+    render(
+      <SideMenu
+        onClose={mockOnClose}
+        compact
+        onToggleCompact={onToggle}
+        onNewEntry={onNewEntry}
+      />
+    );
+
+    expect(screen.queryByText('Menu')).not.toBeInTheDocument();
+    const home = screen.getByRole('button', { name: 'Home' });
+    expect(home).toHaveAttribute('aria-current', 'page');
+    expect(home).not.toHaveTextContent('Home');
+    fireEvent.click(screen.getByRole('button', { name: 'Expand menu' }));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'New transaction' }));
+    expect(onNewEntry).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers to collapse when expanded on the desktop rail', (): void => {
+    render(<SideMenu onClose={mockOnClose} onToggleCompact={jest.fn()} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Collapse menu' })
+    ).toHaveAttribute('aria-expanded', 'true');
   });
 });
 
@@ -90,9 +119,9 @@ it('uses left aligned navigation, distinct icons, and only the language menu pre
     'Savings',
     'Goals',
     'Financing',
-    'Cards and accounts',
+    'Accounts',
     'Import',
-    'Profile',
+    'Settings',
     'Sign Out',
   ];
   const paths = labels.map((label): string | null => {

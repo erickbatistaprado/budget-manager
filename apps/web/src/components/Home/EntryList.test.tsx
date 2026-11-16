@@ -93,7 +93,9 @@ it.each(['en', 'pt'] as Language[])(
     fireEvent.click(
       screen.getByRole('button', { name: portuguese ? 'Filtros' : 'Filters' })
     );
-    expect(screen.getByLabelText(minimum)).toHaveValue(20);
+    expect(screen.getByLabelText(minimum)).toHaveValue(
+      portuguese ? '20,00' : '20.00'
+    );
     expect(screen.getByLabelText(portuguese ? 'De' : 'From')).toHaveValue(
       portuguese ? '11/01/2026' : '01/11/2026'
     );
@@ -106,7 +108,7 @@ it.each(['en', 'pt'] as Language[])(
         name: portuguese ? 'Limpar filtros' : 'Clear filters',
       })
     );
-    expect(screen.getByLabelText(minimum)).toHaveValue(null);
+    expect(screen.getByLabelText(minimum)).toHaveValue('');
     expect(
       within(screen.getByRole('table')).getAllByRole('row').slice(1)
     ).toHaveLength(2);

@@ -71,12 +71,12 @@ it.each(['en', 'pt'] as const)(
   'saves optional positive limits in %s',
   async (language): Promise<void> => {
     renderWithI18n(<CardsPage />, { language });
-    const limit = screen.getByRole('spinbutton', {
+    const limit = screen.getByRole('textbox', {
       name: language === 'pt' ? 'Limite' : 'Credit limit',
     });
     expect(limit).not.toBeRequired();
     fireEvent.change(
-      screen.getAllByLabelText(language === 'pt' ? 'Nome' : 'Name')[0],
+      screen.getAllByLabelText(language === 'pt' ? 'Nome' : 'Name')[1],
       { target: { value: 'New card' } }
     );
     fireEvent.change(limit, { target: { value: '0' } });
@@ -85,10 +85,18 @@ it.each(['en', 'pt'] as const)(
         name: language === 'pt' ? 'Adicionar cartão' : 'Add card',
       })
     );
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      language === 'pt'
-        ? 'Informe um limite positivo'
-        : 'Enter a positive credit limit'
+    const alerts = screen.getAllByRole('alert');
+    expect(alerts.map((alert): string | null => alert.textContent)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          language === 'pt'
+            ? 'Informe um limite positivo'
+            : 'Enter a positive credit limit'
+        ),
+        language === 'pt'
+          ? 'Informe pelo menos R$ 0,01.'
+          : 'Enter at least R$ 0.01.',
+      ])
     );
     expect(postFetcher).not.toHaveBeenCalled();
     fireEvent.change(limit, { target: { value: '50000' } });
@@ -105,13 +113,13 @@ it.each(['en', 'pt'] as const)(
         })
       )
     );
-    await waitFor((): void => expect(limit).toHaveValue(null));
+    await waitFor((): void => expect(limit).toHaveValue(''));
     fireEvent.click(
       screen.getByRole('button', {
         name: language === 'pt' ? 'Editar' : 'Edit',
       })
     );
-    expect(limit).toHaveValue(50000);
+    expect(limit).toHaveValue(language === 'pt' ? '50.000,00' : '50,000.00');
     fireEvent.change(limit, { target: { value: '' } });
     fireEvent.click(
       screen.getByRole('button', {
@@ -141,7 +149,7 @@ it.each(['en', 'pt'] as const)(
     expect(
       screen.queryByLabelText(messages.cards.billPaymentMethod)
     ).not.toBeInTheDocument();
-    fireEvent.change(screen.getAllByLabelText(messages.common.name)[0], {
+    fireEvent.change(screen.getAllByLabelText(messages.common.name)[1], {
       target: { value: 'Porto' },
     });
     fireEvent.change(screen.getByLabelText(messages.moneyFlow.paymentAccount), {

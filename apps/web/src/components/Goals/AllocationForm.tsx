@@ -1,6 +1,6 @@
 'use client';
 import { useState, type FormEvent, type JSX } from 'react';
-import { Button, Field, NumberInput, Select, DateField } from '@/components/ui';
+import { Button, Field, Select, DateField, MoneyInput } from '@/components/ui';
 import { useI18n } from '@/i18n/useI18n';
 import useAccounts from '@/hooks/useAccounts.hook';
 import useCurrentUser from '@/hooks/useCurrentUser.hook';
@@ -41,13 +41,12 @@ export default function AllocationForm({
   return (
     <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2">
       <Field label={labels.amount}>
-        <NumberInput
+        <MoneyInput
           required
           min="0.01"
           max={release ? saved : '999999999999.99'}
-          step="0.01"
           value={amount}
-          onChange={(event): void => setAmount(event.currentTarget.value)}
+          onValueChange={setAmount}
         />
       </Field>
       <DateField required label={labels.date} value={date} onChange={setDate} />

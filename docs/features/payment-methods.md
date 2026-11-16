@@ -97,8 +97,8 @@ form controls and account deletion confirmation.
 ### Web
 
 - `apps/web/src/app/(private)/analytics/page.tsx`
-- `apps/web/src/app/(private)/cards/page.test.tsx`
-- `apps/web/src/app/(private)/cards/page.tsx`
+- `apps/web/src/app/(private)/accounts/page.test.tsx`
+- `apps/web/src/app/(private)/accounts/page.tsx` (the Accounts page; `/cards` redirects there)
 - `apps/web/src/components/Accounts/AccountsSection.test.tsx`
 - `apps/web/src/components/Accounts/AccountsSection.tsx`
 - `apps/web/src/components/Bank/Bank.tsx`

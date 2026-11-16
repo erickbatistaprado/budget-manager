@@ -1,6 +1,15 @@
 'use client';
 
-import { Panel, TextInput, Select, Button, Field } from '@/components/ui';
+import {
+  Panel,
+  TextInput,
+  Select,
+  Button,
+  Field,
+  Page,
+  MoneyInput,
+  SegmentedControl,
+} from '@/components/ui';
 import {
   AnalyticsCard,
   EmptyState,
@@ -191,7 +200,7 @@ export default function SavingsPage(): JSX.Element {
     runwayText = messages.expensesError;
   }
   return (
-    <main className="mx-auto flex w-full max-w-[1600px] min-w-0 flex-col gap-6 p-4 text-[var(--ctp-text)] md:p-6">
+    <Page>
       <header>
         <h1 className="text-3xl font-semibold tracking-tight">
           {messages.title}
@@ -405,14 +414,12 @@ export default function SavingsPage(): JSX.Element {
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={messages.search}>
               <TextInput
-                className="mt-1"
                 value={search}
                 onChange={(event): void => setSearch(event.target.value)}
               />
             </Field>
             <Field label={messages.sort}>
               <Select
-                className="mt-1"
                 value={sort}
                 onChange={(event): void =>
                   setSort(event.target.value as SavingsSort)
@@ -424,52 +431,44 @@ export default function SavingsPage(): JSX.Element {
               </Select>
             </Field>
           </div>
-          <div
-            className="my-4 flex flex-wrap gap-2"
-            role="group"
-            aria-label={messages.location}
-          >
-            {[null, ...Object.values(SavingLocation)].map(
-              (value): JSX.Element => (
-                <Button
-                  variant={investmentType === value ? 'primary' : 'secondary'}
-                  key={value ?? 'all'}
-                  type="button"
-                  aria-pressed={location === value}
-                  onClick={(): void => {
-                    setLocation(value);
-                    setInvestmentType(null);
-                  }}
-                >
-                  {value === null ? messages.all : messages.locations[value]}
-                </Button>
-              )
-            )}
+          <div className="my-4">
+            <SegmentedControl
+              label={messages.location}
+              value={location}
+              onChange={(value): void => {
+                setLocation(value);
+                setInvestmentType(null);
+              }}
+              options={[null, ...Object.values(SavingLocation)].map(
+                (value): { value: SavingLocation | null; label: string } => ({
+                  value,
+                  label:
+                    value === null ? messages.all : messages.locations[value],
+                })
+              )}
+            />
           </div>
           {location === SavingLocation.INVESTMENT && (
-            <div
-              role="group"
-              aria-label={messages.investmentType}
-              className="mb-4 flex flex-wrap gap-2"
-            >
-              {[
-                null,
-                ...investments.types
-                  .filter((item): boolean => item.amount > 0)
-                  .map((item): InvestmentType => item.type),
-              ].map((value): JSX.Element => (
-                <Button
-                  variant={investmentType === value ? 'primary' : 'secondary'}
-                  key={value ?? 'all'}
-                  type="button"
-                  aria-pressed={investmentType === value}
-                  onClick={(): void => setInvestmentType(value)}
-                >
-                  {value === null
-                    ? messages.allInvestmentTypes
-                    : messages.investmentTypes[value]}
-                </Button>
-              ))}
+            <div className="mb-4">
+              <SegmentedControl
+                label={messages.investmentType}
+                value={investmentType}
+                onChange={setInvestmentType}
+                options={[
+                  null,
+                  ...investments.types
+                    .filter((item): boolean => item.amount > 0)
+                    .map((item): InvestmentType => item.type),
+                ].map(
+                  (value): { value: InvestmentType | null; label: string } => ({
+                    value,
+                    label:
+                      value === null
+                        ? messages.allInvestmentTypes
+                        : messages.investmentTypes[value],
+                  })
+                )}
+              />
             </div>
           )}
           {!request.isLoading && !request.error && (
@@ -503,7 +502,6 @@ export default function SavingsPage(): JSX.Element {
               <TextInput
                 ref={nameInput}
                 id="saving-name"
-                className="mt-1"
                 value={form.name}
                 aria-invalid={submitted && nameInvalid}
                 aria-describedby={
@@ -520,19 +518,16 @@ export default function SavingsPage(): JSX.Element {
               </p>
             )}
             <Field label={<>{messages.amount} (BRL)</>}>
-              <TextInput
+              <MoneyInput
                 id="saving-amount"
-                type="number"
                 min="0"
-                step="0.01"
-                className="mt-1"
                 value={form.amount}
                 aria-invalid={submitted && amountInvalid}
                 aria-describedby={
                   submitted && amountInvalid ? 'amount-error' : undefined
                 }
-                onChange={(event): void =>
-                  setForm({ ...form, amount: event.target.value })
+                onValueChange={(value): void =>
+                  setForm({ ...form, amount: value })
                 }
               />
             </Field>
@@ -544,7 +539,6 @@ export default function SavingsPage(): JSX.Element {
             <Field label={messages.location}>
               <Select
                 id="saving-location"
-                className="mt-1"
                 value={form.location}
                 onChange={(event): void =>
                   setForm({
@@ -566,7 +560,6 @@ export default function SavingsPage(): JSX.Element {
                   <Select
                     id="saving-investment-type"
                     required
-                    className="mt-1"
                     value={form.investmentType}
                     aria-invalid={submitted && typeInvalid}
                     aria-describedby={
@@ -623,6 +616,6 @@ export default function SavingsPage(): JSX.Element {
           </form>
         </AnalyticsCard>
       </div>
-    </main>
+    </Page>
   );
 }

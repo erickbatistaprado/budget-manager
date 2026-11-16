@@ -65,6 +65,21 @@ it('keeps native control styling inside the UI kit', (): void => {
           );
         if (nativeDate)
           violations.push(`${path.relative(root, file)}: native date input`);
+        if (tag === 'dialog')
+          violations.push(
+            `${path.relative(root, file)}: own <dialog>, use SidePanel`
+          );
+        const centsStep = attributes.some(
+          (attribute): boolean =>
+            ts.isJsxAttribute(attribute) &&
+            attribute.name.getText(source) === 'step' &&
+            attribute.initializer !== undefined &&
+            /0\.01/.test(attribute.initializer.getText(source))
+        );
+        if (centsStep)
+          violations.push(
+            `${path.relative(root, file)}: number field for money, use MoneyInput`
+          );
         if (
           hasClassName &&
           (tag === 'button' ||

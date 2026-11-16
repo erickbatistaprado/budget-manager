@@ -17,7 +17,6 @@ export { default as SelectWithTooltip } from '@/components/SelectWithTooltip/Sel
 export { default as SideMenu } from '@/components/SideMenu/SideMenu.component';
 export { default as Tooltip } from '@/components/Tooltip/Tooltip.component';
 export { default as Transactions } from '@/components/Transactions/Transactions.component';
-export { default as LanguageSwitcher } from '@/components/LanguageSwitcher/LanguageSwitcher.component';
 export {
   Button,
   DismissOverlay,

@@ -109,14 +109,6 @@ jest.mock('@/libs/moneyFlowCache.lib', (): object => ({
   refreshMoneyFlow: jest.fn(),
 }));
 
-beforeAll((): void => {
-  HTMLDialogElement.prototype.showModal = function (): void {
-    this.setAttribute('open', '');
-  };
-  HTMLDialogElement.prototype.close = function (): void {
-    this.removeAttribute('open');
-  };
-});
 beforeEach((): void => {
   jest.clearAllMocks();
   currentGoals = mockGoals;

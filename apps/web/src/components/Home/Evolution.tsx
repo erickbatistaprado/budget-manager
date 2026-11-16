@@ -1,5 +1,5 @@
 'use client';
-import { Panel, Button } from '@/components/ui';
+import { Panel, SegmentedControl } from '@/components/ui';
 import { useState, type JSX } from 'react';
 import { BarChart, LineChart } from '@mui/x-charts';
 import type { Evolution as EvolutionPoint } from '@budget-manager/api-client';
@@ -41,18 +41,15 @@ export default function Evolution({
         <h2 id="evolution" className="text-xl font-semibold">
           {labels.evolution}
         </h2>
-        <div>
-          {[false, true].map((value): JSX.Element => (
-            <Button
-              variant="secondary"
-              key={String(value)}
-              aria-pressed={all === value}
-              onClick={(): void => setAll(value)}
-            >
-              {value ? labels.allTime : labels.year}
-            </Button>
-          ))}
-        </div>
+        <SegmentedControl
+          label={labels.evolution}
+          value={all ? 'all' : 'year'}
+          onChange={(range): void => setAll(range === 'all')}
+          options={[
+            { value: 'year', label: labels.year },
+            { value: 'all', label: labels.allTime },
+          ]}
+        />
       </div>
       <p className="text-sm text-[var(--ctp-subtext0)]">{labels.projection}</p>
       <div className="flex flex-wrap gap-4 text-sm">

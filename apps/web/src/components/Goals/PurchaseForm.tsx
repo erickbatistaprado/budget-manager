@@ -5,7 +5,14 @@ import {
   type Goal,
   type GoalPurchaseDraft,
 } from '@budget-manager/api-client';
-import { Button, Field, NumberInput, Select, DateField } from '@/components/ui';
+import {
+  Button,
+  Field,
+  NumberInput,
+  Select,
+  DateField,
+  MoneyInput,
+} from '@/components/ui';
 import { useI18n } from '@/i18n/useI18n';
 import useAccounts from '@/hooks/useAccounts.hook';
 import useCards from '@/hooks/useCards.hook';
@@ -65,12 +72,11 @@ export default function PurchaseForm({
   return (
     <form onSubmit={submit} className="grid min-w-0 gap-3 sm:grid-cols-2">
       <Field label={labels.actualPrice}>
-        <NumberInput
+        <MoneyInput
           required
           min="0.01"
-          step="0.01"
           value={price}
-          onChange={(event): void => setPrice(event.currentTarget.value)}
+          onValueChange={setPrice}
         />
       </Field>
       <DateField required label={labels.date} value={date} onChange={setDate} />

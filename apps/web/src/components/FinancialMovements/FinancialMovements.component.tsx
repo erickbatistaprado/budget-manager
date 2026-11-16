@@ -6,6 +6,7 @@ import {
   Panel,
   Badge,
   EntryRow,
+  SidePanel,
 } from '@/components/ui';
 import Link from 'next/link';
 
@@ -305,13 +306,13 @@ export default function FinancialMovements({
               </Panel>
             )}
             {isEditOpen && (
-              <div className="fixed top-0 right-0 z-50 h-full w-full max-w-[500px] overflow-y-auto bg-[var(--ctp-mantle)] shadow-lg">
+              <SidePanel title={t.common.edit} onClose={onEditOrClose}>
                 <NewTransaction
                   onClose={onEditOrClose}
                   transaction={transaction}
                   selectedDate={selectedDate}
                 />
-              </div>
+              </SidePanel>
             )}
             {isPrepaying && (
               <InstallmentPrepayment

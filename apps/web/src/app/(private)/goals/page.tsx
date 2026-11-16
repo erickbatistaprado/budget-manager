@@ -6,15 +6,16 @@ import {
   Button,
   IconButton,
   Field,
-  NumberInput,
   Panel,
   Badge,
   ProgressBar,
+  Page,
+  MoneyInput,
+  SidePanel,
 } from '@/components/ui';
 import GoalForm from '@/components/Goals/GoalForm';
 import PurchaseForm from '@/components/Goals/PurchaseForm';
 import SavingsTips from '@/components/Goals/SavingsTips';
-import Drawer from '@/components/Home/Drawer';
 import AllocationForm from '@/components/Goals/AllocationForm';
 import useSavings from '@/hooks/useSavings.hook';
 import useAccounts from '@/hooks/useAccounts.hook';
@@ -100,7 +101,7 @@ export default function GoalsPage(): JSX.Element {
   if (goalsError || planError) return <p role="alert">{labels.loadError}</p>;
   if (!goals || !plan) return <p role="status">{labels.loading}</p>;
   return (
-    <main className="mx-auto w-full max-w-5xl min-w-0 space-y-4 p-3 sm:p-6">
+    <Page>
       <h1 className="text-2xl font-bold">{labels.title}</h1>
       {error && <p role="alert">{labels.error}</p>}
       <Panel title={labels.pace} className="min-w-0 space-y-3">
@@ -124,19 +125,19 @@ export default function GoalsPage(): JSX.Element {
           }}
         >
           <Field label={labels.monthly}>
-            <NumberInput
+            <MoneyInput
               min="0"
               max="999999999999.99"
               required
-              step="0.01"
               value={pace ?? plan.pace}
-              onChange={(event): void => setPace(event.currentTarget.value)}
+              onValueChange={setPace}
             />
           </Field>
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" size="field" disabled={busy}>
             {labels.submit}
           </Button>
           <Button
+            size="field"
             disabled={busy || plan.paceOverride === null}
             onClick={(): void => {
               void run(async (): Promise<void> => {
@@ -162,20 +163,18 @@ export default function GoalsPage(): JSX.Element {
       </Panel>
       <Button
         variant="primary"
+        className="self-start"
         disabled={busy}
         onClick={(): void => setEditor({ kind: 'goal' })}
       >
         {labels.new}
       </Button>
       {editor && (
-        <Drawer
+        <SidePanel
           title={editor.kind === 'goal' ? labels.new : editor.goal.name}
           onClose={(): void => setEditor(null)}
         >
-          <Panel
-            className="space-y-4"
-            title={editor.kind === 'goal' ? labels.new : editor.goal.name}
-          >
+          <div className="space-y-4">
             {editor.kind === 'goal' && (
               <GoalForm
                 key={editor.goal?.id ?? 'new'}
@@ -248,8 +247,8 @@ export default function GoalsPage(): JSX.Element {
                 </div>
               </div>
             )}
-          </Panel>
-        </Drawer>
+          </div>
+        </SidePanel>
       )}
       {ranked.length === 0 && (
         <Panel>
@@ -419,6 +418,6 @@ export default function GoalsPage(): JSX.Element {
         </ul>
       </details>
       <SavingsTips />
-    </main>
+    </Page>
   );
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { DismissOverlay } from '@/components/ui';
+import { DismissOverlay, SidePanel } from '@/components/ui';
 import { NewTransaction, SideMenu, Tooltip } from '@/components';
 import { useProfileImage } from '@/hooks';
+import useCompactMenu from '@/hooks/useCompactMenu.hook';
 import useHideOnScroll from '@/hooks/useHideOnScroll.hook';
 import { useI18n } from '@/i18n/useI18n';
 import clsx from 'clsx';
@@ -16,7 +17,7 @@ export default function Header(): JSX.Element {
   const { t } = useI18n();
 
   const [isLeftOpen, setIsLeftOpen] = useState(false);
-  const [isRightOpen, setIsRightOpen] = useState(false);
+  const [isEntryOpen, setIsEntryOpen] = useState(false);
   const profileImageUrl: string | undefined = useMemo(
     (): string | undefined =>
       profileImage ? URL.createObjectURL(profileImage) : undefined,
@@ -31,21 +32,39 @@ export default function Header(): JSX.Element {
     return (): void => URL.revokeObjectURL(profileImageUrl);
   }, [profileImageUrl]);
 
-  const hidden: boolean = useHideOnScroll(isLeftOpen || isRightOpen);
+  const hidden: boolean = useHideOnScroll(isLeftOpen || isEntryOpen);
+  const { compact, setCompact } = useCompactMenu();
 
   function closeMenu(): void {
     setIsLeftOpen(false);
-    setIsRightOpen(false);
+    setIsEntryOpen(false);
   }
 
-  // The drawers and overlay stay outside the sliding bar: a translated parent would become their
-  // containing block, pushing the closed drawers into the page and making it scroll sideways.
+  // From md up the side menu is a permanent rail (full or icons only) and there is no top bar;
+  // phones keep the top bar with the menu and new-transaction buttons. New transaction opens in
+  // the shared side panel, from the left like every panel. The drawers and overlay
+  // stay outside the sliding bar: a translated parent would become their containing block,
+  // pushing the closed drawers into the page and making it scroll sideways.
   return (
     <>
+      <aside
+        data-testid="side-rail"
+        className={clsx(
+          'sticky top-0 z-40 hidden h-screen shrink-0 border-r border-[var(--ctp-surface1)] bg-[var(--ctp-mantle)] md:block',
+          compact ? 'w-16' : 'w-64'
+        )}
+      >
+        <SideMenu
+          compact={compact}
+          onClose={closeMenu}
+          onToggleCompact={(): void => setCompact(!compact)}
+          onNewEntry={(): void => setIsEntryOpen(true)}
+        />
+      </aside>
       <div
         data-testid="header-bar"
         className={clsx(
-          'sticky top-0 z-30 w-full border-b border-[var(--ctp-surface1)] bg-[var(--ctp-mantle)] px-4 text-[var(--ctp-text)] shadow-md motion-safe:transition-transform motion-safe:duration-200',
+          'sticky top-0 z-30 w-full border-b border-[var(--ctp-surface1)] bg-[var(--ctp-mantle)] px-4 text-[var(--ctp-text)] shadow-md motion-safe:transition-transform motion-safe:duration-200 md:hidden',
           hidden && '-translate-y-full'
         )}
       >
@@ -78,20 +97,20 @@ export default function Header(): JSX.Element {
               className="cursor-pointer rounded-md p-1 hover:text-[var(--ctp-subtext0)]"
               size={44}
               onClick={(): void =>
-                setIsRightOpen((prev: boolean): boolean => !prev)
+                setIsEntryOpen((prev: boolean): boolean => !prev)
               }
             />
           </Tooltip>
         </header>
       </div>
-      {(isLeftOpen || isRightOpen) && (
+      {isLeftOpen && (
         <DismissOverlay aria-label={t.common.cancel} onClick={closeMenu} />
       )}
       <div
         inert={!isLeftOpen}
         data-testid="side-menu-drawer"
         className={clsx(
-          'fixed top-0 left-0 z-50 h-full w-72 max-w-full transform bg-[var(--ctp-mantle)] shadow-lg transition-transform duration-300',
+          'fixed top-0 left-0 z-50 h-full w-72 max-w-full transform bg-[var(--ctp-mantle)] shadow-lg transition-transform duration-300 md:hidden',
           isLeftOpen
             ? 'pointer-events-auto translate-x-0'
             : 'pointer-events-none -translate-x-full'
@@ -99,18 +118,15 @@ export default function Header(): JSX.Element {
       >
         <SideMenu onClose={closeMenu} />
       </div>
-      <div
-        inert={!isRightOpen}
-        data-testid="new-entry-drawer"
-        className={clsx(
-          'fixed top-0 right-0 z-50 h-full w-full max-w-[500px] transform overflow-y-auto bg-[var(--ctp-mantle)] shadow-lg transition-transform duration-300',
-          isRightOpen
-            ? 'pointer-events-auto translate-x-0'
-            : 'pointer-events-none translate-x-full'
-        )}
-      >
-        <NewTransaction onClose={closeMenu} />
-      </div>
+      {isEntryOpen && (
+        <SidePanel
+          testId="new-entry-drawer"
+          title={t.header.newTransactionTooltip}
+          onClose={closeMenu}
+        >
+          <NewTransaction onClose={closeMenu} />
+        </SidePanel>
+      )}
     </>
   );
 }

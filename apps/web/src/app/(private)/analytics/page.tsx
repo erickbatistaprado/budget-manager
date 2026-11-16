@@ -8,6 +8,8 @@ import {
   DateField,
   parseFieldDate,
   formatFieldDate,
+  Page,
+  SegmentedControl,
 } from '@/components/ui';
 import {
   AnalyticsCard,
@@ -238,7 +240,7 @@ export default function AnalyticsPage(): JSX.Element {
   ];
 
   return (
-    <main className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 p-4 text-[var(--ctp-text)] md:p-6">
+    <Page>
       <header>
         <h1 className="text-3xl font-semibold tracking-tight">
           {messages.title}
@@ -252,25 +254,17 @@ export default function AnalyticsPage(): JSX.Element {
         aria-label={messages.title}
         className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:flex-wrap sm:items-center"
       >
-        <Panel
-          className="flex justify-between"
-          role="group"
-          aria-label={messages.title}
-        >
-          {(Object.keys(messages.periods) as PeriodKind[]).map(
-            (kind): JSX.Element => (
-              <Button
-                variant={selection.kind === kind ? 'primary' : 'ghost'}
-                key={kind}
-                type="button"
-                aria-pressed={selection.kind === kind}
-                onClick={(): void => updateSelection({ kind })}
-              >
-                {messages.periods[kind]}
-              </Button>
-            )
+        <SegmentedControl
+          label={messages.title}
+          value={selection.kind}
+          onChange={(kind): void => updateSelection({ kind })}
+          options={(Object.keys(messages.periods) as PeriodKind[]).map(
+            (kind): { value: PeriodKind; label: string } => ({
+              value: kind,
+              label: messages.periods[kind],
+            })
           )}
-        </Panel>
+        />
         {selection.kind === 'custom' ? (
           <div className="flex flex-wrap gap-3">
             {(['start', 'end'] as const).map((field): JSX.Element => (
@@ -719,6 +713,6 @@ export default function AnalyticsPage(): JSX.Element {
           </>
         )}
       </AnalyticsCard>
-    </main>
+    </Page>
   );
 }

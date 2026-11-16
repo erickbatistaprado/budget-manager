@@ -103,14 +103,6 @@ jest.mock('@/libs/fetchers.lib', (): object => ({
 jest.mock('@/libs/moneyFlowCache.lib', (): object => ({
   refreshMoneyFlow: jest.fn(),
 }));
-beforeAll((): void => {
-  HTMLDialogElement.prototype.showModal = function (): void {
-    this.setAttribute('open', '');
-  };
-  HTMLDialogElement.prototype.close = function (): void {
-    this.removeAttribute('open');
-  };
-});
 beforeEach((): void => {
   jest.clearAllMocks();
   goals = [goal];
@@ -149,8 +141,9 @@ it.each(['en', 'pt'] as const)(
       />,
       { language }
     );
-    expect(screen.getByLabelText('Keyboard')).toHaveValue(300);
-    expect(screen.getByLabelText(labels.investment)).toHaveValue(200);
+    const cents = language === 'pt' ? ',00' : '.00';
+    expect(screen.getByLabelText('Keyboard')).toHaveValue(`300${cents}`);
+    expect(screen.getByLabelText(labels.investment)).toHaveValue(`200${cents}`);
     expect(screen.getByLabelText(labels.investInto)).toHaveValue('saving');
     fireEvent.change(screen.getByLabelText('Keyboard'), {
       target: { value: '400' },

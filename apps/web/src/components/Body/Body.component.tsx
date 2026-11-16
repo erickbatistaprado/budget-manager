@@ -1,7 +1,7 @@
 'use client';
 import CardLimit from '@/components/Bank/CardLimit';
 
-import { MonthSwitcher, Panel, Button } from '@/components/ui';
+import { MonthSwitcher, Panel, Button, Page, SidePanel } from '@/components/ui';
 
 import { useMemo, useState, type JSX } from 'react';
 import useSWR from 'swr';
@@ -18,7 +18,6 @@ import MovementForm from '@/components/MoneyFlow/MovementForm';
 import BalanceAdjust from '@/components/MoneyFlow/BalanceAdjust';
 import MonthSummary from '@/components/Home/MonthSummary';
 import Evolution from '@/components/Home/Evolution';
-import Drawer from '@/components/Home/Drawer';
 import EntryList from '@/components/Home/EntryList';
 import {
   accountOutflows,
@@ -142,7 +141,7 @@ export default function Body(): JSX.Element {
     expenses.error ||
     financings.error;
   return (
-    <main className="flex min-w-0 flex-col gap-4 p-3 text-[var(--ctp-text)] sm:p-5">
+    <Page>
       {surplusDraft && (
         <SurplusDialog
           draft={surplusDraft}
@@ -314,19 +313,24 @@ export default function Body(): JSX.Element {
         loading={loading}
       />
       {adjust && (
-        <Drawer
+        <SidePanel
           title={t.moneyFlow.adjust}
           onClose={(): void => setAdjust(undefined)}
         >
           <BalanceAdjust
+            variant="drawer"
             accountId={adjust}
             onClose={(): void => setAdjust(undefined)}
           />
-        </Drawer>
+        </SidePanel>
       )}
       {drawer && (
-        <Drawer
-          title={drawer === 'movement' ? t.moneyFlow.title : labels.entries}
+        <SidePanel
+          title={
+            drawer === 'movement'
+              ? t.moneyFlow.title
+              : t.header.newTransactionTooltip
+          }
           onClose={(): void => setDrawer(undefined)}
         >
           {drawer === 'entry' ? (
@@ -342,8 +346,8 @@ export default function Body(): JSX.Element {
               onClose={(): void => setDrawer(undefined)}
             />
           )}
-        </Drawer>
+        </SidePanel>
       )}
-    </main>
+    </Page>
   );
 }

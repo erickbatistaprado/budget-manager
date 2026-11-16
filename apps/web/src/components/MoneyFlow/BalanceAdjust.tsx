@@ -2,12 +2,12 @@
 
 import {
   Panel,
-  TextInput,
   Button,
   Field,
   DateField,
   parseFieldDate,
   formatFieldDate,
+  MoneyInput,
 } from '@/components/ui';
 import { useState, type FormEvent, type JSX } from 'react';
 import useSWR from 'swr';
@@ -24,9 +24,12 @@ import type {
 export default function BalanceAdjust({
   accountId,
   onClose,
+  variant = 'panel',
 }: {
   accountId: string;
   onClose: () => void;
+  /** Inside a SidePanel the form drops its own box. */
+  variant?: 'drawer' | 'panel';
 }): JSX.Element {
   const { t, language } = useI18n();
   const labels = t.moneyFlow;
@@ -79,7 +82,11 @@ export default function BalanceAdjust({
   }
   return (
     <Panel
-      className="flex w-full flex-col gap-3"
+      className={
+        variant === 'drawer'
+          ? 'flex w-full flex-col gap-3 border-0 bg-transparent p-0'
+          : 'flex w-full flex-col gap-3'
+      }
       role="dialog"
       aria-label={labels.adjust}
     >
@@ -102,14 +109,11 @@ export default function BalanceAdjust({
           />
         </Field>
         <Field label={labels.bankBalance}>
-          <TextInput
+          <MoneyInput
             required
-
-            type="number"
-            step="0.01"
             value={balance}
-            onChange={(event): void => {
-              setBalance(event.currentTarget.value);
+            onValueChange={(value): void => {
+              setBalance(value);
               setPreview(undefined);
             }}
           />

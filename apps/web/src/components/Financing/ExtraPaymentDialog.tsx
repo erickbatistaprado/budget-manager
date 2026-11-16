@@ -2,12 +2,12 @@
 
 import {
   Panel,
-  TextInput,
   Button,
   Field,
   DateField,
   parseFieldDate,
   formatFieldDate,
+  MoneyInput,
 } from '@/components/ui';
 import { useState, type JSX } from 'react';
 import type { FinancingSimulation } from '@budget-manager/api-client';
@@ -72,16 +72,13 @@ export default function ExtraPaymentDialog({
       >
         <h2 id="extra-title">{t.financing.extra}</h2>
         <Field label={t.financing.adjustmentAmount}>
-          <TextInput
+          <MoneyInput
             autoFocus
             disabled={busy}
-
-            type="number"
             min="0.01"
-            step="0.01"
             value={amount}
-            onChange={(event): void => {
-              setAmount(event.currentTarget.value);
+            onValueChange={(value): void => {
+              setAmount(value);
               setResults(undefined);
             }}
           />

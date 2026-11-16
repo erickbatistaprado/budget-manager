@@ -79,7 +79,7 @@ export default function AccountsSection(): JSX.Element {
 
   return (
     <section className="flex w-full flex-col gap-5">
-      <h2 className="text-xl font-semibold">{t.payments.accounts}</h2>
+      <h2 className="text-lg font-semibold">{t.payments.accounts}</h2>
       <Panel
         as="form"
         onSubmit={save}
@@ -94,7 +94,7 @@ export default function AccountsSection(): JSX.Element {
           />
         </Field>
         <BankSelect bank={bank} onChange={setBank} />
-        <Button variant="primary" size="lg" disabled={busy} type="submit">
+        <Button variant="primary" size="field" disabled={busy} type="submit">
           {editing ? t.common.save : t.payments.addAccount}
         </Button>
         {editing && (
@@ -111,14 +111,14 @@ export default function AccountsSection(): JSX.Element {
       {(message || error) && (
         <p role="alert">{message || t.common.errorGeneric}</p>
       )}
-      <ul className="flex flex-col gap-3">
+      <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {accounts?.map((account): JSX.Element => (
           <Panel
             as="li"
             key={account.id}
-            className="flex flex-wrap items-center gap-3"
+            className="flex flex-wrap content-between items-center gap-3"
           >
-            <div className="flex-1">
+            <div className="min-w-0 flex-1 basis-full">
               <strong>{account.name}</strong>
               <p>
                 {t.moneyFlow.balance}:{' '}

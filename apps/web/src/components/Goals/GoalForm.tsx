@@ -4,9 +4,9 @@ import {
   Button,
   Field,
   TextInput,
-  NumberInput,
   Select,
   DateField,
+  MoneyInput,
 } from '@/components/ui';
 import { useI18n } from '@/i18n/useI18n';
 import useSavings from '@/hooks/useSavings.hook';
@@ -61,13 +61,12 @@ export default function GoalForm({
         />
       </Field>
       <Field label={labels.price}>
-        <NumberInput
+        <MoneyInput
           required
           min="0.01"
           max="999999999999.99"
-          step="0.01"
           value={price}
-          onChange={(event): void => setPrice(event.currentTarget.value)}
+          onValueChange={setPrice}
         />
       </Field>
       <Field label={labels.kind}>
@@ -83,12 +82,11 @@ export default function GoalForm({
       </Field>
       <DateField label={labels.target} value={target} onChange={setTarget} />
       <Field label={labels.monthly}>
-        <NumberInput
+        <MoneyInput
           min="0"
           max="999999999999.99"
-          step="0.01"
           value={monthly}
-          onChange={(event): void => setMonthly(event.currentTarget.value)}
+          onValueChange={setMonthly}
         />
       </Field>
       <Field label={labels.saving}>

@@ -12,6 +12,7 @@ import {
   DateField,
   parseFieldDate,
   formatFieldDate,
+  Page,
 } from '@/components/ui';
 import { Input, Money } from '@/components';
 import { TransactionType } from '@/enums';
@@ -278,7 +279,7 @@ export default function ImportPage(): JSX.Element {
   }
 
   return (
-    <div className="flex w-full flex-col gap-4 p-4">
+    <Page>
       <section className="grid gap-4 xl:grid-cols-[360px_1fr]">
         <Panel
           as="form"
@@ -296,7 +297,10 @@ export default function ImportPage(): JSX.Element {
             type="file"
             accept=".pdf,.csv,application/pdf,text/csv"
             onChange={handleFile}
-            className={clsx(control, 'cursor-pointer')}
+            className={clsx(
+              control,
+              'h-14 cursor-pointer py-0 pl-0 leading-[3.5rem] file:mr-3 file:h-full file:cursor-pointer file:border-0 file:border-r file:border-[var(--ctp-surface2)] file:bg-[var(--ctp-surface1)] file:px-4 file:text-[var(--ctp-text)]'
+            )}
           />
           {needsPassword && (
             <Input
@@ -324,19 +328,20 @@ export default function ImportPage(): JSX.Element {
             <span className="text-sm font-semibold text-[var(--ctp-subtext1)]">
               {t.import.newCategory}
             </span>
-            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
-              <TextInput
-                aria-label={t.import.newCategoryName}
-                placeholder={t.common.name}
-                size="small"
-                value={newCategoryName}
-                onChange={({
-                  currentTarget: { value },
-                }: ChangeEvent<HTMLInputElement>): void =>
-                  setNewCategoryName(value)
-                }
-              />
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <div className="col-span-2">
+                <TextInput
+                  label={t.import.newCategoryName}
+                  value={newCategoryName}
+                  onChange={({
+                    currentTarget: { value },
+                  }: ChangeEvent<HTMLInputElement>): void =>
+                    setNewCategoryName(value)
+                  }
+                />
+              </div>
               <Select
+                label={t.import.categoryKind}
                 aria-label={t.import.newCategoryType}
                 value={newCategoryType}
                 onChange={({
@@ -357,10 +362,10 @@ export default function ImportPage(): JSX.Element {
                 type="button"
                 onClick={(): Promise<void> => handleCreateCategory()}
                 disabled={!newCategoryName.trim()}
-                aria-label={t.import.addCategory}
-                title={t.import.addCategory}
+                size="field"
               >
-                <FiPlus />
+                <FiPlus aria-hidden />
+                {t.import.addCategory}
               </Button>
             </div>
           </div>
@@ -668,6 +673,6 @@ export default function ImportPage(): JSX.Element {
           </Panel>
         )}
       </section>
-    </div>
+    </Page>
   );
 }

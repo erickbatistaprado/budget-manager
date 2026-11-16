@@ -8,6 +8,8 @@ import {
   DateField,
   parseFieldDate,
   formatFieldDate,
+  Page,
+  MoneyInput,
 } from '@/components/ui';
 import { use, useState, type JSX, type FormEvent } from 'react';
 import useSWR from 'swr';
@@ -79,11 +81,7 @@ export default function FinancingPage({
     }
   }
   if (!data)
-    return (
-      <main className="p-4">
-        {error ? t.financing.error : t.financing.loading}
-      </main>
-    );
+    return <Page>{error ? t.financing.error : t.financing.loading}</Page>;
   const rows = data.calculation.schedule;
   const summary = financingSummary(rows, data.extraPaid, data.payoffDate);
   const current = rows.find(
@@ -130,7 +128,7 @@ export default function FinancingPage({
     ],
   ];
   return (
-    <main className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-4 p-4">
+    <Page>
       <header>
         <h1 className="text-xl font-semibold">{data.contract.name}</h1>
         <p className="text-sm text-[var(--ctp-subtext1)]">
@@ -245,15 +243,11 @@ export default function FinancingPage({
           ) : (
             <>
               <Field label={t.financing.adjustmentAmount}>
-                <TextInput
+                <MoneyInput
                   required
-                  type="number"
                   min={action === 'sync' ? 0 : 0.01}
-                  step="0.01"
                   value={amount}
-                  onChange={(event): void =>
-                    setAmount(event.currentTarget.value)
-                  }
+                  onValueChange={setAmount}
                 />
               </Field>
               {action === 'sync' && (
@@ -435,6 +429,6 @@ export default function FinancingPage({
           </tbody>
         </table>
       </Panel>
-    </main>
+    </Page>
   );
 }

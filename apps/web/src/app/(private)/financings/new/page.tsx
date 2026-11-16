@@ -9,6 +9,8 @@ import {
   DateField,
   parseFieldDate,
   formatFieldDate,
+  Page,
+  MoneyInput,
 } from '@/components/ui';
 import { useEffect, useState, type FormEvent, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
@@ -105,7 +107,7 @@ export default function NewFinancingPage(): JSX.Element {
     'alreadyPaid',
   ] as const;
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
+    <Page>
       <h1 className="text-xl font-semibold">{t.financing.newContract}</h1>
       <Panel
         as="form"
@@ -165,22 +167,33 @@ export default function NewFinancingPage(): JSX.Element {
           )
           .map((key): JSX.Element => (
             <Field label={t.financing[key]} key={key}>
-              <TextInput
-                type="number"
-                min={0}
-                max={key === 'term' ? 500 : undefined}
-                step={key === 'term' || key === 'alreadyPaid' ? 1 : '0.01'}
-                required={key === 'term' || key === 'amount'}
-                value={draft[key] ?? ''}
-                onChange={(event): void =>
-                  change(
-                    key,
-                    event.currentTarget.value === ''
-                      ? undefined
-                      : Number(event.currentTarget.value)
-                  )
-                }
-              />
+              {key === 'term' || key === 'alreadyPaid' ? (
+                <TextInput
+                  type="number"
+                  min={0}
+                  max={key === 'term' ? 500 : undefined}
+                  step={1}
+                  required={key === 'term'}
+                  value={draft[key] ?? ''}
+                  onChange={(event): void =>
+                    change(
+                      key,
+                      event.currentTarget.value === ''
+                        ? undefined
+                        : Number(event.currentTarget.value)
+                    )
+                  }
+                />
+              ) : (
+                <MoneyInput
+                  min={0}
+                  required={key === 'amount'}
+                  value={draft[key]}
+                  onValueChange={(value): void =>
+                    change(key, value === '' ? undefined : Number(value))
+                  }
+                />
+              )}
             </Field>
           ))}
         <Field label={t.financing.monthlyRate}>
@@ -293,6 +306,6 @@ export default function NewFinancingPage(): JSX.Element {
           ))}
         </Panel>
       )}
-    </main>
+    </Page>
   );
 }
