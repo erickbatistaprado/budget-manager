@@ -16,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class MoneyFlowService {
+  /** Series repeat forever, so a snapshot only looks this far ahead. */
+  private static final int SNAPSHOT_YEARS_AHEAD = 10;
+
   private final MovementRepository movements;
   private final TransactionRepository transactions;
   private final AccountBalanceRepository checkpoints;
@@ -51,6 +54,10 @@ public class MoneyFlowService {
 
   @Transactional(readOnly = true)
   public Snapshot snapshot(LocalDate end) {
+    if (end.isAfter(LocalDate.now().plusYears(SNAPSHOT_YEARS_AHEAD))) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST, "Choose a date within the next 10 years");
+    }
     UUID userId = users.requireCurrentUser().getId();
     List<Transaction> data = transactions.findMoneyFlowData(userId);
     transactions.loadMoneyFlowMonths(userId);
@@ -69,6 +76,37 @@ public class MoneyFlowService {
         bills,
         checkpoints.findByAccountIdIn(accountList.stream().map(Account::getId).toList()),
         first);
+  }
+
+  @Transactional(readOnly = true)
+  public Map<UUID, CardLimit> cardLimits(LocalDate today) {
+    UUID userId = users.requireCurrentUser().getId();
+    List<Transaction> data = transactions.findMoneyFlowData(userId);
+    List<TransactionOccurrence> entries =
+        data.stream()
+            .filter(transaction -> transaction.getCard() != null)
+            .flatMap(transaction ->
+                TransactionOccurrence.expand(transaction, limitHorizon(transaction, today))
+                    .stream())
+            .toList();
+    List<Card> cardList = cards.list();
+    List<MoneyFlow.Bill> bills = MoneyFlow.bills(entries, cardList);
+    LocalDate first =
+        data.stream().map(Transaction::getDate).min(LocalDate::compareTo).orElse(null);
+    List<Movement> payments = MoneyFlow.movements(movements.findByUserId(userId), bills, first);
+    Map<UUID, CardLimit> result = new HashMap<>();
+    cardList.forEach(
+        card -> result.put(card.getId(), CardLimit.calculate(card, bills, payments, today)));
+    return result;
+  }
+
+  /**
+   * How far ahead a card charge holds the limit: every installment of a purchase does (banks block
+   * the whole purchase), but a monthly charge such as insurance only holds it for the bills already
+   * open, so an open-ended series never expands forever.
+   */
+  private static LocalDate limitHorizon(Transaction transaction, LocalDate today) {
+    return transaction.getRepeats() == RepeatInterval.MONTHLY ? today.plusMonths(1) : LocalDate.MAX;
   }
 
   @Transactional(readOnly = true)

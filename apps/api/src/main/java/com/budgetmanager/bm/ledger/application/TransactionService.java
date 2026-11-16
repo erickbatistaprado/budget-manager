@@ -236,9 +236,11 @@ public class TransactionService {
       throw new ApplicationException(
           ApplicationError.BAD_REQUEST, "Transaction cannot repeat and have installments");
     }
-    if (source.getCard() != null && repeats != RepeatInterval.NONE) {
+    if (source.getCard() != null
+        && repeats != RepeatInterval.NONE
+        && repeats != RepeatInterval.MONTHLY) {
       throw new ApplicationException(
-          ApplicationError.BAD_REQUEST, "Monthly series cannot have a card");
+          ApplicationError.BAD_REQUEST, "Card charges can only repeat monthly");
     }
     var card =
         source.getCard() == null
@@ -250,7 +252,12 @@ public class TransactionService {
             ? null
             : accountService.requireOwned(source.getAccount().getId(), target.getUser()));
     target.setCard(card);
-    target.assignBillDueDate(card == null ? null : card.billDueDate(source.getDate()));
+    // A monthly charge on a card belongs to the bill of each month it shows in, so the series
+    // keeps no single bill date.
+    target.assignBillDueDate(
+        card == null || repeats == RepeatInterval.MONTHLY
+            ? null
+            : card.billDueDate(source.getDate()));
     target.setNotes(source.getNotes());
     target.setTotalValue(source.getTotalValue());
     target.setDate(source.getDate());

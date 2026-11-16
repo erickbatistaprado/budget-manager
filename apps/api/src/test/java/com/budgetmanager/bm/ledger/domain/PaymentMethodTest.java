@@ -32,6 +32,17 @@ class PaymentMethodTest {
   }
 
   @Test
+  void aCardChargeMayRepeatMonthlyButNotOnOtherIntervals() {
+    Transaction transaction = draft(TransactionType.EXPENSE);
+    transaction.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+    transaction.setCard(new Card());
+    transaction.setRepeats(RepeatInterval.MONTHLY);
+    assertThatCode(transaction::validatePayment).doesNotThrowAnyException();
+    transaction.setRepeats(RepeatInterval.WEEKLY);
+    assertThatThrownBy(transaction::validatePayment).isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void validatesEveryExpenseMethodWithAndWithoutAnAccount() {
     for (PaymentMethod method : PaymentMethod.values()) {
       if (method == PaymentMethod.CREDIT_CARD) {
@@ -73,7 +84,7 @@ class PaymentMethodTest {
   }
 
   @Test
-  void monthlyOverridesKeepPaymentAndAccountButMonthlyCreditIsRejected() {
+  void monthlyOverridesKeepPaymentAndAccountAndAMonthlySeriesMayUseACard() {
     Transaction transaction = draft(TransactionType.EXPENSE);
     transaction.setRepeats(RepeatInterval.MONTHLY);
     transaction.setPaymentMethod(PaymentMethod.BOLETO);
@@ -87,6 +98,6 @@ class PaymentMethodTest {
     transaction.setAccount(null);
     transaction.setCard(new Card());
     transaction.setPaymentMethod(PaymentMethod.CREDIT_CARD);
-    assertThatThrownBy(transaction::validatePayment).isInstanceOf(IllegalArgumentException.class);
+    assertThatCode(transaction::validatePayment).doesNotThrowAnyException();
   }
 }

@@ -39,7 +39,9 @@ public class OverviewService {
       BigDecimal total,
       AccountSummary paymentAccount,
       boolean automatic,
-      boolean paid) {}
+      boolean paid,
+      BigDecimal creditLimit,
+      BigDecimal availableLimit) {}
 
   public record Unassigned(long count, BigDecimal total) {}
 
@@ -93,6 +95,7 @@ public class OverviewService {
                         .map(checkpoint -> date(checkpoint.getDate()))
                         .orElse(null)))
             .toList();
+    var limits = ledger.cardLimits(today);
     List<BillView> bills =
         snapshot.bills().stream()
             .filter(bill -> YearMonth.from(bill.dueDate()).equals(month))
@@ -119,7 +122,13 @@ public class OverviewService {
                   bill.total(),
                   account,
                   payment.map(Movement::isAutomatic).orElse(false),
-                  payment.isPresent() && bill.dueDate().isBefore(today));
+                  payment.isPresent() && bill.dueDate().isBefore(today),
+                  limits.containsKey(bill.cardId())
+                      ? limits.get(bill.cardId()).creditLimit()
+                      : null,
+                  limits.containsKey(bill.cardId())
+                      ? limits.get(bill.cardId()).availableLimit()
+                      : null);
             })
             .toList();
     var unassigned =

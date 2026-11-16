@@ -24,6 +24,9 @@ class CardBillIntegrationTest extends IntegrationTest {
   @Autowired private StatementImportService imports;
   @Autowired private TransactionRepository repository;
   @Autowired private TransactionTemplate template;
+  @Autowired private MoneyFlowService moneyFlow;
+  @Autowired private AccountService accounts;
+  @Autowired private java.time.Clock clock;
   private Card card;
   private Category category;
 
@@ -32,6 +35,42 @@ class CardBillIntegrationTest extends IntegrationTest {
     signIn(registerUser());
     card = cards.save(null, "Visa", 25, 5);
     category = categories.findByTransactionType(TransactionType.EXPENSE).getFirst();
+  }
+
+  @Test
+  void limitsIncludeFutureInstallmentsAndReleaseOnlyThePaidBill() {
+    card = cards.save(card.getId(), "Visa", 25, 5, Bank.OTHER, null, null, new BigDecimal("1000"));
+    LocalDate today = LocalDate.now(clock);
+    LocalDate purchaseDate = today.minusMonths(2).withDayOfMonth(1);
+    Transaction single = draft(null);
+    single.setDate(purchaseDate);
+    single.setTotalValue(new BigDecimal("100"));
+    single.setCard(card);
+    single.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+    transactions.save(single, category.getId());
+    Transaction installments = draft(6);
+    installments.setDate(purchaseDate);
+    installments.setTotalValue(new BigDecimal("600"));
+    installments.setCard(card);
+    installments.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+    transactions.save(installments, category.getId());
+    var before = moneyFlow.cardLimits(today).get(card.getId());
+    assertThat(before.usedLimit()).isEqualByComparingTo("700");
+    assertThat(before.availableLimit()).isEqualByComparingTo("300");
+    var account = accounts.save(null, "Bank", Bank.OTHER);
+    moneyFlow.save(
+        null,
+        Movement.builder()
+            .kind(MovementKind.CARD_BILL_PAYMENT)
+            .date(card.billDueDate(purchaseDate))
+            .billDueDate(card.billDueDate(purchaseDate))
+            .cardId(card.getId())
+            .fromAccountId(account.getId())
+            .amount(new BigDecimal("200"))
+            .build());
+    var after = moneyFlow.cardLimits(today).get(card.getId());
+    assertThat(after.usedLimit()).isEqualByComparingTo("500");
+    assertThat(after.availableLimit()).isEqualByComparingTo("500");
   }
 
   @Test
@@ -59,11 +98,43 @@ class CardBillIntegrationTest extends IntegrationTest {
   }
 
   @Test
-  void rejectsMonthlyCardAndAnotherOwnersCard() {
+  void aMonthlyCardChargeLandsInEachMonthsBill() {
+    Transaction insurance = draft(null);
+    insurance.setDate(LocalDate.of(2026, 1, 5));
+    insurance.setTotalValue(new BigDecimal("344.08"));
+    insurance.setCard(card);
+    insurance.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+    insurance.setRepeats(RepeatInterval.MONTHLY);
+    Transaction saved = transactions.save(insurance, category.getId());
+    assertThat(saved.getBillDueDate()).isNull();
+    assertThat(list(2026, 1).getTotalElements()).isEqualTo(1);
+    assertThat(list(2026, 3).getTotalElements()).isEqualTo(1);
+    assertThat(moneyFlow.snapshot(LocalDate.of(2026, 3, 31)).bills())
+        .filteredOn(bill -> card.getId().equals(bill.cardId()))
+        .extracting(MoneyFlow.Bill::dueDate, bill -> bill.total().toPlainString())
+        .containsExactly(
+            tuple(LocalDate.of(2026, 1, 5), "344.08"),
+            tuple(LocalDate.of(2026, 2, 5), "344.08"),
+            tuple(LocalDate.of(2026, 3, 5), "344.08"));
+    card = cards.save(card.getId(), "Visa", 25, 5, Bank.OTHER, null, null, new BigDecimal("1000"));
+    var limit = moneyFlow.cardLimits(LocalDate.of(2026, 3, 10)).get(card.getId());
+    assertThat(limit.usedLimit())
+        .as("unpaid January to March bills plus the next open one, never the whole open series")
+        .isEqualByComparingTo("1376.32");
+  }
+
+  @Test
+  void refusesASnapshotTooFarAheadInsteadOfExpandingSeriesForever() {
+    assertThatThrownBy(() -> moneyFlow.snapshot(LocalDate.now(clock).plusYears(50)))
+        .isInstanceOf(ApplicationException.class);
+  }
+
+  @Test
+  void rejectsWeeklyCardAndAnotherOwnersCard() {
     Transaction draft = draft(null);
     draft.setCard(card);
     draft.setPaymentMethod(PaymentMethod.CREDIT_CARD);
-    draft.setRepeats(RepeatInterval.MONTHLY);
+    draft.setRepeats(RepeatInterval.WEEKLY);
     assertThatThrownBy(() -> transactions.save(draft, category.getId()))
         .isInstanceOf(ApplicationException.class);
     signIn(registerUser());

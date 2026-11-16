@@ -2,6 +2,7 @@ package com.budgetmanager.bm.ledger.domain;
 
 import com.budgetmanager.bm.identity.domain.User;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -39,6 +40,9 @@ public class Card {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "funding_account_id")
   private Account fundingAccount;
+
+  @Column(precision = 19, scale = 2)
+  private BigDecimal creditLimit;
 
   private int closingDay;
   private int dueDay;

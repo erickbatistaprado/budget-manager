@@ -58,10 +58,14 @@ public class Transaction {
       throw new IllegalArgumentException(
           "Credit card payment requires a card; a card requires credit card payment");
     }
+    if (paymentMethod == PaymentMethod.CREDIT_CARD && account != null) {
+      throw new IllegalArgumentException("Credit card payment cannot have an account");
+    }
     if (paymentMethod == PaymentMethod.CREDIT_CARD
-        && (account != null || repeats == RepeatInterval.MONTHLY)) {
-      throw new IllegalArgumentException(
-          "Credit card payment cannot have an account or repeat monthly");
+        && repeats != null
+        && repeats != RepeatInterval.NONE
+        && repeats != RepeatInterval.MONTHLY) {
+      throw new IllegalArgumentException("Credit card charges can only repeat monthly");
     }
     boolean income = category != null && category.getTransactionType() == TransactionType.INCOME;
     if (income

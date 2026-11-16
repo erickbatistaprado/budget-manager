@@ -7,6 +7,7 @@ import com.budgetmanager.bm.ledger.domain.Card;
 import com.budgetmanager.bm.ledger.infrastructure.persistence.CardRepository;
 import com.budgetmanager.bm.shared.application.ApplicationError;
 import com.budgetmanager.bm.shared.application.ApplicationException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,27 @@ public class CardService {
       Bank bank,
       UUID paymentAccountId,
       UUID fundingAccountId) {
+    return save(id, name, closingDay, dueDay, bank, paymentAccountId, fundingAccountId, null);
+  }
+
+  @Transactional
+  public Card save(
+      UUID id,
+      String name,
+      int closingDay,
+      int dueDay,
+      Bank bank,
+      UUID paymentAccountId,
+      UUID fundingAccountId,
+      BigDecimal creditLimit) {
     User user = userService.requireCurrentUser();
+    if (creditLimit != null
+        && (creditLimit.signum() <= 0
+            || creditLimit.scale() > 2
+            || creditLimit.precision() - creditLimit.scale() > 17)) {
+      throw new ApplicationException(
+          ApplicationError.BAD_REQUEST, "Credit limit must be positive with at most two decimals");
+    }
     if (fundingAccountId != null
         && (paymentAccountId == null || fundingAccountId.equals(paymentAccountId))) {
       throw new ApplicationException(
@@ -83,6 +104,7 @@ public class CardService {
         paymentAccountId == null ? null : accounts.requireOwned(paymentAccountId, user));
     card.setFundingAccount(
         fundingAccountId == null ? null : accounts.requireOwned(fundingAccountId, user));
+    card.setCreditLimit(creditLimit);
     card.setBank(bank);
     card.setName(name.trim());
     card.setClosingDay(closingDay);
