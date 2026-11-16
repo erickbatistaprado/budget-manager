@@ -117,7 +117,9 @@ public class MoneyFlowService {
             .anyMatch(existing ->
                 !existing.getId().equals(id)
                     && draft.getCardId().equals(existing.getCardId())
-                    && draft.getBillDueDate().equals(existing.getBillDueDate())
+                    && existing.getBillDueDate() != null
+                    && YearMonth.from(draft.getBillDueDate())
+                        .equals(YearMonth.from(existing.getBillDueDate()))
                     && draft.getKind() == existing.getKind())) {
       throw new ApplicationException(
           ApplicationError.BAD_REQUEST, "A movement already records this bill");

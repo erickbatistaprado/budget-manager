@@ -24,8 +24,11 @@ Monthly values use `Transaction.amountIn`; dates use `Transaction.dateIn`, inclu
 skips, overrides and clamping. Financing installments retain their explicit amounts.
 Balances, bill totals and overview use this same ledger projection.
 
-A bill total is the card's expense occurrences minus its income occurrences on the
-bill date, including installments. Income validation and the database trigger now
+A bill is one per card and month: the card's expense occurrences minus its income
+occurrences in that month, including installments. Installments keep the due day the card
+had when they were bought, so after a bank moves the due day a month can hold two dates;
+the bill takes the date that carries most of its amount, and a recorded payment for any
+day of that month replaces the automatic one. Income validation and the database trigger now
 accept card credits, fixing the previous rejection of imported card refunds.
 
 Positive bills on or after the first transaction derive a payment on their due date

@@ -107,6 +107,44 @@ class MoneyFlowTest {
   }
 
   @Test
+  void aMonthWithTwoDueDatesIsOneBillOnTheDateCarryingMostOfIt() {
+    Card card = card();
+    LocalDate oldDueDay = LocalDate.of(2026, 7, 8);
+    LocalDate newDueDay = LocalDate.of(2026, 7, 5);
+    List<TransactionOccurrence> entries =
+        List.of(
+            occurrence(card, oldDueDay, "30"),
+            occurrence(card, newDueDay, "500"),
+            occurrence(card, newDueDay, "70"),
+            occurrence(card, LocalDate.of(2026, 8, 5), "40"));
+    assertThat(MoneyFlow.bills(entries, List.of(card)))
+        .extracting(MoneyFlow.Bill::dueDate, bill -> bill.total().toPlainString())
+        .containsExactly(tuple(newDueDay, "600"), tuple(LocalDate.of(2026, 8, 5), "40"));
+  }
+
+  @Test
+  void aPaymentRecordedForAnyDayOfTheBillMonthReplacesTheAutomaticOne() {
+    Card card = card();
+    var bill = new MoneyFlow.Bill(card, LocalDate.of(2026, 7, 5), new BigDecimal("100"));
+    Movement payment = movement(MovementKind.CARD_BILL_PAYMENT);
+    payment.setCardId(card.getId());
+    payment.setBillDueDate(LocalDate.of(2026, 7, 8));
+    assertThat(MoneyFlow.sameBill(payment, bill)).isTrue();
+    payment.setBillDueDate(LocalDate.of(2026, 8, 5));
+    assertThat(MoneyFlow.sameBill(payment, bill)).isFalse();
+  }
+
+  private static TransactionOccurrence occurrence(Card card, LocalDate date, String amount) {
+    return new TransactionOccurrence(
+        date,
+        new BigDecimal(amount),
+        TransactionType.EXPENSE,
+        null,
+        card.getId(),
+        PaymentMethod.CREDIT_CARD);
+  }
+
+  @Test
   void recordedPaymentAndExplicitFundingReplaceOnlyTheirOwnAutomaticMovement() {
     Card card = card();
     var bill = new MoneyFlow.Bill(card, JAN, new BigDecimal("100"));

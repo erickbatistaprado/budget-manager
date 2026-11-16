@@ -2,6 +2,7 @@ package com.budgetmanager.bm.ledger.domain;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.*;
 
 public final class MoneyFlow {
@@ -25,13 +26,19 @@ public final class MoneyFlow {
     }
   }
 
+  /**
+   * One bill per card and month. Installments keep the due day the card had when they were bought,
+   * so a month can carry two due dates after the bank moves the due day; the bill takes the date
+   * that carries most of its amount.
+   */
   public static List<Bill> bills(List<TransactionOccurrence> entries, List<Card> cards) {
-    Map<UUID, Map<LocalDate, BigDecimal>> totals = new HashMap<>();
+    Map<UUID, Map<YearMonth, Map<LocalDate, BigDecimal>>> totals = new HashMap<>();
     entries.stream()
         .filter(entry -> entry.cardId() != null)
         .forEach(entry ->
             totals
                 .computeIfAbsent(entry.cardId(), ignored -> new TreeMap<>())
+                .computeIfAbsent(YearMonth.from(entry.date()), ignored -> new TreeMap<>())
                 .merge(
                     entry.date(),
                     entry.type() == TransactionType.EXPENSE
@@ -42,8 +49,22 @@ public final class MoneyFlow {
     cards.forEach(card ->
         totals
             .getOrDefault(card.getId(), Map.of())
-            .forEach((date, total) -> bills.add(new Bill(card, date, total))));
+            .values()
+            .forEach(dates -> bills.add(new Bill(card, mainDueDate(dates), sum(dates)))));
     return bills;
+  }
+
+  private static LocalDate mainDueDate(Map<LocalDate, BigDecimal> dates) {
+    return dates.entrySet().stream()
+        .max(
+            Comparator.comparing((Map.Entry<LocalDate, BigDecimal> date) -> date.getValue().abs())
+                .thenComparing(Map.Entry::getKey))
+        .orElseThrow()
+        .getKey();
+  }
+
+  private static BigDecimal sum(Map<LocalDate, BigDecimal> dates) {
+    return dates.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
   public static List<Movement> movements(
@@ -80,7 +101,8 @@ public final class MoneyFlow {
 
   public static boolean sameBill(Movement movement, Bill bill) {
     return bill.cardId().equals(movement.getCardId())
-        && bill.dueDate().equals(movement.getBillDueDate());
+        && movement.getBillDueDate() != null
+        && YearMonth.from(bill.dueDate()).equals(YearMonth.from(movement.getBillDueDate()));
   }
 
   private static Movement derived(Bill bill, MovementKind kind, UUID from, UUID to) {
