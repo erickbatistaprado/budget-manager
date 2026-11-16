@@ -1,3 +1,4 @@
+import SavingActions from '@/components/MoneyFlow/SavingActions';
 import { useState, type JSX } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { enUS, ptBR } from 'date-fns/locale';
@@ -37,7 +38,7 @@ export default function SavingEntry({
     }
   }
   return (
-    <li className="min-w-0 rounded-xl border border-[var(--ctp-surface1)] px-3 py-2 sm:flex sm:min-h-[72px] sm:items-center sm:gap-3">
+    <li className="min-w-0 rounded-xl border border-[var(--ctp-surface1)] px-3 py-2 sm:flex sm:min-h-[72px] sm:flex-wrap sm:items-center sm:gap-3">
       <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold break-words">{saving.name}</h3>
@@ -63,7 +64,16 @@ export default function SavingEntry({
           </p>
         </div>
         <div className="text-right break-all">
-          <strong>{formatBRL(saving.amount, language)}</strong>
+          <strong>
+            {t.moneyFlow.current}: {formatBRL(saving.amount, language)}
+          </strong>
+          <p>
+            {t.moneyFlow.invested}:{' '}
+            {formatBRL(saving.invested ?? saving.amount, language)}
+          </p>
+          <p>
+            {t.moneyFlow.gain}: {formatBRL(saving.gain ?? 0, language)}
+          </p>
           <p className="text-xs text-[var(--ctp-subtext1)]">
             {formatPercent(savingsShare(saving.amount, total), language)}
           </p>
@@ -110,6 +120,7 @@ export default function SavingEntry({
           </>
         )}
       </div>
+      <SavingActions savingId={saving.id} />
     </li>
   );
 }

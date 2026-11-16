@@ -297,7 +297,7 @@ it('rejects passwords exceeding BCrypt’s byte limit even when every character 
   fireEvent.change(screen.getByLabelText('Confirm new password'), {
     target: { value: longPassword },
   });
-  expect(screen.getByText('○ At most 72 UTF-8 bytes')).toBeInTheDocument();
+  expect(screen.getByText('○ At most 72 characters (fewer with accents or emoji)')).toBeInTheDocument();
   expect(
     within(screen.getByRole('region', { name: 'Security' })).getByRole(
       'button',

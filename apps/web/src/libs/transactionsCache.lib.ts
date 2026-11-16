@@ -1,3 +1,4 @@
+import { mutate } from 'swr';
 type Refresh = () => Promise<unknown>;
 
 const lists = new Set<Refresh>();
@@ -16,6 +17,13 @@ export function registerTransactionsList(refresh: Refresh): () => void {
 
 /** Reloads every list of transactions on screen. */
 export async function refreshTransactions(): Promise<void> {
+  await mutate(
+    (key: unknown): boolean =>
+      typeof key === 'string' &&
+      ['/accounts', '/overview'].some((prefix): boolean =>
+        key.startsWith(prefix)
+      )
+  );
   await Promise.all(
     [...lists].map((refresh: Refresh): Promise<unknown> => refresh())
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import MovementForm from '@/components/MoneyFlow/MovementForm';
 import { DatePickerDialog, Input, SelectWithTooltip } from '@/components';
 import { RepeatInterval, TransactionType } from '@/enums';
 import { useCategories } from '@/hooks';
@@ -67,6 +68,7 @@ export default function NewTransaction({
   onClose,
 }: Readonly<NewTransactionProps>): JSX.Element {
   const { t, language } = useI18n();
+  const [movement, setMovement] = useState(false);
   const { data: cards } = useCards();
   const { data: accounts } = useAccounts();
   const monthly = transaction?.repeats === RepeatInterval.MONTHLY;
@@ -331,6 +333,13 @@ export default function NewTransaction({
     );
   }
 
+  if (movement)
+    return (
+      <div className="w-full p-5">
+        <MovementForm onClose={onClose} variant="drawer" />
+      </div>
+    );
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[var(--ctp-surface0)]/55 p-5 text-[var(--ctp-text)] backdrop-blur-xs">
       <div className="flex items-center justify-center">
@@ -370,11 +379,17 @@ export default function NewTransaction({
           tooltip={t.transactions.typeTooltip}
           icon={<GrTransaction className="text-[var(--ctp-green)]" size={25} />}
           value={transactionType}
-          onChange={handleTransactionTypeChange}
+          onChange={(event): void => {
+            if (event.target.value === 'MOVEMENT') setMovement(true);
+            else handleTransactionTypeChange(event);
+          }}
           options={[
             { label: t.transactions.selectType, value: '' },
             { label: t.common.expense, value: 'EXPENSE' },
             { label: t.common.income, value: 'INCOME' },
+            ...(!transaction
+              ? [{ label: t.moneyFlow.title, value: 'MOVEMENT' }]
+              : []),
           ]}
         />
         <SelectWithTooltip

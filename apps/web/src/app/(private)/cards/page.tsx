@@ -1,5 +1,7 @@
 'use client';
 
+import { refreshMoneyFlow } from '@/libs/moneyFlowCache.lib';
+import useAccounts from '@/hooks/useAccounts.hook';
 import useCards from '@/hooks/useCards.hook';
 import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import { useI18n } from '@/i18n/useI18n';
@@ -16,6 +18,9 @@ const button = 'rounded bg-[var(--ctp-surface1)] px-3 py-2 disabled:opacity-50';
 export default function CardsPage(): JSX.Element {
   const { t } = useI18n();
   const { data: cards, error, mutate } = useCards();
+  const { data: accounts } = useAccounts();
+  const [paymentAccountId, setPaymentAccountId] = useState('');
+  const [fundingAccountId, setFundingAccountId] = useState('');
   const [editing, setEditing] = useState<string>();
   const [name, setName] = useState('');
   const [bank, setBank] = useState(Bank.OTHER);
@@ -26,6 +31,8 @@ export default function CardsPage(): JSX.Element {
   const [busy, setBusy] = useState(false);
 
   function reset(): void {
+    setPaymentAccountId('');
+    setFundingAccountId('');
     setEditing(undefined);
     setName('');
     setBank(Bank.OTHER);
@@ -55,12 +62,15 @@ export default function CardsPage(): JSX.Element {
         bank,
         closingDay: closing,
         dueDay: due,
+        paymentAccountId: paymentAccountId || null,
+        fundingAccountId: fundingAccountId || null,
       });
       if (editing) {
         await putFetcher<Card>(`/cards/${editing}`, { body });
       } else {
         await postFetcher<Card>('/cards', { body });
       }
+      await refreshMoneyFlow();
       await mutate();
       reset();
     } catch {
@@ -76,6 +86,7 @@ export default function CardsPage(): JSX.Element {
     try {
       await deleteFetcher(`/cards/${id}`);
       await refreshTransactions();
+      await refreshMoneyFlow();
       await mutate();
       setDeleting(undefined);
       if (editing === id) {
@@ -129,6 +140,44 @@ export default function CardsPage(): JSX.Element {
           />
         </label>
         <BankSelect bank={bank} onChange={setBank} />
+        <label className="flex flex-col gap-1">
+          {t.moneyFlow.paymentAccount}
+          <select
+            className={field}
+            value={paymentAccountId}
+            onChange={(event): void => {
+              setPaymentAccountId(event.currentTarget.value);
+              setFundingAccountId('');
+            }}
+          >
+            <option value="">{t.moneyFlow.none}</option>
+            {accounts?.map((account): JSX.Element => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          {t.moneyFlow.fundingAccount}
+          <select
+            className={field}
+            disabled={!paymentAccountId}
+            value={fundingAccountId}
+            onChange={(event): void =>
+              setFundingAccountId(event.currentTarget.value)
+            }
+          >
+            <option value="">{t.moneyFlow.none}</option>
+            {accounts
+              ?.filter((account): boolean => account.id !== paymentAccountId)
+              .map((account): JSX.Element => (
+                <option key={account.id} value={account.id}>
+                  {account.name}
+                </option>
+              ))}
+          </select>
+        </label>
         <button className={button} disabled={busy} type="submit">
           {editing ? t.common.save : t.cards.add}
         </button>
@@ -157,11 +206,22 @@ export default function CardsPage(): JSX.Element {
               <p className="text-sm">
                 {t.cards.schedule(card.closingDay, card.dueDay)}
               </p>
+              <p className="text-sm">
+                {t.moneyFlow.paymentAccount}:{' '}
+                {card.paymentAccount?.name ?? t.moneyFlow.none}
+              </p>
+              {card.fundingAccount && (
+                <p className="text-sm">
+                  {t.moneyFlow.fundingAccount}: {card.fundingAccount.name}
+                </p>
+              )}
             </div>
             <button
               className={button}
               disabled={busy}
               onClick={(): void => {
+                setPaymentAccountId(card.paymentAccount?.id ?? '');
+                setFundingAccountId(card.fundingAccount?.id ?? '');
                 setEditing(card.id);
                 setName(card.name);
                 setBank(card.bank);

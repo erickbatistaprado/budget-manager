@@ -5,6 +5,7 @@ import {
   EmptyState,
   RankedList,
 } from '@/components/Analytics/AnalyticsPanels';
+import { refreshMoneyFlow } from '@/libs/moneyFlowCache.lib';
 import SavingEntry from '@/components/Savings/SavingEntry';
 import { type InvestmentType, SavingLocation, TransactionType } from '@/enums';
 import { useSavings, useTransactions } from '@/hooks';
@@ -159,6 +160,7 @@ export default function SavingsPage(): JSX.Element {
         await savingService.createSaving(payload);
       }
       reset();
+      await refreshMoneyFlow();
       await request.mutate();
     } catch {
       setError(messages.saveError);
@@ -172,6 +174,7 @@ export default function SavingsPage(): JSX.Element {
       if (editing?.id === id) {
         reset();
       }
+      await refreshMoneyFlow();
       await request.mutate();
     } catch {
       setError(messages.deleteError);

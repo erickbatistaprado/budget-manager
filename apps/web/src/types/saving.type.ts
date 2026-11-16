@@ -6,5 +6,7 @@ export interface Saving {
   id: string;
   name: string;
   amount: number;
+  invested?: number;
+  gain?: number;
   location: SavingLocation;
 }

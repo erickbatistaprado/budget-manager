@@ -1,5 +1,8 @@
 'use client';
 
+import { refreshMoneyFlow } from '@/libs/moneyFlowCache.lib';
+import BalanceAdjust from '@/components/MoneyFlow/BalanceAdjust';
+import { formatBRL } from '@/utils/analytics.util';
 import useAccounts from '@/hooks/useAccounts.hook';
 import { refreshTransactions } from '@/libs/transactionsCache.lib';
 import { useI18n } from '@/i18n/useI18n';
@@ -13,7 +16,8 @@ const field =
 const button = 'rounded bg-[var(--ctp-surface1)] px-3 py-2 disabled:opacity-50';
 
 export default function AccountsSection(): JSX.Element {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const [adjusting, setAdjusting] = useState<string>();
   const { data: accounts, error, mutate } = useAccounts();
   const [editing, setEditing] = useState<string>();
   const [name, setName] = useState('');
@@ -47,6 +51,7 @@ export default function AccountsSection(): JSX.Element {
       } else {
         await postFetcher<Account>('/accounts', { body });
       }
+      await refreshMoneyFlow();
       await mutate();
       reset();
     } catch {
@@ -62,6 +67,7 @@ export default function AccountsSection(): JSX.Element {
     try {
       await deleteFetcher(`/accounts/${id}`);
       await refreshTransactions();
+      await refreshMoneyFlow();
       await mutate();
       setDeleting(undefined);
       if (editing === id) {
@@ -117,6 +123,10 @@ export default function AccountsSection(): JSX.Element {
           >
             <div className="flex-1">
               <strong>{account.name}</strong>
+              <p>
+                {t.moneyFlow.balance}:{' '}
+                {formatBRL(account.balance ?? 0, language)}
+              </p>
               <p className="text-sm">
                 <BankBadge bank={account.bank} />
               </p>
@@ -139,6 +149,18 @@ export default function AccountsSection(): JSX.Element {
             >
               {t.common.delete}
             </button>
+            <button
+              className={button}
+              onClick={(): void => setAdjusting(account.id)}
+            >
+              {t.moneyFlow.adjust}
+            </button>
+            {adjusting === account.id && (
+              <BalanceAdjust
+                accountId={account.id}
+                onClose={(): void => setAdjusting(undefined)}
+              />
+            )}
             {deleting === account.id && (
               <div
                 role="alertdialog"
