@@ -268,6 +268,12 @@ export default function CardsPage(): JSX.Element {
                   {t.moneyFlow.fundingAccount}: {card.fundingAccount.name}
                 </p>
               )}
+              {card.paymentAccount && card.billPaymentMethod && (
+                <p className="text-sm">
+                  {t.cards.billPaymentMethod}:{' '}
+                  {t.payments.methods[card.billPaymentMethod]}
+                </p>
+              )}
             </div>
             <Button
               variant="secondary"
