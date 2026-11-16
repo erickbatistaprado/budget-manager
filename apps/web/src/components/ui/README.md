@@ -35,6 +35,7 @@ Pages:
 - `app/(private)/financings/page.tsx`
 - `app/(private)/financings/[id]/page.tsx`
 - `app/(private)/financings/new/page.tsx`
+- `app/(private)/goals/page.tsx`
 - `app/(private)/import/page.tsx`
 - `app/(private)/savings/page.tsx`
 - `app/(public)/auth/page.tsx`
@@ -47,6 +48,7 @@ Components (paths relative to `src/components`):
 - `DatePickerCustomButton/DatePickerCustomButton.component.tsx`
 - `FinancialMovements/FinancialMovements.component.tsx`
 - `Financing/ExtraPaymentDialog.tsx`
+- `Goals/AllocationForm.tsx`, `Goals/GoalForm.tsx`
 - `Header/Header.component.tsx`, `HeaderCell/HeaderCell.component.tsx`
 - `Home/Drawer.tsx`, `Home/EntryList.tsx`, `Home/Evolution.tsx`,
   `Home/MonthSummary.tsx`, `Home/MovementRow.tsx`

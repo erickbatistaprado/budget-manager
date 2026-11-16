@@ -12,6 +12,7 @@ export default function MonthSummary({
   incomes,
   month,
   salaryDay,
+  mainAccountId,
   onInvest,
   outflows = {},
   ready = true,
@@ -22,6 +23,7 @@ export default function MonthSummary({
   incomes: Entry[];
   month: Date;
   salaryDay?: number | null;
+  mainAccountId?: string | null;
   onInvest: (draft: Partial<MovementDraft>) => void;
 }): JSX.Element {
   const { t, language } = useI18n();
@@ -161,7 +163,15 @@ export default function MonthSummary({
             variant="secondary"
             disabled={!ready}
             onClick={(): void =>
-              onInvest(investmentDraft(overview.kept, incomes, month))
+              onInvest(
+                investmentDraft(
+                  overview.kept,
+                  incomes,
+                  month,
+                  new Date(),
+                  mainAccountId
+                )
+              )
             }
           >
             {labels.invest}

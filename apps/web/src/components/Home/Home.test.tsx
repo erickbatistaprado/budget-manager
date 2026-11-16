@@ -269,6 +269,15 @@ it('uses the account with the greatest complete monthly income', (): void => {
       new Date(2026, 2, 1)
     ).fromAccountId
   ).toBe('primary');
+  expect(
+    investmentDraft(
+      100,
+      incomeEntries,
+      new Date(2026, 1, 1),
+      new Date(2026, 2, 1),
+      'main-account'
+    ).fromAccountId
+  ).toBe('main-account');
 });
 
 it.each(['en', 'pt'] as const)(

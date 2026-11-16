@@ -12,6 +12,7 @@ import {
   formatFieldDate,
 } from '@/components/ui';
 import { useState, type FormEvent, type JSX } from 'react';
+import useCurrentUser from '@/hooks/useCurrentUser.hook';
 import useAccounts from '@/hooks/useAccounts.hook';
 import useCards from '@/hooks/useCards.hook';
 import useSavings from '@/hooks/useSavings.hook';
@@ -73,6 +74,7 @@ export default function MovementForm({
     initialDraft?.date ? parseApiDate(initialDraft.date) : new Date()
   );
   const labels = t.moneyFlow;
+  const { data: user } = useCurrentUser();
   const { data: accounts } = useAccounts();
   const { data: cards } = useCards();
   const { data: savings } = useSavings();
@@ -81,7 +83,9 @@ export default function MovementForm({
     (initialDraft?.date ?? getApiDate(new Date())).replaceAll('/', '-')
   );
   const [amount, setAmount] = useState(initialDraft?.amount?.toString() ?? '');
-  const [from, setFrom] = useState(initialDraft?.fromAccountId ?? '');
+  const [from, setFrom] = useState(
+    initialDraft?.fromAccountId ?? user?.mainAccountId ?? ''
+  );
   const [to, setTo] = useState(initialDraft?.toAccountId ?? '');
   const [card, setCard] = useState(initialDraft?.cardId ?? '');
   const [bill, setBill] = useState(initialDraft?.billDueDate ?? '');

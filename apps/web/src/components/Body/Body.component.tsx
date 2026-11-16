@@ -152,6 +152,7 @@ export default function Body(): JSX.Element {
             incomes={incomeEntries}
             month={date}
             salaryDay={user?.salaryDay}
+            mainAccountId={user?.mainAccountId}
             onInvest={openMovement}
             outflows={accountOutflows(entries)}
             ready={!loading}

@@ -88,6 +88,7 @@ it('uses left aligned navigation, distinct icons, and only the language menu pre
     'Home',
     'Analytics',
     'Savings',
+    'Goals',
     'Financing',
     'Cards and accounts',
     'Import',

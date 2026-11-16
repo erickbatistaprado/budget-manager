@@ -23,6 +23,15 @@ const mockUser = {
   roles: [],
   salaryDay: null,
 };
+jest.mock('@/hooks/useAccounts.hook', (): object => ({
+  __esModule: true,
+  default: (): object => ({
+    data: [
+      { id: 'checking', name: 'Checking' },
+      { id: 'savings', name: 'Savings' },
+    ],
+  }),
+}));
 jest.mock('@/hooks', (): object => ({
   useCurrentUser: (): object => ({ data: mockUser, mutate: mockMutate }),
   useProfileImage: (): object => ({ data: mockPhoto, mutate: mockMutate }),
@@ -169,7 +178,7 @@ it('announces an incorrect current password without clearing the form', async ()
   expect(screen.getByLabelText('New password')).toHaveValue('N3w!Password');
 });
 
-it('validates salary day and saves it independently', async (): Promise<void> => {
+it('validates salary day and saves main account preferences', async (): Promise<void> => {
   renderWithI18n(<ProfileForm />);
   const section = screen.getByRole('region', { name: 'Preferences' });
   const save = within(section).getByRole('button', { name: 'Save' });
@@ -181,12 +190,15 @@ it('validates salary day and saves it independently', async (): Promise<void> =>
   fireEvent.change(screen.getByLabelText('Salary day'), {
     target: { value: '15' },
   });
+  fireEvent.change(screen.getByLabelText('Main account'), {
+    target: { value: 'checking' },
+  });
   fireEvent.click(save);
   await waitFor((): void =>
     expect(within(section).getByText('Saved')).toBeInTheDocument()
   );
   expect(putFetcher).toHaveBeenCalledWith('/users/current/preferences', {
-    body: JSON.stringify({ salaryDay: 15 }),
+    body: JSON.stringify({ salaryDay: 15, mainAccountId: 'checking' }),
   });
 });
 

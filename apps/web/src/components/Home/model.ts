@@ -155,7 +155,8 @@ export function investmentDraft(
   kept: number,
   incomes: Entry[],
   month: Date,
-  today = new Date()
+  today = new Date(),
+  mainAccountId?: string | null
 ): Partial<MovementDraft> {
   const byAccount = new Map<string, number>();
   incomes.forEach((entry): void => {
@@ -171,7 +172,7 @@ export function investmentDraft(
   return {
     kind: 'INVESTMENT',
     amount: kept,
-    fromAccountId: main,
+    fromAccountId: mainAccountId ?? main,
     date: getApiDate(end < today ? end : today),
   };
 }

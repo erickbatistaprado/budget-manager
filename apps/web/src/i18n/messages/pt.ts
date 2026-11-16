@@ -2,6 +2,58 @@ import { SavingLocation } from '@/enums';
 import type { Messages } from './en';
 
 export const pt: Messages = {
+  goals: {
+    title: 'Metas',
+    new: 'Nova meta',
+    empty:
+      'Metas transformam o que você precisa ou quer comprar em um plano para guardar dinheiro, na sua ordem.',
+    name: 'Nome',
+    price: 'Preço',
+    kind: 'Tipo',
+    need: 'Preciso',
+    want: 'Quero',
+    target: 'Data desejada',
+    monthly: 'Valor por mês',
+    link: 'Link',
+    notes: 'Observações',
+    saving: 'Reserva vinculada',
+    none: 'Nenhuma',
+    pace: 'Ritmo',
+    perMonth: '/mês',
+    average: 'Média dos últimos 6 meses',
+    override: 'Ritmo mensal personalizado',
+    reset: 'Voltar à média',
+    save: 'Guardar',
+    release: 'Liberar',
+    reserved: 'Reservado',
+    saved: 'Guardado',
+    remaining: 'Falta',
+    forecast: 'Previsão',
+    capped: 'Não fica pronta em até 120 meses',
+    moveUp: 'Subir',
+    moveDown: 'Descer',
+    drag: 'Arraste para reordenar',
+    edit: 'Editar',
+    delete: 'Excluir',
+    confirm:
+      'Excluir esta meta e liberar o valor reservado? O dinheiro nas reservas continua investido.',
+    cancel: 'Cancelar',
+    submit: 'Salvar',
+    amount: 'Valor',
+    date: 'Data',
+    account: 'Conta de origem',
+    error: 'Não foi possível salvar as metas. Tente de novo.',
+    loading: 'Carregando metas…',
+    loadError: 'Não foi possível carregar as metas.',
+    releaseHelp:
+      'Libera o valor reservado. O dinheiro na reserva vinculada continua investido.',
+    warning: (target: string, extra: string | null): string =>
+      extra === null
+        ? `Não fica pronta até ${target}; suba para 1º ou ajuste a data.`
+        : `Não fica pronta até ${target}: ${extra}/mês a mais resolve; ou suba para 1º.`,
+    first: 'Em 1º lugar',
+    free: 'Saldo livre',
+  },
   dashboard: {
     loadMore: 'Carregar mais',
     noIncome: 'Não houve renda neste mês.',
@@ -416,6 +468,8 @@ export const pt: Messages = {
     },
   },
   profile: {
+    mainAccount: 'Conta principal',
+    noMainAccount: 'Automática (conta com mais receitas)',
     title: 'Perfil e preferências',
     chooseImage: 'Trocar foto',
     deleteImage: 'Remover foto',

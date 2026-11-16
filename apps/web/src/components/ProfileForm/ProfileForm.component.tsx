@@ -1,6 +1,7 @@
 'use client';
 
 import { Panel, Button, TextInput, Select, Field } from '@/components/ui';
+import useAccounts from '@/hooks/useAccounts.hook';
 import { useCurrentUser, useProfileImage } from '@/hooks';
 import { useTheme } from '@/hooks/useTheme.hook';
 import { useI18n } from '@/i18n/useI18n';
@@ -61,6 +62,8 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
     '/users/current/data-summary',
     getFetcher<OpenApi.UserDataSummary>
   );
+  const { data: accounts } = useAccounts();
+  const [mainAccountId, setMainAccountId] = useState(user.mainAccountId ?? '');
   const [name, setName] = useState(user.name ?? '');
   const [salaryDay, setSalaryDay] = useState(String(user.salaryDay ?? ''));
   const [currentPassword, setCurrentPassword] = useState('');
@@ -201,6 +204,7 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
         await putFetcher('/users/current/preferences', {
           body: JSON.stringify({
             salaryDay: salaryDay === '' ? null : Number(salaryDay),
+            mainAccountId: mainAccountId || null,
           }),
         });
         setSalaryDay(salaryDay === '' ? '' : String(Number(salaryDay)));
@@ -448,6 +452,23 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
           </Select>
         </Field>
         <form onSubmit={savePreferences} className="space-y-3">
+          <Field label={t.profile.mainAccount}>
+            <Select
+              value={mainAccountId}
+              onChange={(event): void =>
+                setMainAccountId(event.currentTarget.value)
+              }
+            >
+              <option value="">{t.profile.noMainAccount}</option>
+              {(Array.isArray(accounts) ? accounts : []).map(
+                (account): JSX.Element => (
+                  <option key={account.id} value={account.id}>
+                    {account.name}
+                  </option>
+                )
+              )}
+            </Select>
+          </Field>
           <Field label={t.profile.salaryDay}>
             <TextInput
               type="number"
@@ -470,7 +491,8 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
             disabled={
               busy.preferences ||
               !validSalary ||
-              salaryDay === String(user.salaryDay ?? '')
+              (salaryDay === String(user.salaryDay ?? '') &&
+                mainAccountId === (user.mainAccountId ?? ''))
             }
           >
             {t.common.save}

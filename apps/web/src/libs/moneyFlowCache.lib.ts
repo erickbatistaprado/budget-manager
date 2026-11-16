@@ -5,8 +5,13 @@ export async function refreshMoneyFlow(): Promise<void> {
   await mutate(
     (key: unknown): boolean =>
       typeof key === 'string' &&
-      ['/accounts', '/cards', '/savings', '/movements', '/overview'].some(
-        (prefix): boolean => key.startsWith(prefix)
-      )
+      [
+        '/accounts',
+        '/cards',
+        '/savings',
+        '/movements',
+        '/overview',
+        '/goals',
+      ].some((prefix): boolean => key.startsWith(prefix))
   );
 }

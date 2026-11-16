@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { JSX } from 'react';
 import { CgProfile } from 'react-icons/cg';
 import { FaHome } from 'react-icons/fa';
-import { FiUpload } from 'react-icons/fi';
+import { FiTarget, FiUpload } from 'react-icons/fi';
 import {
   PiSignOutBold,
   PiPiggyBank,
@@ -59,6 +59,13 @@ export default function SideMenu({
         >
           <PiPiggyBank size={22} />
           {t.menu.savings}
+        </MenuButton>
+        <MenuButton
+          active={isActive('/goals')}
+          onClick={(): void => onClick('/goals')}
+        >
+          <FiTarget size={22} />
+          {t.goals.title}
         </MenuButton>
         <MenuButton
           active={isActive('/financings')}

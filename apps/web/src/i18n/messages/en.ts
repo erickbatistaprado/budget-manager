@@ -1,6 +1,57 @@
 import { SavingLocation } from '@/enums';
 
 export const en = {
+  goals: {
+    title: 'Goals',
+    new: 'New goal',
+    empty: 'Goals turn things you need or want into a ranked savings plan.',
+    name: 'Name',
+    price: 'Price',
+    kind: 'Type',
+    need: 'Need',
+    want: 'Want',
+    target: 'Target date',
+    monthly: 'Amount per month',
+    link: 'Link',
+    notes: 'Notes',
+    saving: 'Linked saving',
+    none: 'None',
+    pace: 'Pace',
+    perMonth: '/month',
+    average: 'Average of the last 6 months',
+    override: 'Custom monthly pace',
+    reset: 'Use average',
+    save: 'Set aside',
+    release: 'Release',
+    reserved: 'Reserved',
+    saved: 'Saved',
+    remaining: 'Remaining',
+    forecast: 'Expected',
+    capped: 'Not funded within 120 months',
+    moveUp: 'Move up',
+    moveDown: 'Move down',
+    drag: 'Drag to reorder',
+    edit: 'Edit',
+    delete: 'Delete',
+    confirm:
+      'Delete this goal and release its reservations? Linked savings stay invested.',
+    cancel: 'Cancel',
+    submit: 'Save',
+    amount: 'Amount',
+    date: 'Date',
+    account: 'From account',
+    error: 'Unable to save goals. Try again.',
+    loading: 'Loading goals…',
+    loadError: 'Unable to load goals.',
+    releaseHelp:
+      'Releases the reservation. Money in linked savings stays invested.',
+    warning: (target: string, extra: string | null): string =>
+      extra === null
+        ? `Not ready by ${target}; move it to 1st place or change the target.`
+        : `Not ready by ${target}: ${extra}/month more gets you there; or move it to 1st place.`,
+    first: 'In 1st place',
+    free: 'Free available',
+  },
   dashboard: {
     loadMore: 'Load more',
     noIncome: 'No income this month.',
@@ -406,6 +457,8 @@ export const en = {
     },
   },
   profile: {
+    mainAccount: 'Main account',
+    noMainAccount: 'Automatic (account with the most income)',
     title: 'Profile and preferences',
     chooseImage: 'Change photo',
     deleteImage: 'Remove photo',
