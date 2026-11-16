@@ -6,6 +6,11 @@ jest.mock('@/services', () => ({
   authenticationService: { logout: jest.fn() },
 }));
 
+let mockPhoto: Blob | undefined;
+jest.mock('@/hooks', () => ({
+  useProfileImage: () => ({ data: mockPhoto }),
+}));
+
 const mockPush = jest.fn();
 let mockPathname = '/';
 
@@ -19,6 +24,7 @@ describe('SideMenu', (): void => {
 
   beforeEach((): void => {
     mockPathname = '/';
+    mockPhoto = undefined;
     jest.clearAllMocks();
   });
 
@@ -147,4 +153,18 @@ it('uses left aligned navigation, distinct icons, and only the language menu pre
     screen.queryByRole('radio', { name: 'Light' })
   ).not.toBeInTheDocument();
   expect(screen.queryByRole('radio', { name: 'Dark' })).not.toBeInTheDocument();
+});
+
+it('shows the profile photo as the rail logo when there is one', (): void => {
+  Object.defineProperty(URL, 'createObjectURL', {
+    configurable: true,
+    value: jest.fn().mockReturnValue('blob:photo'),
+  });
+  Object.defineProperty(URL, 'revokeObjectURL', {
+    configurable: true,
+    value: jest.fn(),
+  });
+  mockPhoto = new Blob(['photo']);
+  render(<SideMenu onClose={jest.fn()} onToggleCompact={jest.fn()} />);
+  expect(screen.getByTestId('menu-photo')).toHaveAttribute('src', 'blob:photo');
 });

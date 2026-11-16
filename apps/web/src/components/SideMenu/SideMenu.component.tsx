@@ -6,7 +6,8 @@ import { useI18n } from '@/i18n/useI18n';
 import { authenticationService } from '@/services';
 import clsx from 'clsx';
 import { usePathname, useRouter } from 'next/navigation';
-import type { JSX, ReactNode } from 'react';
+import { useEffect, useMemo, type JSX, type ReactNode } from 'react';
+import { useProfileImage } from '@/hooks';
 import { AiOutlinePlus } from 'react-icons/ai';
 import { FaHome } from 'react-icons/fa';
 import { FiTarget, FiUpload } from 'react-icons/fi';
@@ -116,11 +117,7 @@ export default function SideMenu({
             onClick={onToggleCompact}
             className="group h-11 w-11 !px-0"
           >
-            <VscRobot
-              size={32}
-              aria-hidden
-              className="text-[var(--ctp-text)] group-hover:hidden group-focus-visible:hidden"
-            />
+            <MenuLogo className="group-hover:hidden group-focus-visible:hidden" />
             <LuPanelLeftOpen
               size={24}
               aria-hidden
@@ -131,11 +128,7 @@ export default function SideMenu({
         {onToggleCompact && !compact && (
           <>
             <span className="flex h-11 w-11 items-center justify-center">
-              <VscRobot
-                size={32}
-                aria-hidden
-                className="text-[var(--ctp-text)]"
-              />
+              <MenuLogo />
             </span>
             <IconButton
               variant="quiet"
@@ -199,5 +192,40 @@ export default function SideMenu({
         </div>
       </nav>
     </div>
+  );
+}
+
+/** The menu's logo: the profile photo when there is one, otherwise the app's robot. */
+function MenuLogo({
+  className,
+}: Readonly<{ className?: string }>): JSX.Element {
+  const { data: photo } = useProfileImage();
+  const url = useMemo(
+    (): string | undefined => (photo ? URL.createObjectURL(photo) : undefined),
+    [photo]
+  );
+  useEffect(
+    (): (() => void) => (): void => {
+      if (url) URL.revokeObjectURL(url);
+    },
+    [url]
+  );
+  if (!url) {
+    return (
+      <VscRobot
+        size={32}
+        aria-hidden
+        className={clsx('text-[var(--ctp-text)]', className)}
+      />
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- a local blob URL, nothing to optimize
+    <img
+      src={url}
+      alt=""
+      data-testid="menu-photo"
+      className={clsx('h-8 w-8 shrink-0 rounded-full object-cover', className)}
+    />
   );
 }
