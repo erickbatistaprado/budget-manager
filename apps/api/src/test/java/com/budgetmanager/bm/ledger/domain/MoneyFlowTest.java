@@ -25,6 +25,30 @@ class MoneyFlowTest {
   }
 
   @Test
+  void derivedPaymentsCarryCardMethodAndTransfersHaveTheirOwnMethod() {
+    Card card = card();
+    card.setBillPaymentMethod(PaymentMethod.AUTOMATIC_DEBIT);
+    var movements =
+        MoneyFlow.movements(List.of(), List.of(new MoneyFlow.Bill(card, JAN, BigDecimal.TEN)), JAN);
+    assertThat(movements)
+        .filteredOn(movement -> movement.getKind() == MovementKind.CARD_BILL_PAYMENT)
+        .extracting(Movement::getPaymentMethod)
+        .containsExactly(PaymentMethod.AUTOMATIC_DEBIT);
+    Movement transfer = movement(MovementKind.TRANSFER);
+    transfer.setFromAccountId(FROM);
+    transfer.setToAccountId(TO);
+    transfer.setPaymentMethod(PaymentMethod.AUTOMATIC_DEBIT);
+    assertThatThrownBy(transfer::validate).isInstanceOf(IllegalArgumentException.class);
+    transfer.setPaymentMethod(PaymentMethod.PIX);
+    assertThatCode(transfer::validate).doesNotThrowAnyException();
+    for (PaymentMethod method :
+        List.of(PaymentMethod.CREDIT_CARD, PaymentMethod.DEBIT_CARD, PaymentMethod.CASH)) {
+      transfer.setPaymentMethod(method);
+      assertThatThrownBy(transfer::validate).isInstanceOf(IllegalArgumentException.class);
+    }
+  }
+
+  @Test
   void movementKindsRequireExactlyTheirOwnReferences() {
     for (MovementKind kind : MovementKind.values()) {
       Movement draft = movement(kind);

@@ -14,7 +14,18 @@ public final class MoneyFlow {
       LocalDate dueDate,
       BigDecimal total,
       UUID paymentAccountId,
-      UUID fundingAccountId) {
+      UUID fundingAccountId,
+      PaymentMethod billPaymentMethod) {
+    public Bill(
+        UUID cardId,
+        String cardName,
+        LocalDate dueDate,
+        BigDecimal total,
+        UUID paymentAccountId,
+        UUID fundingAccountId) {
+      this(cardId, cardName, dueDate, total, paymentAccountId, fundingAccountId, null);
+    }
+
     public Bill(Card card, LocalDate dueDate, BigDecimal total) {
       this(
           card.getId(),
@@ -22,7 +33,8 @@ public final class MoneyFlow {
           dueDate,
           total,
           card.getPaymentAccount() == null ? null : card.getPaymentAccount().getId(),
-          card.getFundingAccount() == null ? null : card.getFundingAccount().getId());
+          card.getFundingAccount() == null ? null : card.getFundingAccount().getId(),
+          card.getBillPaymentMethod());
     }
   }
 
@@ -114,6 +126,7 @@ public final class MoneyFlow {
         .toAccountId(to)
         .cardId(bill.cardId())
         .billDueDate(bill.dueDate())
+        .paymentMethod(kind == MovementKind.CARD_BILL_PAYMENT ? bill.billPaymentMethod() : null)
         .automatic(true)
         .build();
   }

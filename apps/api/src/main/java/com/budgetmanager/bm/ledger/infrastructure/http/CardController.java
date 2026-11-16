@@ -41,7 +41,8 @@ public class CardController {
                 draft.bank(),
                 draft.paymentAccountId(),
                 draft.fundingAccountId(),
-                draft.creditLimit()));
+                draft.creditLimit(),
+                draft.billPaymentMethod()));
     return ResponseEntity.created(URI.create("/cards/" + saved.id())).body(saved);
   }
 
@@ -56,7 +57,8 @@ public class CardController {
             draft.bank(),
             draft.paymentAccountId(),
             draft.fundingAccountId(),
-            draft.creditLimit()));
+            draft.creditLimit(),
+            draft.billPaymentMethod()));
   }
 
   private CardDto response(Card card) {

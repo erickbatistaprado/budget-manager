@@ -17,6 +17,7 @@ public record MovementResponse(
     @JsonFormat(pattern = "yyyy/MM/dd") LocalDate billDueDate,
     UUID savingId,
     boolean opening,
+    PaymentMethod paymentMethod,
     String notes,
     boolean automatic) {
   public static MovementResponse from(Movement movement) {
@@ -31,6 +32,7 @@ public record MovementResponse(
         movement.getBillDueDate(),
         movement.getSavingId(),
         movement.isOpening(),
+        movement.getPaymentMethod(),
         movement.getNotes(),
         movement.isAutomatic());
   }

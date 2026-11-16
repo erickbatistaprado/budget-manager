@@ -1,5 +1,6 @@
 package com.budgetmanager.bm.ledger.application;
 
+import com.budgetmanager.bm.ledger.domain.Transaction;
 import com.budgetmanager.bm.ledger.domain.statement.StatementLine;
 import com.budgetmanager.bm.ledger.domain.statement.StatementText;
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Decides which statement lines are already saved.
@@ -52,11 +54,17 @@ final class DuplicateMatcher {
   /** Shortest description prefix trusted to name the same merchant. */
   private static final int MIN_SHARED_PREFIX = 6;
 
-  private static final BigDecimal CENT = new BigDecimal("0.01");
+  private final Map<UUID, Transaction> schedules;
 
   private record FileLine(int index, UUID categoryId) {}
 
   DuplicateMatcher(List<ExistingTransaction> existing) {
+    this(existing, List.of());
+  }
+
+  DuplicateMatcher(List<ExistingTransaction> existing, List<Transaction> purchases) {
+    schedules =
+        purchases.stream().collect(Collectors.toMap(Transaction::getId, purchase -> purchase));
     for (ExistingTransaction transaction : existing) {
       String description = StatementText.normalize(transaction.notes());
       if (transaction.installmentNumbers() == null) {
@@ -131,7 +139,11 @@ final class DuplicateMatcher {
   /** Saved purchases a line belongs to: exact matches first, then near ones. */
   private List<ExistingTransaction> savedPurchases(StatementLine line) {
     List<ExistingTransaction> found =
-        new ArrayList<>(installments.getOrDefault(purchaseKey(line), List.of()));
+        new ArrayList<>(
+            installments.getOrDefault(purchaseKey(line), List.of()).stream()
+                .filter(transaction ->
+                    isNearPurchase(transaction, line, StatementText.normalize(line.description())))
+                .toList());
     String description = StatementText.normalize(line.description());
     for (ExistingTransaction transaction : installmentPurchases) {
       if (!found.contains(transaction) && isNearPurchase(transaction, line, description)) {
@@ -141,19 +153,35 @@ final class DuplicateMatcher {
     return found;
   }
 
-  private static boolean isNearPurchase(
+  private boolean isNearPurchase(
       ExistingTransaction transaction, StatementLine line, String description) {
     int count = line.installmentTotal();
-    if (transaction.installmentNumbers() != count || !line.date().equals(transaction.date())) {
+    if (transaction.installmentNumbers() != count) {
       return false;
     }
     BigDecimal saved =
         money(transaction.totalValue()).divide(BigDecimal.valueOf(count), 2, RoundingMode.DOWN);
-    BigDecimal tolerance = CENT.multiply(BigDecimal.valueOf(count));
+    Transaction purchase = schedules.get(transaction.id());
+    if (purchase != null) {
+      saved =
+          purchase.getInstallments().stream()
+              .filter(installment ->
+                  installment.getInstallmentNumber().equals(line.installmentNumber()))
+              .map(com.budgetmanager.bm.ledger.domain.Installment::getAmount)
+              .findFirst()
+              .orElse(saved);
+    }
+    BigDecimal tolerance = BigDecimal.ONE;
     if (saved.subtract(money(line.amount())).abs().compareTo(tolerance) > 0) {
       return false;
     }
     String savedDescription = StatementText.normalize(transaction.notes());
+    if (savedDescription.equals(description)) {
+      return true;
+    }
+    if (!line.date().equals(transaction.date())) {
+      return false;
+    }
     String shorter =
         savedDescription.length() <= description.length() ? savedDescription : description;
     String longer = shorter.equals(savedDescription) ? description : savedDescription;

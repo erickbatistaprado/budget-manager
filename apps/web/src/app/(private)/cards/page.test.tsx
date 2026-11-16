@@ -2,14 +2,18 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithI18n } from '@/i18n/testing';
 import { deleteFetcher, postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import CardsPage from './page';
+import { en } from '@/i18n/messages/en';
+import { pt } from '@/i18n/messages/pt';
 
 jest.mock('@/libs/transactionsCache.lib', (): object => ({
   refreshTransactions: jest.fn(),
 }));
 
+const accountsMock = jest.fn((): object => ({ data: [], mutate: jest.fn() }));
+
 jest.mock('@/hooks/useAccounts.hook', (): object => ({
   __esModule: true,
-  default: (): object => ({ data: [], mutate: jest.fn() }),
+  default: (): object => accountsMock(),
 }));
 
 jest.mock('@/hooks/useCards.hook', (): object => ({
@@ -36,6 +40,7 @@ jest.mock('@/libs/fetchers.lib', (): object => ({
 }));
 beforeEach((): void => {
   jest.clearAllMocks();
+  accountsMock.mockReturnValue({ data: [], mutate: jest.fn() });
 });
 
 it('requires confirmation before deleting a card and supports cancelling', async (): Promise<void> => {
@@ -118,6 +123,39 @@ it.each(['en', 'pt'] as const)(
         '/cards/visa',
         expect.objectContaining({
           body: expect.stringContaining('"creditLimit":null'),
+        })
+      )
+    );
+  }
+);
+
+it.each(['en', 'pt'] as const)(
+  'shows and saves the bill method only with a payment account in %s',
+  async (language): Promise<void> => {
+    accountsMock.mockReturnValue({
+      data: [{ id: 'bank', name: 'Nubank' }],
+      mutate: jest.fn(),
+    });
+    const messages = language === 'pt' ? pt : en;
+    renderWithI18n(<CardsPage />, { language });
+    expect(
+      screen.queryByLabelText(messages.cards.billPaymentMethod)
+    ).not.toBeInTheDocument();
+    fireEvent.change(screen.getAllByLabelText(messages.common.name)[0], {
+      target: { value: 'Porto' },
+    });
+    fireEvent.change(screen.getByLabelText(messages.moneyFlow.paymentAccount), {
+      target: { value: 'bank' },
+    });
+    fireEvent.change(screen.getByLabelText(messages.cards.billPaymentMethod), {
+      target: { value: 'PIX' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: messages.cards.add }));
+    await waitFor((): void =>
+      expect(postFetcher).toHaveBeenCalledWith(
+        '/cards',
+        expect.objectContaining({
+          body: expect.stringContaining('"billPaymentMethod":"PIX"'),
         })
       )
     );

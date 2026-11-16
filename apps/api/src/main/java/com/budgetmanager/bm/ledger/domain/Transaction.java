@@ -274,6 +274,28 @@ public class Transaction {
     }
   }
 
+  /** Accept a bank's rounding without redistributing the other installments. */
+  public boolean adjustInstallmentAmount(int number, BigDecimal bankAmount) {
+    if (financingId != null
+        || installmentNumbers == null
+        || bankAmount == null
+        || bankAmount.signum() <= 0
+        || bankAmount.scale() > 2) {
+      return false;
+    }
+    Installment installment = requireInstallment(number);
+    BigDecimal difference = installment.getAmount().subtract(bankAmount).abs();
+    if (installment.isPaidEarly()
+        || difference.signum() == 0
+        || difference.compareTo(BigDecimal.ONE) > 0) {
+      return false;
+    }
+    installment.setAmount(bankAmount);
+    totalValue =
+        installments.stream().map(Installment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+    return true;
+  }
+
   /** The month an installment falls in when nothing was paid early. */
   public LocalDate scheduledDueDate(int number) {
     return (billDueDate == null ? date : billDueDate).plusMonths((long) number - 1);

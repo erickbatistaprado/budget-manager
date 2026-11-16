@@ -52,9 +52,16 @@ export function toStatementImportError(error: unknown): StatementImportError {
 }
 
 class StatementImportService {
-  async preview(file: File, password?: string): Promise<StatementPreview> {
+  async preview(
+    file: File,
+    password?: string,
+    cardId?: string,
+    billDueDate?: string
+  ): Promise<StatementPreview> {
     const body = new FormData();
     body.append('file', file);
+    if (cardId) body.append('cardId', cardId);
+    if (billDueDate) body.append('billDueDate', billDueDate);
     if (password) {
       body.append('password', password);
     }

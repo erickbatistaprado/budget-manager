@@ -33,9 +33,14 @@ day of that month replaces the automatic one. Income validation and the database
 accept card credits, fixing the previous rejection of imported card refunds.
 
 Positive bills on or after the first transaction derive a payment on their due date
-when the card has a payment account. A funding account also derives a transfer of the
+when the card has a payment account (inheriting `card.billPaymentMethod`). A funding account also derives a transfer of the
 bill total to the payment account. Automatic movements have `automatic: true` and null
-id and are never stored. Bills with zero/negative totals derive nothing.
+id and are never stored. Bills with zero/negative totals derive nothing. V18 adds
+nullable `t_card.bill_payment_method` (`PIX`, `BANK_TRANSFER`, `BOLETO`,
+`AUTOMATIC_DEBIT`, `OTHER`, cleared when `paymentAccount` is unset) and nullable
+`t_movement.payment_method` (same values for `CARD_BILL_PAYMENT`, or `PIX`,
+`BANK_TRANSFER`, `OTHER` for `TRANSFER`). Recording a bill payment pre-fills the
+method from the card, and movement rows show the method before the source account.
 
 A recorded payment replaces only the automatic payment for `(cardId, billDueDate)`.
 **The funding transfer remains automatic until a recorded TRANSFER explicitly supplies

@@ -16,6 +16,9 @@ export const movementDraftSchema = z.object({
   savingId: z.string().nullish(),
   opening: z.boolean().optional(),
   notes: z.string().nullish(),
+  paymentMethod: z
+    .enum(['PIX', 'BANK_TRANSFER', 'BOLETO', 'AUTOMATIC_DEBIT', 'OTHER'])
+    .nullish(),
 });
 export const movementSchema = movementDraftSchema.extend({
   id: z.string().nullable(),

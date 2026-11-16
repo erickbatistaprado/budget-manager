@@ -6,6 +6,7 @@ import com.budgetmanager.bm.ledger.domain.Card;
 import com.budgetmanager.bm.ledger.domain.Category;
 import com.budgetmanager.bm.ledger.domain.PaymentMethod;
 import com.budgetmanager.bm.ledger.domain.RepeatInterval;
+import com.budgetmanager.bm.ledger.domain.SubscriptionMatcher;
 import com.budgetmanager.bm.ledger.domain.Transaction;
 import com.budgetmanager.bm.ledger.domain.TransactionType;
 import com.budgetmanager.bm.ledger.domain.statement.MerchantText;
@@ -16,6 +17,7 @@ import com.budgetmanager.bm.ledger.infrastructure.persistence.TransactionReposit
 import com.budgetmanager.bm.shared.application.ApplicationError;
 import com.budgetmanager.bm.shared.application.ApplicationException;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -83,7 +85,36 @@ public class StatementImportService {
       UUID duplicateOfTransactionId,
       Integer duplicateOfLine,
       Integer samePurchaseAsLine,
-      UUID samePurchaseAsTransactionId) {
+      UUID samePurchaseAsTransactionId,
+      String subscriptionName,
+      boolean updateMonthAvailable) {
+    public PreviewLine(
+        int index,
+        StatementLine line,
+        UUID suggestedCategoryId,
+        SuggestionSource suggestionSource,
+        String suggestionBasis,
+        int suggestionCount,
+        String merchantKey,
+        UUID duplicateOfTransactionId,
+        Integer duplicateOfLine,
+        Integer samePurchaseAsLine,
+        UUID samePurchaseAsTransactionId) {
+      this(
+          index,
+          line,
+          suggestedCategoryId,
+          suggestionSource,
+          suggestionBasis,
+          suggestionCount,
+          merchantKey,
+          duplicateOfTransactionId,
+          duplicateOfLine,
+          samePurchaseAsLine,
+          samePurchaseAsTransactionId,
+          null,
+          false);
+    }
 
     public boolean duplicate() {
       return duplicateOfTransactionId != null || duplicateOfLine != null;
@@ -102,10 +133,18 @@ public class StatementImportService {
     }
   }
 
-  public record LineToImport(StatementLine line, UUID categoryId) {}
+  public record LineToImport(StatementLine line, UUID categoryId, boolean updateMonth) {
+    public LineToImport(StatementLine line, UUID categoryId) {
+      this(line, categoryId, false);
+    }
+  }
 
   public record ImportResult(
-      int imported, int skippedAsDuplicates, int movedInstallments, int billDatesSet) {}
+      int imported,
+      int skippedAsDuplicates,
+      int movedInstallments,
+      int billDatesSet,
+      int installmentAmountsAdjusted) {}
 
   @Transactional(readOnly = true)
   public Preview preview(byte[] content, String password) {
@@ -114,10 +153,20 @@ public class StatementImportService {
 
   @Transactional(readOnly = true)
   public Preview preview(byte[] content, String password, String filename) {
+    return preview(content, password, filename, null, null);
+  }
+
+  @Transactional(readOnly = true)
+  public Preview preview(
+      byte[] content, String password, String filename, UUID cardId, LocalDate billDueDate) {
     ParsedStatement statement = statementReader.read(content, password, filename);
     User user = userService.requireCurrentUser();
     List<ExistingTransaction> existing = transactionRepository.findImportCandidates(user.getId());
-    DuplicateMatcher matcher = new DuplicateMatcher(existing);
+    DuplicateMatcher matcher =
+        new DuplicateMatcher(existing, transactionRepository.findMoneyFlowData(user.getId()));
+    Card card = cardId == null ? null : cardService.requireOwned(cardId, user);
+    List<Transaction> subscriptions = transactionRepository.findCardSubscriptions(user.getId());
+    LocalDate dueDate = billDueDate == null ? statement.billDueDate() : billDueDate;
     Set<String> alreadyMoved = alreadyMoved(user);
     List<Category> categories = new ArrayList<>();
     categories.addAll(categoryService.findByTransactionType(TransactionType.EXPENSE));
@@ -131,6 +180,29 @@ public class StatementImportService {
     for (int index = 0; index < statementLines.size(); index++) {
       StatementLine line = statementLines.get(index);
       if (line.paidEarly()) {
+        continue;
+      }
+      var subscription = SubscriptionMatcher.match(subscriptions, card, dueDate, line);
+      if (subscription.isPresent()) {
+        Transaction series = subscription.get();
+        YearMonth month = SubscriptionMatcher.billMonth(card, dueDate, line);
+        lines[index] =
+            new PreviewLine(
+                index,
+                line,
+                series.getCategory().getId(),
+                SuggestionSource.DUPLICATE,
+                series.getNotes(),
+                0,
+                MerchantText.merchantKey(line.description()),
+                series.getId(),
+                null,
+                null,
+                null,
+                series.getNotes(),
+                series.amountIn(month).compareTo(line.amount()) != 0
+                    && SubscriptionMatcher.descriptionsMatch(
+                        series.getNotes(), line.description()));
         continue;
       }
       DuplicateMatcher.Match match = matcher.match(index, line, null);
@@ -187,7 +259,9 @@ public class StatementImportService {
     }
     User user = userService.requireCurrentUser();
     DuplicateMatcher matcher =
-        new DuplicateMatcher(transactionRepository.findImportCandidates(user.getId()));
+        new DuplicateMatcher(
+            transactionRepository.findImportCandidates(user.getId()),
+            transactionRepository.findMoneyFlowData(user.getId()));
     Set<String> alreadyMoved = alreadyMoved(user);
     Map<Object, UUID> purchasesCreated = new HashMap<>();
 
@@ -196,6 +270,8 @@ public class StatementImportService {
     int imported = 0;
     int skipped = 0;
     int moved = 0;
+    int adjusted = 0;
+    List<Transaction> subscriptions = transactionRepository.findCardSubscriptions(user.getId());
     for (int index = 0; index < linesToImport.size(); index++) {
       LineToImport lineToImport = linesToImport.get(index);
       StatementLine line = lineToImport.line();
@@ -203,14 +279,45 @@ public class StatementImportService {
       if (line.paidEarly()) {
         continue;
       }
+      var subscription = SubscriptionMatcher.match(subscriptions, card, billDueDate, line);
+      if (subscription.isPresent()) {
+        Transaction series = subscription.get();
+        YearMonth month = SubscriptionMatcher.billMonth(card, billDueDate, line);
+        if (lineToImport.updateMonth()) {
+          if (!SubscriptionMatcher.descriptionsMatch(series.getNotes(), line.description())) {
+            throw new ApplicationException(
+                ApplicationError.BAD_REQUEST,
+                "Only a matching subscription description can update the month");
+          }
+          series.changeMonth(
+              month,
+              line.amount(),
+              series.dateIn(month),
+              series.getMonths().stream()
+                  .filter(change -> change.getMonth().equals(month.atDay(1)))
+                  .map(change -> Optional.ofNullable(change.getNotes()).orElse(""))
+                  .findFirst()
+                  .orElse(series.getNotes()));
+        }
+        skipped++;
+        continue;
+      }
+      if (lineToImport.updateMonth()) {
+        throw new ApplicationException(
+            ApplicationError.BAD_REQUEST, "The subscription occurrence no longer matches");
+      }
       var match = matcher.match(index, line, category.getId());
       if (match != null) {
-        if (match.transactionId() != null && billDueDate != null) {
+        if (match.transactionId() != null) {
           Transaction saved =
               transactionRepository
                   .findByIdAndUserId(match.transactionId(), user.getId())
                   .orElseThrow();
-          if (setMissingBill(saved, line, card, billDueDate)) {
+          if (line.isInstallment()
+              && saved.adjustInstallmentAmount(line.installmentNumber(), line.amount())) {
+            adjusted++;
+          }
+          if (billDueDate != null && setMissingBill(saved, line, card, billDueDate)) {
             billDatesSet.add(saved.getId());
           }
         }
@@ -219,6 +326,10 @@ public class StatementImportService {
       }
       Transaction saved = saveImported(line, line.date(), category.getId(), card, billDueDate);
       imported++;
+      if (line.isInstallment()
+          && saved.adjustInstallmentAmount(line.installmentNumber(), line.amount())) {
+        adjusted++;
+      }
       if (line.isInstallment()) {
         purchasesCreated.putIfAbsent(DuplicateMatcher.purchaseKey(line), saved.getId());
       }
@@ -264,7 +375,7 @@ public class StatementImportService {
       alreadyMoved.add(movedKey);
       moved++;
     }
-    return new ImportResult(imported, skipped, moved, billDatesSet.size());
+    return new ImportResult(imported, skipped, moved, billDatesSet.size(), adjusted);
   }
 
   private Transaction saveImported(

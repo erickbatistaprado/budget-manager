@@ -17,6 +17,7 @@ public record MovementDraft(
     @JsonFormat(pattern = "yyyy/MM/dd") LocalDate billDueDate,
     UUID savingId,
     Boolean opening,
+    PaymentMethod paymentMethod,
     @Size(max = 4000) String notes) {
   public Movement toDomain() {
     return Movement.builder()
@@ -29,6 +30,7 @@ public record MovementDraft(
         .billDueDate(billDueDate)
         .savingId(savingId)
         .opening(Boolean.TRUE.equals(opening))
+        .paymentMethod(paymentMethod)
         .notes(notes)
         .build();
   }

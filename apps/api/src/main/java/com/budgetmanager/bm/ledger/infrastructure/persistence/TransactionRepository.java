@@ -22,6 +22,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
   @Query("SELECT DISTINCT t FROM Transaction t LEFT JOIN FETCH t.months WHERE t.user.id = :userId")
   List<Transaction> loadMoneyFlowMonths(UUID userId);
 
+  @Query(
+      "SELECT DISTINCT t FROM Transaction t JOIN FETCH t.category JOIN FETCH t.card LEFT JOIN FETCH t.months WHERE t.user.id = :userId AND t.repeats = 'MONTHLY' AND t.financingId IS NULL")
+  List<Transaction> findCardSubscriptions(UUID userId);
+
   Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
 
   List<Transaction> findByFinancingId(UUID financingId);
@@ -35,7 +39,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
             t.createdAt)
           FROM Transaction t
           JOIN t.category c
-          WHERE t.user.id = :userId AND t.notes IS NOT NULL AND t.financingId IS NULL
+          WHERE t.user.id = :userId AND t.notes IS NOT NULL AND t.financingId IS NULL AND (t.repeats IS NULL OR t.repeats <> 'MONTHLY')
       """)
   List<ExistingTransaction> findImportCandidates(@Param("userId") UUID userId);
 

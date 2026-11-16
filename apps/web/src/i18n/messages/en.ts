@@ -243,6 +243,7 @@ export const en = {
     },
   },
   cards: {
+    billPaymentMethod: 'How the bill is paid',
     creditLimit: 'Credit limit',
     availableLimit: 'Available limit',
     of: 'of',
@@ -522,6 +523,9 @@ export const en = {
     readStatement: 'Read statement',
     importedTransactions: (count: number): string =>
       count === 1 ? '1 transaction' : `${count} transactions`,
+    installmentAmountsAdjusted: (count: number): string =>
+      `${count} installment amounts adjusted`,
+    updateMonth: (amount: string): string => `Update this month to ${amount}`,
     importSuccess: (
       imported: number,
       skipped: number,

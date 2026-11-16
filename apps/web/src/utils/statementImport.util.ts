@@ -11,6 +11,7 @@ export interface ImportRow {
   readonly line: StatementPreviewLine;
   readonly selected: boolean;
   readonly categoryId: string;
+  readonly updateMonth?: boolean;
   /** The user picked this row's category themselves. */
   readonly touched?: boolean;
   /** The category was copied from another row of the same merchant. */
@@ -86,6 +87,7 @@ export function toImportLines(
       installmentTotal: row.line.installmentTotal ?? null,
       paidEarly: row.line.paidEarly,
       categoryId: row.categoryId,
+      ...(row.updateMonth ? { updateMonth: true } : {}),
     }));
 }
 
@@ -131,6 +133,7 @@ export function describeSuggestion(
     return messages.suggestions.sameMerchantYouSet;
   }
   const { suggestionSource, suggestionBasis, suggestionCount } = row.line;
+  if (row.line.subscriptionName) return row.line.subscriptionName;
   switch (suggestionSource) {
     case 'EXACT':
       return messages.suggestions.exact(suggestionCount);

@@ -4,6 +4,9 @@ import com.budgetmanager.bm.identity.application.UserService;
 import com.budgetmanager.bm.identity.domain.User;
 import com.budgetmanager.bm.ledger.domain.Bank;
 import com.budgetmanager.bm.ledger.domain.Card;
+import com.budgetmanager.bm.ledger.domain.Movement;
+import com.budgetmanager.bm.ledger.domain.MovementKind;
+import com.budgetmanager.bm.ledger.domain.PaymentMethod;
 import com.budgetmanager.bm.ledger.infrastructure.persistence.CardRepository;
 import com.budgetmanager.bm.shared.application.ApplicationError;
 import com.budgetmanager.bm.shared.application.ApplicationException;
@@ -65,6 +68,25 @@ public class CardService {
       UUID paymentAccountId,
       UUID fundingAccountId,
       BigDecimal creditLimit) {
+    return save(
+        id, name, closingDay, dueDay, bank, paymentAccountId, fundingAccountId, creditLimit, null);
+  }
+
+  @Transactional
+  public Card save(
+      UUID id,
+      String name,
+      int closingDay,
+      int dueDay,
+      Bank bank,
+      UUID paymentAccountId,
+      UUID fundingAccountId,
+      BigDecimal creditLimit,
+      PaymentMethod billPaymentMethod) {
+    if (billPaymentMethod != null
+        && !Movement.supportsPaymentMethod(MovementKind.CARD_BILL_PAYMENT, billPaymentMethod)) {
+      throw new ApplicationException(ApplicationError.BAD_REQUEST, "Invalid bill payment method");
+    }
     User user = userService.requireCurrentUser();
     if (creditLimit != null
         && (creditLimit.signum() <= 0
@@ -104,6 +126,7 @@ public class CardService {
         paymentAccountId == null ? null : accounts.requireOwned(paymentAccountId, user));
     card.setFundingAccount(
         fundingAccountId == null ? null : accounts.requireOwned(fundingAccountId, user));
+    card.setBillPaymentMethod(paymentAccountId == null ? null : billPaymentMethod);
     card.setCreditLimit(creditLimit);
     card.setBank(bank);
     card.setName(name.trim());

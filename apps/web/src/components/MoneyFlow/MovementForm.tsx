@@ -93,6 +93,9 @@ export default function MovementForm({
     fixedSaving ?? initialDraft?.savingId ?? ''
   );
   const [notes, setNotes] = useState(initialDraft?.notes ?? '');
+  const [paymentMethod, setPaymentMethod] = useState<
+    NonNullable<MovementDraft['paymentMethod']> | ''
+  >(initialDraft?.paymentMethod ?? '');
   const [opening, setOpening] = useState(initialDraft?.opening ?? false);
   const [funding, setFunding] = useState(
     initialKind === 'TRANSFER' && Boolean(initialDraft?.cardId)
@@ -116,6 +119,7 @@ export default function MovementForm({
     : [];
   function changeKind(value: MovementKind): void {
     setKind(value);
+    setPaymentMethod('');
     setOpening(false);
     setFunding(false);
   }
@@ -135,6 +139,7 @@ export default function MovementForm({
       savingId: savingNeeded ? saving : null,
       opening: kind === 'INVESTMENT' && opening,
       notes: notes.trim() || null,
+      paymentMethod: paymentMethod || null,
     };
     try {
       const write = movementId ? putFetcher : postFetcher;
@@ -262,6 +267,13 @@ export default function MovementForm({
               value={card}
               onChange={(event): void => {
                 setCard(event.currentTarget.value);
+                if (kind === 'CARD_BILL_PAYMENT') {
+                  const chosen = cards?.find(
+                    (item): boolean => item.id === event.currentTarget.value
+                  );
+                  setPaymentMethod(chosen?.billPaymentMethod ?? '');
+                  setFrom(chosen?.paymentAccount?.id ?? '');
+                }
                 setBill('');
               }}
             >
@@ -304,6 +316,40 @@ export default function MovementForm({
                 {item.name}
               </option>
             ))}
+          </Select>
+        </Field>
+      )}
+      {(kind === 'TRANSFER' || kind === 'CARD_BILL_PAYMENT') && (
+        <Field label={t.payments.method}>
+          <Select
+            value={paymentMethod}
+            onChange={(event): void =>
+              setPaymentMethod(
+                event.currentTarget.value as
+                  NonNullable<MovementDraft['paymentMethod']> | ''
+              )
+            }
+          >
+            <option value="">{labels.none}</option>
+            {(
+              [
+                'PIX',
+                'BANK_TRANSFER',
+                'BOLETO',
+                'AUTOMATIC_DEBIT',
+                'OTHER',
+              ] as const
+            )
+              .filter(
+                (method): boolean =>
+                  kind === 'CARD_BILL_PAYMENT' ||
+                  !['BOLETO', 'AUTOMATIC_DEBIT'].includes(method)
+              )
+              .map((method): JSX.Element => (
+                <option key={method} value={method}>
+                  {t.payments.methods[method]}
+                </option>
+              ))}
           </Select>
         </Field>
       )}

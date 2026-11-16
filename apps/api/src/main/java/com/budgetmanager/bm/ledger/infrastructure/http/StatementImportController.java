@@ -13,7 +13,10 @@ import com.budgetmanager.bm.shared.application.ApplicationError;
 import com.budgetmanager.bm.shared.application.ApplicationException;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,7 +37,10 @@ public class StatementImportController {
   @PostMapping(path = "/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<StatementPreviewDto> preview(
       @RequestParam("file") MultipartFile file,
-      @RequestParam(value = "password", required = false) String password) {
+      @RequestParam(value = "password", required = false) String password,
+      @RequestParam(value = "cardId", required = false) UUID cardId,
+      @RequestParam(value = "billDueDate", required = false) @DateTimeFormat(pattern = "yyyy/MM/dd")
+          LocalDate billDueDate) {
     byte[] content;
     try {
       content = file.getBytes();
@@ -43,7 +49,7 @@ public class StatementImportController {
           exception, ApplicationError.BAD_REQUEST, "The file could not be read");
     }
     StatementImportService.Preview preview =
-        service.preview(content, password, file.getOriginalFilename());
+        service.preview(content, password, file.getOriginalFilename(), cardId, billDueDate);
     return ok(
         new StatementPreviewDto(
             preview.statement().source(),
@@ -76,7 +82,9 @@ public class StatementImportController {
                         previewLine.duplicateOfLine(),
                         previewLine.samePurchaseAsLine(),
                         previewLine.samePurchaseAsTransactionId(),
-                        previewLine.selected()))
+                        previewLine.selected(),
+                        previewLine.subscriptionName(),
+                        previewLine.updateMonthAvailable()))
                 .toList()));
   }
 
@@ -94,7 +102,8 @@ public class StatementImportController {
             result.imported(),
             result.skippedAsDuplicates(),
             result.movedInstallments(),
-            result.billDatesSet()));
+            result.billDatesSet(),
+            result.installmentAmountsAdjusted()));
   }
 
   private static StatementImportService.LineToImport toLineToImport(StatementImportLineDto dto) {
@@ -113,6 +122,7 @@ public class StatementImportController {
             installment ? dto.installmentTotal() : null,
             null,
             installment && dto.paidEarly()),
-        dto.categoryId());
+        dto.categoryId(),
+        dto.updateMonth());
   }
 }

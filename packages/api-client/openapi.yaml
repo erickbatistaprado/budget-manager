@@ -791,6 +791,8 @@ paths:
               properties:
                 file: { type: string, format: binary }
                 password: { type: string, description: Only for protected PDFs }
+                cardId: { type: [string, 'null'], format: uuid }
+                billDueDate: { type: [string, 'null'], description: yyyy/MM/dd }
       responses:
         '200':
           description: Statement lines
@@ -1798,6 +1800,11 @@ components:
         dueDay: { type: integer, minimum: 1, maximum: 31 }
         paymentAccountId: { type: [string, 'null'], format: uuid }
         fundingAccountId: { type: [string, 'null'], format: uuid }
+        billPaymentMethod:
+          {
+            type: [string, 'null'],
+            enum: [PIX, BANK_TRANSFER, BOLETO, AUTOMATIC_DEBIT, OTHER, null],
+          }
         creditLimit:
           {
             type: [number, 'null'],
@@ -1818,6 +1825,11 @@ components:
           anyOf: [{ $ref: '#/components/schemas/Account' }, { type: 'null' }]
         fundingAccount:
           anyOf: [{ $ref: '#/components/schemas/Account' }, { type: 'null' }]
+        billPaymentMethod:
+          {
+            type: [string, 'null'],
+            enum: [PIX, BANK_TRANSFER, BOLETO, AUTOMATIC_DEBIT, OTHER, null],
+          }
         creditLimit: { type: [number, 'null'] }
         usedLimit: { type: [number, 'null'] }
         availableLimit: { type: [number, 'null'] }
@@ -2016,6 +2028,12 @@ components:
             the saved purchase it moves.,
           }
         selected: { type: boolean }
+        subscriptionName: { type: [string, 'null'] }
+        updateMonthAvailable:
+          {
+            type: boolean,
+            description: A matching subscription can take this amount for the bill month only.,
+          }
     StatementImportRequest:
       type: object
       required: [lines]
@@ -2039,10 +2057,27 @@ components:
         installmentTotal: { type: [integer, 'null'] }
         paidEarly: { type: boolean }
         categoryId: { type: string, format: uuid }
+        updateMonth:
+          {
+            type: boolean,
+            default: false,
+            description: Confirm updating the matching subscription occurrence only.,
+          }
     StatementImportResult:
       type: object
-      required: [imported, skippedAsDuplicates, movedInstallments]
+      required:
+        [
+          imported,
+          skippedAsDuplicates,
+          movedInstallments,
+          installmentAmountsAdjusted,
+        ]
       properties:
+        installmentAmountsAdjusted:
+          {
+            type: integer,
+            description: Installment amounts replaced with bank amounts within one real.,
+          }
         billDatesSet:
           {
             type: integer,
@@ -2085,6 +2120,10 @@ components:
         savingId: { type: [string, 'null'], format: uuid }
         opening: { type: boolean, default: false }
         notes: { type: [string, 'null'], maxLength: 4000 }
+        paymentMethod:
+          type: [string, 'null']
+          enum: [PIX, BANK_TRANSFER, BOLETO, AUTOMATIC_DEBIT, OTHER, null]
+          description: Transfers accept only PIX, BANK_TRANSFER or OTHER; investments and redemptions require null.
     Movement:
       allOf:
         - { $ref: '#/components/schemas/MovementWrite' }

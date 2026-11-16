@@ -65,7 +65,7 @@ function messageOf(error: unknown, fallback: string): string {
 }
 
 export default function ImportPage(): JSX.Element {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { data: cards } = useCards();
   const [cardId, setCardId] = useState('');
   const [billDueDate, setBillDueDate] = useState('');
@@ -163,7 +163,9 @@ export default function ImportPage(): JSX.Element {
     try {
       const statement: StatementPreview = await statementImportService.preview(
         file,
-        password || undefined
+        password || undefined,
+        cardId || undefined,
+        billDueDate ? billDueDate.replaceAll('-', '/') : undefined
       );
       setPreview(statement);
       setBillDueDate(defaultBillDate(statement, cardId));
@@ -174,6 +176,28 @@ export default function ImportPage(): JSX.Element {
         error instanceof StatementImportError &&
           error.status === PASSWORD_REQUIRED_STATUS
       );
+      setErrorMessage(messageOf(error, t.common.errorGeneric));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function refreshPreview(
+    selectedCard: string,
+    selectedBill: string
+  ): Promise<void> {
+    if (!file) return;
+    setIsBusy(true);
+    try {
+      const statement = await statementImportService.preview(
+        file,
+        password || undefined,
+        selectedCard || undefined,
+        selectedBill ? selectedBill.replaceAll('-', '/') : undefined
+      );
+      setPreview(statement);
+      setRows(toRows(statement));
+    } catch (error: unknown) {
       setErrorMessage(messageOf(error, t.common.errorGeneric));
     } finally {
       setIsBusy(false);
@@ -237,7 +261,12 @@ export default function ImportPage(): JSX.Element {
       await refreshTransactions();
       if (file) {
         const refreshed: StatementPreview =
-          await statementImportService.preview(file, password || undefined);
+          await statementImportService.preview(
+            file,
+            password || undefined,
+            cardId || undefined,
+            billDueDate ? billDueDate.replaceAll('-', '/') : undefined
+          );
         setPreview(refreshed);
         setRows(toRows(refreshed));
       }
@@ -415,7 +444,12 @@ export default function ImportPage(): JSX.Element {
                   aria-label={t.cards.card}
                   value={cardId}
                   onChange={(event): void => {
-                    setCardId(event.currentTarget.value);
+                    const selectedCard = event.currentTarget.value;
+                    void refreshPreview(
+                      selectedCard,
+                      defaultBillDate(preview, selectedCard)
+                    );
+                    setCardId(selectedCard);
                     setBillDueDate(
                       defaultBillDate(preview, event.currentTarget.value)
                     );
@@ -434,9 +468,11 @@ export default function ImportPage(): JSX.Element {
                   aria-label={t.cards.billDueDate}
 
                   value={parseFieldDate(billDueDate)}
-                  onChange={(pickedDate): void =>
-                    setBillDueDate(formatFieldDate(pickedDate))
-                  }
+                  onChange={(pickedDate): void => {
+                    const selectedBill = formatFieldDate(pickedDate);
+                    setBillDueDate(selectedBill);
+                    void refreshPreview(cardId, selectedBill);
+                  }}
                 />
               </Field>
             </div>
@@ -534,6 +570,26 @@ export default function ImportPage(): JSX.Element {
                       </td>
                       <td className="p-2 text-xs whitespace-nowrap text-[var(--ctp-subtext1)]">
                         {describeStatus(row.line, t.import)}
+                        {row.line.subscriptionName && (
+                          <div>{row.line.subscriptionName}</div>
+                        )}
+                        {row.line.updateMonthAvailable && (
+                          <Checkbox
+                            label={t.import.updateMonth(
+                              new Intl.NumberFormat(
+                                language === 'pt' ? 'pt-BR' : 'en-US',
+                                { style: 'currency', currency: 'BRL' }
+                              ).format(row.line.amount)
+                            )}
+                            checked={row.updateMonth ?? false}
+                            onChange={(): void =>
+                              updateRow(row.line.index, {
+                                updateMonth: !row.updateMonth,
+                                selected: !row.updateMonth,
+                              })
+                            }
+                          />
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -554,6 +610,14 @@ export default function ImportPage(): JSX.Element {
                   className="shrink-0 text-lg text-[var(--ctp-green)]"
                 />
                 <span className="min-w-0 flex-1 font-medium">
+                  {result.installmentAmountsAdjusted > 0 && (
+                    <span>
+                      {t.import.installmentAmountsAdjusted(
+                        result.installmentAmountsAdjusted
+                      )}
+                      .{' '}
+                    </span>
+                  )}
                   {result.billDatesSet > 0 && (
                     <span>{t.cards.moved(result.billDatesSet)}. </span>
                   )}

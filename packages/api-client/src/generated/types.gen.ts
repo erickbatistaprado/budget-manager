@@ -210,6 +210,7 @@ export type CardWrite = {
     dueDay: number;
     paymentAccountId?: string | null;
     fundingAccountId?: string | null;
+    billPaymentMethod?: 'PIX' | 'BANK_TRANSFER' | 'BOLETO' | 'AUTOMATIC_DEBIT' | 'OTHER' | null;
     creditLimit?: number | null;
 };
 
@@ -221,6 +222,7 @@ export type Card = {
     dueDay: number;
     paymentAccount?: Account | null;
     fundingAccount?: Account | null;
+    billPaymentMethod?: 'PIX' | 'BANK_TRANSFER' | 'BOLETO' | 'AUTOMATIC_DEBIT' | 'OTHER' | null;
     creditLimit?: number | null;
     usedLimit?: number | null;
     availableLimit?: number | null;
@@ -357,6 +359,11 @@ export type StatementPreviewLine = {
      */
     samePurchaseAsTransactionId?: string | null;
     selected: boolean;
+    subscriptionName?: string | null;
+    /**
+     * A matching subscription can take this amount for the bill month only.
+     */
+    updateMonthAvailable?: boolean;
 };
 
 export type StatementImportRequest = {
@@ -377,9 +384,17 @@ export type StatementImportLine = {
     installmentTotal?: number | null;
     paidEarly?: boolean;
     categoryId: string;
+    /**
+     * Confirm updating the matching subscription occurrence only.
+     */
+    updateMonth?: boolean;
 };
 
 export type StatementImportResult = {
+    /**
+     * Installment amounts replaced with bank amounts within one real.
+     */
+    installmentAmountsAdjusted: number;
     /**
      * Saved purchases moved to their bill month without duplicating them
      */
@@ -417,6 +432,10 @@ export type MovementWrite = {
     savingId?: string | null;
     opening?: boolean;
     notes?: string | null;
+    /**
+     * Transfers accept only PIX, BANK_TRANSFER or OTHER; investments and redemptions require null.
+     */
+    paymentMethod?: 'PIX' | 'BANK_TRANSFER' | 'BOLETO' | 'AUTOMATIC_DEBIT' | 'OTHER' | null;
 };
 
 export type Movement = MovementWrite & {
@@ -1676,6 +1695,11 @@ export type PreviewStatementImportData = {
          * Only for protected PDFs
          */
         password?: string;
+        cardId?: string | null;
+        /**
+         * yyyy/MM/dd
+         */
+        billDueDate?: string | null;
     };
     path?: never;
     query?: never;

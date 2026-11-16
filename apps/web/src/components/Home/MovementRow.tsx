@@ -56,6 +56,8 @@ export default function MovementRow({
         description={movement.notes || t.moneyFlow[movement.kind]}
         detail={
           <>
+            {movement.paymentMethod &&
+              `${t.payments.methods[movement.paymentMethod]} · `}
             {names[movement.fromAccountId ?? ''] ?? '—'} →{' '}
             {names[
               movement.toAccountId ?? movement.savingId ?? movement.cardId ?? ''

@@ -29,6 +29,10 @@ public class Card {
   private String name;
 
   @Enumerated(EnumType.STRING)
+  @Column(length = 32)
+  private PaymentMethod billPaymentMethod;
+
+  @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 32)
   @Builder.Default
   private Bank bank = Bank.OTHER;

@@ -120,6 +120,9 @@ export const cardSchema = z.object({
   dueDay: z.number(),
   paymentAccount: accountSchema.nullish(),
   fundingAccount: accountSchema.nullish(),
+  billPaymentMethod: z
+    .enum(['PIX', 'BANK_TRANSFER', 'BOLETO', 'AUTOMATIC_DEBIT', 'OTHER'])
+    .nullish(),
   creditLimit: z.coerce.number().positive().nullish(),
   usedLimit: z.coerce.number().nullish(),
   availableLimit: z.coerce.number().nullish(),
@@ -230,6 +233,8 @@ export const statementPreviewLineSchema = z.object({
   samePurchaseAsLine: z.number().nullish(),
   samePurchaseAsTransactionId: z.string().nullish(),
   selected: z.boolean(),
+  subscriptionName: z.string().nullish(),
+  updateMonthAvailable: z.boolean().optional(),
 });
 
 export const statementPreviewSchema = z.object({
@@ -247,6 +252,7 @@ export const statementImportResultSchema = z.object({
   skippedAsDuplicates: z.number(),
   movedInstallments: z.number().default(0),
   billDatesSet: z.number().default(0),
+  installmentAmountsAdjusted: z.number().default(0),
 });
 
 export type Category = z.infer<typeof categorySchema>;
@@ -266,6 +272,7 @@ export interface StatementImportLine {
   readonly installmentTotal?: number | null;
   readonly paidEarly: boolean;
   readonly categoryId: string;
+  readonly updateMonth?: boolean;
 }
 export type Role = z.infer<typeof roleSchema>;
 export type User = z.infer<typeof userSchema>;

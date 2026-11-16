@@ -53,7 +53,9 @@ public final class StatementImportDtos {
       Integer duplicateOfLine,
       Integer samePurchaseAsLine,
       UUID samePurchaseAsTransactionId,
-      boolean selected) {}
+      boolean selected,
+      String subscriptionName,
+      boolean updateMonthAvailable) {}
 
   public record StatementImportRequestDto(
       UUID cardId,
@@ -73,8 +75,13 @@ public final class StatementImportDtos {
       @Min(1) @Max(500) Integer installmentNumber,
       @Min(2) @Max(500) Integer installmentTotal,
       boolean paidEarly,
-      @NotNull UUID categoryId) {}
+      @NotNull UUID categoryId,
+      boolean updateMonth) {}
 
   public record StatementImportResultDto(
-      int imported, int skippedAsDuplicates, int movedInstallments, int billDatesSet) {}
+      int imported,
+      int skippedAsDuplicates,
+      int movedInstallments,
+      int billDatesSet,
+      int installmentAmountsAdjusted) {}
 }

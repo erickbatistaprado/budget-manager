@@ -32,6 +32,11 @@ public class Movement {
   private UUID savingId;
   private boolean opening;
   private String notes;
+
+  @Enumerated(EnumType.STRING)
+  @Column(length = 32)
+  private PaymentMethod paymentMethod;
+
   @CreationTimestamp private Instant createdAt;
   @UpdateTimestamp private Instant updatedAt;
   @Transient private boolean automatic;
@@ -39,6 +44,9 @@ public class Movement {
   public void validate() {
     if (kind == null || date == null || amount == null || amount.signum() <= 0) {
       throw new IllegalArgumentException("Kind, date and a positive amount are required");
+    }
+    if (paymentMethod != null && !supportsPaymentMethod(kind, paymentMethod)) {
+      throw new IllegalArgumentException("Invalid payment method for movement kind " + kind);
     }
     boolean bill = cardId != null && billDueDate != null;
     boolean noBill = cardId == null && billDueDate == null;
@@ -69,6 +77,15 @@ public class Movement {
       throw new IllegalArgumentException(
           "Invalid accounts, bill or saving for movement kind " + kind);
     }
+  }
+
+  public static boolean supportsPaymentMethod(MovementKind kind, PaymentMethod method) {
+    return (kind == MovementKind.TRANSFER || kind == MovementKind.CARD_BILL_PAYMENT)
+        && (method == PaymentMethod.PIX
+            || method == PaymentMethod.BANK_TRANSFER
+            || method == PaymentMethod.OTHER
+            || (kind == MovementKind.CARD_BILL_PAYMENT
+                && (method == PaymentMethod.BOLETO || method == PaymentMethod.AUTOMATIC_DEBIT)));
   }
 
   public BigDecimal effectOn(UUID accountId) {

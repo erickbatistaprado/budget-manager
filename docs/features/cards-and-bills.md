@@ -90,3 +90,23 @@ production build passes using the external TypeScript configuration preload and
 `--watchman=false` described in money-flow.md. Browser review at 1440px/375px and
 in dark theme remains unverified: preview servers cannot bind either all interfaces
 or localhost (`listen EPERM`). No repository configuration workaround was added.
+
+## Bank installment amounts and card subscriptions on import
+
+When importing a statement line that matches an installment of a saved purchase
+(or creating a new installment purchase from a line), `Transaction.adjustInstallmentAmount`
+accepts the bank's installment amount when the difference is at most R$ 1.00,
+keeping the other installments unchanged and updating `total_value` to the sum of
+all installments. Installments marked paid early, financing-managed purchases and
+differences above R$ 1.00 are never adjusted. `StatementImportResultDto` reports
+`installmentAmountsAdjusted`, which is displayed in the import result banner.
+
+`SubscriptionMatcher` matches non-installment, non-prepaid statement lines for a
+selected card against active monthly series (`repeats = MONTHLY`, not skipped in
+the bill month) charged to that card. A line matches when its description matches
+(normalized equality or shared prefix of at least 6 characters) or its amount is
+within R$ 0.05 of the series occurrence in the bill month. Matched lines are
+marked as duplicates (unselected, naming the series in the preview). When the
+description matches and the amount differs, the preview offers an option to
+update that month's amount (`updateMonthAvailable` / `updateMonth`), which stores
+a per-month override via `Transaction.changeMonth` without modifying other months.

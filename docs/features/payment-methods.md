@@ -29,6 +29,15 @@ Statement imports with a selected card set CREDIT_CARD, including enrichment of
 saved purchases. Monthly overrides preserve payment details. Splitting a series
 can change them for the selected month and following months.
 
+V18 (`V18__bill_payment_method.sql`) adds nullable `t_card.bill_payment_method`
+(`PIX`, `BANK_TRANSFER`, `BOLETO`, `AUTOMATIC_DEBIT`, `OTHER`) and nullable
+`t_movement.payment_method` (same values for `CARD_BILL_PAYMENT`; `PIX`,
+`BANK_TRANSFER` and `OTHER` for `TRANSFER`). Existing rows are not backfilled.
+Cards only store `billPaymentMethod` when `paymentAccount` is set; derived card
+bill payments inherit the card's method, and recording a payment pre-fills it
+from the card. Movement rows display the payment method alongside the source
+account (for example, `Pix · Nubank`).
+
 The `/cards` page manages cards and accounts, with translated bank controls and
 subtle brand dots. Transaction forms offer methods appropriate to income,
 expense and recurrence, followed by the applicable card or optional account.

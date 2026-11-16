@@ -19,7 +19,17 @@ jest.mock('@/hooks/useAccounts.hook', (): object => ({
 }));
 jest.mock('@/hooks/useCards.hook', (): object => ({
   __esModule: true,
-  default: (): object => ({ data: [{ id: 'card', name: 'Visa' }] }),
+  default: (): object => ({
+    data: [
+      {
+        id: 'card',
+        name: 'Visa',
+        dueDay: 5,
+        paymentAccount: { id: 'payment', name: 'Payment' },
+        billPaymentMethod: 'PIX',
+      },
+    ],
+  }),
 }));
 jest.mock('@/hooks/useSavings.hook', (): object => ({
   __esModule: true,
@@ -102,12 +112,50 @@ it('records a transfer with API dates and refreshes affected data', async (): Pr
         savingId: null,
         opening: false,
         notes: null,
+        paymentMethod: null,
       }),
     })
   );
   await waitFor((): void => expect(close).toHaveBeenCalled());
   expect(refreshMoneyFlow).toHaveBeenCalled();
 });
+
+it.each(['en', 'pt'] as const)(
+  'prefills the card bill payment method and lets the user change it in %s',
+  async (language): Promise<void> => {
+    const labels = language === 'pt' ? pt.moneyFlow : en.moneyFlow;
+    const payments = language === 'pt' ? pt.payments : en.payments;
+    const common = language === 'pt' ? pt.common : en.common;
+    renderWithI18n(
+      <MovementForm initialKind="CARD_BILL_PAYMENT" onClose={jest.fn()} />,
+      { language }
+    );
+    fireEvent.change(screen.getByLabelText(labels.card), {
+      target: { value: 'card' },
+    });
+    expect(screen.getByLabelText(labels.from)).toHaveValue('payment');
+    expect(screen.getByLabelText(payments.method)).toHaveValue('PIX');
+    fireEvent.change(screen.getByLabelText(payments.method), {
+      target: { value: 'AUTOMATIC_DEBIT' },
+    });
+    fireEvent.change(screen.getByLabelText(labels.amount), {
+      target: { value: '80' },
+    });
+    const billSelect = screen.getByLabelText(labels.bill) as HTMLSelectElement;
+    fireEvent.change(billSelect, {
+      target: { value: billSelect.options[1]?.value ?? '' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: common.save }));
+    await waitFor((): void =>
+      expect(postFetcher).toHaveBeenCalledWith(
+        '/movements',
+        expect.objectContaining({
+          body: expect.stringContaining('"paymentMethod":"AUTOMATIC_DEBIT"'),
+        })
+      )
+    );
+  }
+);
 
 it.each(['en', 'pt'] as const)(
   'previews a bank balance difference before saving in %s',
@@ -242,6 +290,7 @@ it.each(['en', 'pt'] as const)(
           savingId: 'saving',
           opening: false,
           notes: null,
+          paymentMethod: null,
         }),
       });
     });

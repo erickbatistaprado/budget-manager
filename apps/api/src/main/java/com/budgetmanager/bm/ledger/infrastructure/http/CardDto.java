@@ -3,6 +3,7 @@ package com.budgetmanager.bm.ledger.infrastructure.http;
 import com.budgetmanager.bm.ledger.domain.Bank;
 import com.budgetmanager.bm.ledger.domain.Card;
 import com.budgetmanager.bm.ledger.domain.CardLimit;
+import com.budgetmanager.bm.ledger.domain.PaymentMethod;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -15,6 +16,7 @@ public record CardDto(
     @NotNull @Min(1) @Max(31) Integer dueDay,
     AccountDto paymentAccount,
     AccountDto fundingAccount,
+    PaymentMethod billPaymentMethod,
     BigDecimal creditLimit,
     BigDecimal usedLimit,
     BigDecimal availableLimit) {
@@ -27,6 +29,7 @@ public record CardDto(
         card.getDueDay(),
         card.getPaymentAccount() == null ? null : AccountDto.from(card.getPaymentAccount()),
         card.getFundingAccount() == null ? null : AccountDto.from(card.getFundingAccount()),
+        card.getBillPaymentMethod(),
         limit.creditLimit(),
         limit.usedLimit(),
         limit.availableLimit());

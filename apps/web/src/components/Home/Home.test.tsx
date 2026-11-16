@@ -411,3 +411,24 @@ it.each([false, true])(
     }
   }
 );
+
+it.each(['en', 'pt'] as const)(
+  'labels movement methods with their account in %s',
+  (language): void => {
+    const messages = language === 'pt' ? pt : en;
+    renderWithI18n(
+      <MovementRow
+        movement={{ ...movement, paymentMethod: 'AUTOMATIC_DEBIT' }}
+        names={{ bank: 'Bradesco', card: 'Visa' }}
+        onRecord={jest.fn()}
+      />,
+      { language }
+    );
+    expect(
+      screen.getByText(
+        `${messages.payments.methods.AUTOMATIC_DEBIT} · Bradesco`,
+        { exact: false }
+      )
+    ).toBeInTheDocument();
+  }
+);

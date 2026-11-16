@@ -25,6 +25,7 @@ export default function CardsPage(): JSX.Element {
   const { data: cards, error, mutate } = useCards();
   const { data: accounts } = useAccounts();
   const [paymentAccountId, setPaymentAccountId] = useState('');
+  const [billPaymentMethod, setBillPaymentMethod] = useState('');
   const [fundingAccountId, setFundingAccountId] = useState('');
   const [editing, setEditing] = useState<string>();
   const [name, setName] = useState('');
@@ -38,6 +39,7 @@ export default function CardsPage(): JSX.Element {
 
   function reset(): void {
     setPaymentAccountId('');
+    setBillPaymentMethod('');
     setFundingAccountId('');
     setEditing(undefined);
     setName('');
@@ -80,6 +82,7 @@ export default function CardsPage(): JSX.Element {
         dueDay: due,
         creditLimit: creditLimit ? Number(creditLimit) : null,
         paymentAccountId: paymentAccountId || null,
+        billPaymentMethod: paymentAccountId ? billPaymentMethod || null : null,
         fundingAccountId: fundingAccountId || null,
       });
       if (editing) {
@@ -168,6 +171,7 @@ export default function CardsPage(): JSX.Element {
             onChange={(event): void => {
               setPaymentAccountId(event.currentTarget.value);
               setFundingAccountId('');
+              setBillPaymentMethod('');
             }}
           >
             <option value="">{t.moneyFlow.none}</option>
@@ -178,6 +182,31 @@ export default function CardsPage(): JSX.Element {
             ))}
           </Select>
         </Field>
+        {paymentAccountId && (
+          <Field label={t.cards.billPaymentMethod}>
+            <Select
+              value={billPaymentMethod}
+              onChange={(event): void =>
+                setBillPaymentMethod(event.currentTarget.value)
+              }
+            >
+              <option value="">{t.moneyFlow.none}</option>
+              {(
+                [
+                  'PIX',
+                  'BANK_TRANSFER',
+                  'BOLETO',
+                  'AUTOMATIC_DEBIT',
+                  'OTHER',
+                ] as const
+              ).map((method): JSX.Element => (
+                <option key={method} value={method}>
+                  {t.payments.methods[method]}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
         <Field label={t.moneyFlow.fundingAccount}>
           <Select
             disabled={!paymentAccountId}
@@ -245,6 +274,7 @@ export default function CardsPage(): JSX.Element {
               disabled={busy}
               onClick={(): void => {
                 setPaymentAccountId(card.paymentAccount?.id ?? '');
+                setBillPaymentMethod(card.billPaymentMethod ?? '');
                 setFundingAccountId(card.fundingAccount?.id ?? '');
                 setEditing(card.id);
                 setName(card.name);

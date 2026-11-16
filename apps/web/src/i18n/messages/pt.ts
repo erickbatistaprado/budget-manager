@@ -245,6 +245,7 @@ export const pt: Messages = {
     },
   },
   cards: {
+    billPaymentMethod: 'Como paga a fatura',
     creditLimit: 'Limite',
     availableLimit: 'Limite disponível',
     of: 'de',
@@ -533,6 +534,10 @@ export const pt: Messages = {
     readStatement: 'Carregar extrato',
     importedTransactions: (count: number): string =>
       count === 1 ? '1 transação' : `${count} transações`,
+    installmentAmountsAdjusted: (count: number): string =>
+      `${count} valores de parcelas ajustados`,
+    updateMonth: (amount: string): string =>
+      `Atualizar este mês para ${amount}`,
     importSuccess: (
       imported: number,
       skipped: number,
