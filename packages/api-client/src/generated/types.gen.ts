@@ -181,6 +181,11 @@ export type AccountWrite = {
 
 export type Account = AccountWrite & {
     id: string;
+    balance?: number;
+    /**
+     * yyyy/MM/dd
+     */
+    balanceCheckpointDate?: string | null;
 };
 
 export type TransactionWrite = {
@@ -200,10 +205,18 @@ export type CardWrite = {
     bank: Bank;
     closingDay: number;
     dueDay: number;
+    paymentAccountId?: string | null;
+    fundingAccountId?: string | null;
 };
 
-export type Card = CardWrite & {
+export type Card = {
     id: string;
+    name: string;
+    bank: Bank;
+    closingDay: number;
+    dueDay: number;
+    paymentAccount?: Account | null;
+    fundingAccount?: Account | null;
 };
 
 export type CardSummary = {
@@ -271,6 +284,8 @@ export type SavingWrite = {
 
 export type Saving = SavingWrite & {
     id: string;
+    readonly invested?: number;
+    readonly gain?: number;
     /**
      * When the balance last changed.
      */
@@ -378,6 +393,135 @@ export type InstallmentChange = {
     paidOn?: string;
 };
 
+export type MovementWrite = {
+    kind: 'TRANSFER' | 'CARD_BILL_PAYMENT' | 'INVESTMENT' | 'REDEMPTION';
+    /**
+     * yyyy/MM/dd
+     */
+    date: string;
+    amount: number;
+    fromAccountId?: string | null;
+    toAccountId?: string | null;
+    cardId?: string | null;
+    /**
+     * yyyy/MM/dd
+     */
+    billDueDate?: string | null;
+    savingId?: string | null;
+    opening?: boolean;
+    notes?: string | null;
+};
+
+export type Movement = MovementWrite & {
+    id: string | null;
+    automatic: boolean;
+};
+
+export type BalanceCheckpointWrite = {
+    /**
+     * yyyy/MM/dd
+     */
+    date: string;
+    balance: number;
+    preview?: boolean;
+};
+
+export type BalanceResult = {
+    /**
+     * yyyy/MM/dd
+     */
+    date: string;
+    computed: number;
+    balance: number;
+    difference: number;
+    saved: boolean;
+};
+
+export type BalanceCheckpoint = {
+    id: string;
+    /**
+     * yyyy/MM/dd
+     */
+    date: string;
+    balance: number;
+};
+
+export type SavingValuationWrite = {
+    /**
+     * yyyy/MM/dd
+     */
+    date: string;
+    value: number;
+};
+
+export type SavingValuation = SavingValuationWrite & {
+    id: string;
+};
+
+export type SavingHistory = {
+    movements: Array<Movement>;
+    valuations: Array<SavingValuation>;
+};
+
+export type OverviewAccount = {
+    id: string;
+    name: string;
+    balance: number;
+    balanceToday: number;
+    /**
+     * yyyy/MM/dd
+     */
+    balanceCheckpointDate: string | null;
+};
+
+export type OverviewBill = {
+    cardId: string;
+    card: string;
+    /**
+     * yyyy/MM/dd
+     */
+    dueDate: string;
+    total: number;
+    paymentAccount: Account | null;
+    automatic: boolean;
+    paid: boolean;
+};
+
+export type Unassigned = {
+    count: number;
+    total: number;
+};
+
+export type MonthOverview = {
+    /**
+     * yyyy-MM
+     */
+    month: string;
+    incomes: number;
+    expenses: number;
+    surplus: number;
+    invested: number;
+    kept: number;
+    accounts: Array<OverviewAccount>;
+    bills: Array<OverviewBill>;
+    unassigned: Unassigned;
+};
+
+export type Evolution = {
+    /**
+     * yyyy-MM
+     */
+    month: string;
+    incomes: number;
+    expenses: number;
+    surplus: number;
+    invested: number;
+    accounts: number;
+    savings: number;
+    debt: number;
+    netWorth: number;
+};
+
 export type TransactionWritable = TransactionWrite & {
     id: string;
     /**
@@ -403,6 +547,363 @@ export type SavingWritable = SavingWrite & {
 };
 
 export type Id = string;
+
+export type ListMovementsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * yyyy/MM/dd
+         */
+        startDate: string;
+        /**
+         * yyyy/MM/dd
+         */
+        endDate: string;
+    };
+    url: '/movements';
+};
+
+export type ListMovementsErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type ListMovementsResponses = {
+    /**
+     * Successful operation
+     */
+    200: Array<Movement>;
+};
+
+export type ListMovementsResponse = ListMovementsResponses[keyof ListMovementsResponses];
+
+export type CreateMovementData = {
+    body: MovementWrite;
+    path?: never;
+    query?: never;
+    url: '/movements';
+};
+
+export type CreateMovementErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type CreateMovementResponses = {
+    /**
+     * Successful operation
+     */
+    201: Movement;
+};
+
+export type CreateMovementResponse = CreateMovementResponses[keyof CreateMovementResponses];
+
+export type DeleteMovementData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/movements/{id}';
+};
+
+export type DeleteMovementErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type DeleteMovementResponses = {
+    /**
+     * Successful operation
+     */
+    204: void;
+};
+
+export type DeleteMovementResponse = DeleteMovementResponses[keyof DeleteMovementResponses];
+
+export type UpdateMovementData = {
+    body: MovementWrite;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/movements/{id}';
+};
+
+export type UpdateMovementErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type UpdateMovementResponses = {
+    /**
+     * Successful operation
+     */
+    200: Movement;
+};
+
+export type UpdateMovementResponse = UpdateMovementResponses[keyof UpdateMovementResponses];
+
+export type GetAccountBalanceData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query: {
+        /**
+         * yyyy/MM/dd
+         */
+        date: string;
+    };
+    url: '/accounts/{id}/balance';
+};
+
+export type GetAccountBalanceErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type GetAccountBalanceResponses = {
+    /**
+     * Successful operation
+     */
+    200: BalanceResult;
+};
+
+export type GetAccountBalanceResponse = GetAccountBalanceResponses[keyof GetAccountBalanceResponses];
+
+export type ListBalanceCheckpointsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/accounts/{id}/balance-checkpoints';
+};
+
+export type ListBalanceCheckpointsErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type ListBalanceCheckpointsResponses = {
+    /**
+     * Successful operation
+     */
+    200: Array<BalanceCheckpoint>;
+};
+
+export type ListBalanceCheckpointsResponse = ListBalanceCheckpointsResponses[keyof ListBalanceCheckpointsResponses];
+
+export type SaveBalanceCheckpointData = {
+    body: BalanceCheckpointWrite;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/accounts/{id}/balance-checkpoints';
+};
+
+export type SaveBalanceCheckpointErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type SaveBalanceCheckpointResponses = {
+    /**
+     * Successful operation
+     */
+    200: BalanceResult;
+};
+
+export type SaveBalanceCheckpointResponse = SaveBalanceCheckpointResponses[keyof SaveBalanceCheckpointResponses];
+
+export type DeleteBalanceCheckpointData = {
+    body?: never;
+    path: {
+        id: string;
+        checkpointId: string;
+    };
+    query?: never;
+    url: '/accounts/{id}/balance-checkpoints/{checkpointId}';
+};
+
+export type DeleteBalanceCheckpointErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type DeleteBalanceCheckpointResponses = {
+    /**
+     * Successful operation
+     */
+    204: void;
+};
+
+export type DeleteBalanceCheckpointResponse = DeleteBalanceCheckpointResponses[keyof DeleteBalanceCheckpointResponses];
+
+export type GetSavingHistoryData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/savings/{id}/history';
+};
+
+export type GetSavingHistoryErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type GetSavingHistoryResponses = {
+    /**
+     * Successful operation
+     */
+    200: SavingHistory;
+};
+
+export type GetSavingHistoryResponse = GetSavingHistoryResponses[keyof GetSavingHistoryResponses];
+
+export type ValueSavingData = {
+    body: SavingValuationWrite;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/savings/{id}/valuations';
+};
+
+export type ValueSavingErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type ValueSavingResponses = {
+    /**
+     * Successful operation
+     */
+    200: SavingValuation;
+};
+
+export type ValueSavingResponse = ValueSavingResponses[keyof ValueSavingResponses];
+
+export type GetMonthOverviewData = {
+    body?: never;
+    path: {
+        month: string;
+    };
+    query?: never;
+    url: '/overview/{month}';
+};
+
+export type GetMonthOverviewErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type GetMonthOverviewResponses = {
+    /**
+     * Successful operation
+     */
+    200: MonthOverview;
+};
+
+export type GetMonthOverviewResponse = GetMonthOverviewResponses[keyof GetMonthOverviewResponses];
+
+export type GetEvolutionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/overview/evolution';
+};
+
+export type GetEvolutionErrors = {
+    /**
+     * Invalid request or movement references prevent deletion
+     */
+    400: unknown;
+    /**
+     * Resource not found for this owner
+     */
+    404: unknown;
+};
+
+export type GetEvolutionResponses = {
+    /**
+     * Successful operation
+     */
+    200: Array<Evolution>;
+};
+
+export type GetEvolutionResponse = GetEvolutionResponses[keyof GetEvolutionResponses];
 
 export type ListAccountsData = {
     body?: never;

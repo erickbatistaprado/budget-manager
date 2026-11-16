@@ -45,3 +45,5 @@ export type {
   User,
 } from './models';
 export * from './financing';
+
+export * from './money-flow';

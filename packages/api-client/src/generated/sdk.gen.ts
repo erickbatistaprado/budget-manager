@@ -3,7 +3,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { BalancesyncsFinancingData, BalancesyncsFinancingErrors, BalancesyncsFinancingResponses, ChangeFinancingDueDayData, ChangeFinancingDueDayErrors, ChangeFinancingDueDayResponses, ChangeTransactionMonthData, ChangeTransactionMonthErrors, ChangeTransactionMonthResponses, CreateAccountData, CreateAccountErrors, CreateAccountResponses, CreateCardData, CreateCardErrors, CreateCardResponses, CreateFinancingData, CreateFinancingErrors, CreateFinancingResponses, CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteCardData, DeleteCardErrors, DeleteCardResponses, DeleteFinancingData, DeleteFinancingErrors, DeleteFinancingResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionFromData, DeleteTransactionFromErrors, DeleteTransactionFromResponses, DeleteTransactionResponses, ExportUserDataData, ExportUserDataResponses, ExtrapaymentsFinancingData, ExtrapaymentsFinancingErrors, ExtrapaymentsFinancingResponses, FinancingScheduleData, FinancingScheduleErrors, FinancingScheduleResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, GetFinancingData, GetFinancingErrors, GetFinancingResponses, GetUserDataSummaryData, GetUserDataSummaryResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListAccountsData, ListAccountsResponses, ListCardsData, ListCardsResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListFinancingsData, ListFinancingsErrors, ListFinancingsResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PayFinancingInstallmentData, PayFinancingInstallmentErrors, PayFinancingInstallmentResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewFinancingData, PreviewFinancingErrors, PreviewFinancingResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, PutFinancingData, PutFinancingErrors, PutFinancingResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, RestoreTransactionMonthData, RestoreTransactionMonthErrors, RestoreTransactionMonthResponses, SimulateFinancingData, SimulateFinancingErrors, SimulateFinancingResponses, SkipTransactionMonthData, SkipTransactionMonthErrors, SkipTransactionMonthResponses, SplitTransactionData, SplitTransactionErrors, SplitTransactionResponses, UpdateAccountData, UpdateAccountErrors, UpdateAccountResponses, UpdateCardData, UpdateCardErrors, UpdateCardResponses, UpdateUserData, UpdateUserErrors, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, UpdateUserResponses } from './types.gen';
+import type { BalancesyncsFinancingData, BalancesyncsFinancingErrors, BalancesyncsFinancingResponses, ChangeFinancingDueDayData, ChangeFinancingDueDayErrors, ChangeFinancingDueDayResponses, ChangeTransactionMonthData, ChangeTransactionMonthErrors, ChangeTransactionMonthResponses, CreateAccountData, CreateAccountErrors, CreateAccountResponses, CreateCardData, CreateCardErrors, CreateCardResponses, CreateFinancingData, CreateFinancingErrors, CreateFinancingResponses, CreateMovementData, CreateMovementErrors, CreateMovementResponses, CreateSavingData, CreateSavingResponses, CreateTransactionData, CreateTransactionResponses, CreateUserData, CreateUserResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteBalanceCheckpointData, DeleteBalanceCheckpointErrors, DeleteBalanceCheckpointResponses, DeleteCardData, DeleteCardErrors, DeleteCardResponses, DeleteFinancingData, DeleteFinancingErrors, DeleteFinancingResponses, DeleteMovementData, DeleteMovementErrors, DeleteMovementResponses, DeleteSavingData, DeleteSavingResponses, DeleteTransactionData, DeleteTransactionFromData, DeleteTransactionFromErrors, DeleteTransactionFromResponses, DeleteTransactionResponses, ExportUserDataData, ExportUserDataResponses, ExtrapaymentsFinancingData, ExtrapaymentsFinancingErrors, ExtrapaymentsFinancingResponses, FinancingScheduleData, FinancingScheduleErrors, FinancingScheduleResponses, GetAccountBalanceData, GetAccountBalanceErrors, GetAccountBalanceResponses, GetCsrfTokenData, GetCsrfTokenResponses, GetCurrentUserData, GetCurrentUserResponses, GetEvolutionData, GetEvolutionErrors, GetEvolutionResponses, GetFinancingData, GetFinancingErrors, GetFinancingResponses, GetMonthOverviewData, GetMonthOverviewErrors, GetMonthOverviewResponses, GetSavingHistoryData, GetSavingHistoryErrors, GetSavingHistoryResponses, GetUserDataSummaryData, GetUserDataSummaryResponses, ImportStatementLinesData, ImportStatementLinesResponses, ListAccountsData, ListAccountsResponses, ListBalanceCheckpointsData, ListBalanceCheckpointsErrors, ListBalanceCheckpointsResponses, ListCardsData, ListCardsResponses, ListCategoriesByTypeData, ListCategoriesByTypeResponses, ListFinancingsData, ListFinancingsErrors, ListFinancingsResponses, ListMovementsData, ListMovementsErrors, ListMovementsResponses, ListSavingsData, ListSavingsResponses, ListTransactionsData, ListTransactionsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, PayFinancingInstallmentData, PayFinancingInstallmentErrors, PayFinancingInstallmentResponses, PayInstallmentsEarlyData, PayInstallmentsEarlyResponses, PreviewFinancingData, PreviewFinancingErrors, PreviewFinancingResponses, PreviewStatementImportData, PreviewStatementImportErrors, PreviewStatementImportResponses, PutFinancingData, PutFinancingErrors, PutFinancingResponses, RefreshSessionData, RefreshSessionErrors, RefreshSessionResponses, RestoreInstallmentsData, RestoreInstallmentsResponses, RestoreTransactionMonthData, RestoreTransactionMonthErrors, RestoreTransactionMonthResponses, SaveBalanceCheckpointData, SaveBalanceCheckpointErrors, SaveBalanceCheckpointResponses, SimulateFinancingData, SimulateFinancingErrors, SimulateFinancingResponses, SkipTransactionMonthData, SkipTransactionMonthErrors, SkipTransactionMonthResponses, SplitTransactionData, SplitTransactionErrors, SplitTransactionResponses, UpdateAccountData, UpdateAccountErrors, UpdateAccountResponses, UpdateCardData, UpdateCardErrors, UpdateCardResponses, UpdateMovementData, UpdateMovementErrors, UpdateMovementResponses, UpdateUserData, UpdateUserErrors, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, UpdateUserResponses, ValueSavingData, ValueSavingErrors, ValueSavingResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -18,6 +18,58 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+export const listMovements = <ThrowOnError extends boolean = false>(options: Options<ListMovementsData, ThrowOnError>): RequestResult<ListMovementsResponses, ListMovementsErrors, ThrowOnError> => (options.client ?? client).get<ListMovementsResponses, ListMovementsErrors, ThrowOnError>({ url: '/movements', ...options });
+
+export const createMovement = <ThrowOnError extends boolean = false>(options: Options<CreateMovementData, ThrowOnError>): RequestResult<CreateMovementResponses, CreateMovementErrors, ThrowOnError> => (options.client ?? client).post<CreateMovementResponses, CreateMovementErrors, ThrowOnError>({
+    url: '/movements',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteMovement = <ThrowOnError extends boolean = false>(options: Options<DeleteMovementData, ThrowOnError>): RequestResult<DeleteMovementResponses, DeleteMovementErrors, ThrowOnError> => (options.client ?? client).delete<DeleteMovementResponses, DeleteMovementErrors, ThrowOnError>({ url: '/movements/{id}', ...options });
+
+export const updateMovement = <ThrowOnError extends boolean = false>(options: Options<UpdateMovementData, ThrowOnError>): RequestResult<UpdateMovementResponses, UpdateMovementErrors, ThrowOnError> => (options.client ?? client).put<UpdateMovementResponses, UpdateMovementErrors, ThrowOnError>({
+    url: '/movements/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getAccountBalance = <ThrowOnError extends boolean = false>(options: Options<GetAccountBalanceData, ThrowOnError>): RequestResult<GetAccountBalanceResponses, GetAccountBalanceErrors, ThrowOnError> => (options.client ?? client).get<GetAccountBalanceResponses, GetAccountBalanceErrors, ThrowOnError>({ url: '/accounts/{id}/balance', ...options });
+
+export const listBalanceCheckpoints = <ThrowOnError extends boolean = false>(options: Options<ListBalanceCheckpointsData, ThrowOnError>): RequestResult<ListBalanceCheckpointsResponses, ListBalanceCheckpointsErrors, ThrowOnError> => (options.client ?? client).get<ListBalanceCheckpointsResponses, ListBalanceCheckpointsErrors, ThrowOnError>({ url: '/accounts/{id}/balance-checkpoints', ...options });
+
+export const saveBalanceCheckpoint = <ThrowOnError extends boolean = false>(options: Options<SaveBalanceCheckpointData, ThrowOnError>): RequestResult<SaveBalanceCheckpointResponses, SaveBalanceCheckpointErrors, ThrowOnError> => (options.client ?? client).post<SaveBalanceCheckpointResponses, SaveBalanceCheckpointErrors, ThrowOnError>({
+    url: '/accounts/{id}/balance-checkpoints',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteBalanceCheckpoint = <ThrowOnError extends boolean = false>(options: Options<DeleteBalanceCheckpointData, ThrowOnError>): RequestResult<DeleteBalanceCheckpointResponses, DeleteBalanceCheckpointErrors, ThrowOnError> => (options.client ?? client).delete<DeleteBalanceCheckpointResponses, DeleteBalanceCheckpointErrors, ThrowOnError>({ url: '/accounts/{id}/balance-checkpoints/{checkpointId}', ...options });
+
+export const getSavingHistory = <ThrowOnError extends boolean = false>(options: Options<GetSavingHistoryData, ThrowOnError>): RequestResult<GetSavingHistoryResponses, GetSavingHistoryErrors, ThrowOnError> => (options.client ?? client).get<GetSavingHistoryResponses, GetSavingHistoryErrors, ThrowOnError>({ url: '/savings/{id}/history', ...options });
+
+export const valueSaving = <ThrowOnError extends boolean = false>(options: Options<ValueSavingData, ThrowOnError>): RequestResult<ValueSavingResponses, ValueSavingErrors, ThrowOnError> => (options.client ?? client).post<ValueSavingResponses, ValueSavingErrors, ThrowOnError>({
+    url: '/savings/{id}/valuations',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getMonthOverview = <ThrowOnError extends boolean = false>(options: Options<GetMonthOverviewData, ThrowOnError>): RequestResult<GetMonthOverviewResponses, GetMonthOverviewErrors, ThrowOnError> => (options.client ?? client).get<GetMonthOverviewResponses, GetMonthOverviewErrors, ThrowOnError>({ url: '/overview/{month}', ...options });
+
+export const getEvolution = <ThrowOnError extends boolean = false>(options?: Options<GetEvolutionData, ThrowOnError>): RequestResult<GetEvolutionResponses, GetEvolutionErrors, ThrowOnError> => (options?.client ?? client).get<GetEvolutionResponses, GetEvolutionErrors, ThrowOnError>({ url: '/overview/evolution', ...options });
 
 export const listAccounts = <ThrowOnError extends boolean = false>(options?: Options<ListAccountsData, ThrowOnError>): RequestResult<ListAccountsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListAccountsResponses, unknown, ThrowOnError>({ url: '/accounts', ...options });
 

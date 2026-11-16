@@ -1,3 +1,22 @@
+import {
+  movementSchema,
+  balanceResultSchema,
+  checkpointSchema,
+  savingHistorySchema,
+  valuationSchema,
+  overviewSchema,
+  evolutionSchema,
+} from './money-flow';
+import type {
+  Movement,
+  MovementDraft,
+  BalanceResult,
+  BalanceCheckpoint,
+  SavingHistory,
+  Valuation,
+  MonthOverview,
+  Evolution,
+} from './money-flow';
 import type {
   Financing,
   FinancingPreview,
@@ -113,6 +132,68 @@ export class BudgetManagerApi {
       financingSchema,
       { method: 'POST', body: { fromInstallment, dueDay } }
     );
+  }
+
+  movements(startDate: string, endDate: string): Promise<Movement[]> {
+    return this.client.request(
+      `/movements?${new URLSearchParams({ startDate, endDate })}`,
+      z.array(movementSchema)
+    );
+  }
+  saveMovement(draft: MovementDraft, id?: string): Promise<Movement> {
+    return this.client.request(
+      id ? `/movements/${id}` : '/movements',
+      movementSchema,
+      { method: id ? 'PUT' : 'POST', body: draft }
+    );
+  }
+  deleteMovement(id: string): Promise<void> {
+    return this.client.command(`/movements/${id}`, { method: 'DELETE' });
+  }
+  accountBalance(id: string, date: string): Promise<BalanceResult> {
+    return this.client.request(
+      `/accounts/${id}/balance?${new URLSearchParams({ date })}`,
+      balanceResultSchema
+    );
+  }
+  saveBalanceCheckpoint(
+    id: string,
+    date: string,
+    balance: number,
+    preview: boolean
+  ): Promise<BalanceResult> {
+    return this.client.request(
+      `/accounts/${id}/balance-checkpoints`,
+      balanceResultSchema,
+      { method: 'POST', body: { date, balance, preview } }
+    );
+  }
+  balanceCheckpoints(id: string): Promise<BalanceCheckpoint[]> {
+    return this.client.request(
+      `/accounts/${id}/balance-checkpoints`,
+      z.array(checkpointSchema)
+    );
+  }
+  deleteBalanceCheckpoint(id: string, checkpointId: string): Promise<void> {
+    return this.client.command(
+      `/accounts/${id}/balance-checkpoints/${checkpointId}`,
+      { method: 'DELETE' }
+    );
+  }
+  savingHistory(id: string): Promise<SavingHistory> {
+    return this.client.request(`/savings/${id}/history`, savingHistorySchema);
+  }
+  valueSaving(id: string, date: string, value: number): Promise<Valuation> {
+    return this.client.request(`/savings/${id}/valuations`, valuationSchema, {
+      method: 'POST',
+      body: { date, value },
+    });
+  }
+  overview(month: string): Promise<MonthOverview> {
+    return this.client.request(`/overview/${month}`, overviewSchema);
+  }
+  evolution(): Promise<Evolution[]> {
+    return this.client.request('/overview/evolution', z.array(evolutionSchema));
   }
 
   login(email: string, password: string) {
@@ -231,7 +312,10 @@ export class BudgetManagerApi {
   accounts(): Promise<Account[]> {
     return this.client.request('/accounts', z.array(accountSchema));
   }
-  saveAccount(account: Omit<Account, 'id'>, id?: string): Promise<Account> {
+  saveAccount(
+    account: Omit<Account, 'id' | 'balance' | 'balanceCheckpointDate'>,
+    id?: string
+  ): Promise<Account> {
     return this.client.request(
       id ? `/accounts/${id}` : '/accounts',
       accountSchema,
@@ -248,7 +332,13 @@ export class BudgetManagerApi {
   cards(): Promise<Card[]> {
     return this.client.request('/cards', z.array(cardSchema));
   }
-  saveCard(card: Omit<Card, 'id'>, id?: string): Promise<Card> {
+  saveCard(
+    card: Omit<Card, 'id' | 'paymentAccount' | 'fundingAccount'> & {
+      paymentAccountId?: string | null;
+      fundingAccountId?: string | null;
+    },
+    id?: string
+  ): Promise<Card> {
     return this.client.request(id ? `/cards/${id}` : '/cards', cardSchema, {
       method: id ? 'PUT' : 'POST',
       body: card,
@@ -262,7 +352,7 @@ export class BudgetManagerApi {
     return this.client.request('/savings', z.array(savingSchema));
   }
 
-  createSaving(saving: Omit<Saving, 'id'>) {
+  createSaving(saving: Omit<Saving, 'id' | 'invested' | 'gain' | 'updatedAt'>) {
     return this.client.request('/savings', savingSchema, {
       method: 'POST',
       body: saving,

@@ -5,6 +5,257 @@ info:
 servers:
   - url: http://localhost:8080
 paths:
+  /movements:
+    get:
+      parameters:
+        - {
+            in: query,
+            name: startDate,
+            required: true,
+            schema: { type: string, description: yyyy/MM/dd },
+          }
+        - {
+            in: query,
+            name: endDate,
+            required: true,
+            schema: { type: string, description: yyyy/MM/dd },
+          }
+      operationId: listMovements
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                {
+                  type: array,
+                  items: { $ref: '#/components/schemas/Movement' },
+                }
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+    post:
+      operationId: createMovement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MovementWrite' }
+      responses:
+        '201':
+          description: Successful operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Movement' }
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+  /movements/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    put:
+      operationId: updateMovement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MovementWrite' }
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Movement' }
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+    delete:
+      operationId: deleteMovement
+      responses:
+        '204':
+          description: Successful operation
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+  /accounts/{id}/balance:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+      - {
+          in: query,
+          name: date,
+          required: true,
+          schema: { type: string, description: yyyy/MM/dd },
+        }
+    get:
+      operationId: getAccountBalance
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BalanceResult' }
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+  /accounts/{id}/balance-checkpoints:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    get:
+      operationId: listBalanceCheckpoints
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                {
+                  type: array,
+                  items: { $ref: '#/components/schemas/BalanceCheckpoint' },
+                }
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+    post:
+      operationId: saveBalanceCheckpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BalanceCheckpointWrite' }
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BalanceResult' }
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+  /accounts/{id}/balance-checkpoints/{checkpointId}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+      - {
+          in: path,
+          name: checkpointId,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
+    delete:
+      operationId: deleteBalanceCheckpoint
+      responses:
+        '204':
+          description: Successful operation
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+  /savings/{id}/history:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getSavingHistory
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SavingHistory' }
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+  /savings/{id}/valuations:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string }
+    post:
+      operationId: valueSaving
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SavingValuationWrite' }
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SavingValuation' }
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+  /overview/{month}:
+    parameters:
+      - in: path
+        name: month
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getMonthOverview
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MonthOverview' }
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
+  /overview/evolution:
+    get:
+      operationId: getEvolution
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                {
+                  type: array,
+                  items: { $ref: '#/components/schemas/Evolution' },
+                }
+        '400':
+          {
+            description: Invalid request or movement references prevent deletion,
+          }
+        '404': { description: Resource not found for this owner }
   /accounts:
     get:
       operationId: listAccounts
@@ -1351,6 +1602,9 @@ components:
           required: [id]
           properties:
             id: { type: string, format: uuid }
+            balance: { type: number }
+            balanceCheckpointDate:
+              { type: [string, 'null'], description: yyyy/MM/dd }
     TransactionWrite:
       type: object
       required: [category, totalValue, repeats, date]
@@ -1374,13 +1628,21 @@ components:
         bank: { $ref: '#/components/schemas/Bank' }
         closingDay: { type: integer, minimum: 1, maximum: 31 }
         dueDay: { type: integer, minimum: 1, maximum: 31 }
+        paymentAccountId: { type: [string, 'null'], format: uuid }
+        fundingAccountId: { type: [string, 'null'], format: uuid }
     Card:
-      allOf:
-        - { $ref: '#/components/schemas/CardWrite' }
-        - type: object
-          required: [id]
-          properties:
-            id: { type: string, format: uuid }
+      type: object
+      required: [id, name, bank, closingDay, dueDay]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        bank: { $ref: '#/components/schemas/Bank' }
+        closingDay: { type: integer }
+        dueDay: { type: integer }
+        paymentAccount:
+          anyOf: [{ $ref: '#/components/schemas/Account' }, { type: 'null' }]
+        fundingAccount:
+          anyOf: [{ $ref: '#/components/schemas/Account' }, { type: 'null' }]
     CardSummary:
       type: object
       required: [id, name]
@@ -1495,6 +1757,8 @@ components:
           properties:
             {
               id: { type: string, format: uuid },
+              invested: { type: number, readOnly: true },
+              gain: { type: number, readOnly: true },
               updatedAt:
                 {
                   type: string,
@@ -1624,3 +1888,158 @@ components:
             examples: ['2026/10/02'],
             description: Required to pay early.,
           }
+
+    MovementWrite:
+      type: object
+      required: [kind, date, amount]
+      properties:
+        kind:
+          {
+            type: string,
+            enum: [TRANSFER, CARD_BILL_PAYMENT, INVESTMENT, REDEMPTION],
+          }
+        date: { type: string, description: yyyy/MM/dd }
+        amount: { type: number, exclusiveMinimum: 0 }
+        fromAccountId: { type: [string, 'null'], format: uuid }
+        toAccountId: { type: [string, 'null'], format: uuid }
+        cardId: { type: [string, 'null'], format: uuid }
+        billDueDate: { type: [string, 'null'], description: yyyy/MM/dd }
+        savingId: { type: [string, 'null'], format: uuid }
+        opening: { type: boolean, default: false }
+        notes: { type: [string, 'null'], maxLength: 4000 }
+    Movement:
+      allOf:
+        - { $ref: '#/components/schemas/MovementWrite' }
+        - type: object
+          required: [id, automatic, opening]
+          properties:
+            id: { type: [string, 'null'], format: uuid }
+            automatic: { type: boolean }
+    BalanceCheckpointWrite:
+      type: object
+      required: [date, balance]
+      properties:
+        date: { type: string, description: yyyy/MM/dd }
+        balance: { type: number }
+        preview: { type: boolean, default: false }
+    BalanceResult:
+      type: object
+      required: [date, computed, balance, difference, saved]
+      properties:
+        date: { type: string, description: yyyy/MM/dd }
+        computed: { type: number }
+        balance: { type: number }
+        difference: { type: number }
+        saved: { type: boolean }
+    BalanceCheckpoint:
+      type: object
+      required: [id, date, balance]
+      properties:
+        id: { type: string, format: uuid }
+        date: { type: string, description: yyyy/MM/dd }
+        balance: { type: number }
+    SavingValuationWrite:
+      type: object
+      required: [date, value]
+      properties:
+        date: { type: string, description: yyyy/MM/dd }
+        value: { type: number, minimum: 0 }
+    SavingValuation:
+      allOf:
+        - { $ref: '#/components/schemas/SavingValuationWrite' }
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
+    SavingHistory:
+      type: object
+      required: [movements, valuations]
+      properties:
+        movements:
+          { type: array, items: { $ref: '#/components/schemas/Movement' } }
+        valuations:
+          {
+            type: array,
+            items: { $ref: '#/components/schemas/SavingValuation' },
+          }
+    OverviewAccount:
+      type: object
+      required: [id, name, balance, balanceToday, balanceCheckpointDate]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        balance: { type: number }
+        balanceToday: { type: number }
+        balanceCheckpointDate:
+          { type: [string, 'null'], description: yyyy/MM/dd }
+    OverviewBill:
+      type: object
+      required: [cardId, card, dueDate, total, paymentAccount, automatic, paid]
+      properties:
+        cardId: { type: string, format: uuid }
+        card: { type: string }
+        dueDate: { type: string, description: yyyy/MM/dd }
+        total: { type: number }
+        paymentAccount:
+          anyOf: [{ $ref: '#/components/schemas/Account' }, { type: 'null' }]
+        automatic: { type: boolean }
+        paid: { type: boolean }
+    Unassigned:
+      type: object
+      required: [count, total]
+      properties:
+        count: { type: integer }
+        total: { type: number }
+    MonthOverview:
+      type: object
+      required:
+        [
+          month,
+          incomes,
+          expenses,
+          surplus,
+          invested,
+          kept,
+          accounts,
+          bills,
+          unassigned,
+        ]
+      properties:
+        month: { type: string, description: yyyy-MM }
+        incomes: { type: number }
+        expenses: { type: number }
+        surplus: { type: number }
+        invested: { type: number }
+        kept: { type: number }
+        accounts:
+          {
+            type: array,
+            items: { $ref: '#/components/schemas/OverviewAccount' },
+          }
+        bills:
+          { type: array, items: { $ref: '#/components/schemas/OverviewBill' } }
+        unassigned: { $ref: '#/components/schemas/Unassigned' }
+    Evolution:
+      type: object
+      required:
+        [
+          month,
+          incomes,
+          expenses,
+          surplus,
+          invested,
+          accounts,
+          savings,
+          debt,
+          netWorth,
+        ]
+      properties:
+        month: { type: string, description: yyyy-MM }
+        incomes: { type: number }
+        expenses: { type: number }
+        surplus: { type: number }
+        invested: { type: number }
+        accounts: { type: number }
+        savings: { type: number }
+        debt: { type: number }
+        netWorth: { type: number }

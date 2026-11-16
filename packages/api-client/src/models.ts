@@ -107,6 +107,8 @@ export const accountSchema = z.object({
   id: z.string(),
   name: z.string(),
   bank: z.enum(Bank),
+  balance: z.coerce.number().optional(),
+  balanceCheckpointDate: z.string().nullish(),
 });
 export type Account = z.infer<typeof accountSchema>;
 
@@ -116,6 +118,8 @@ export const cardSchema = z.object({
   bank: z.enum(Bank),
   closingDay: z.number(),
   dueDay: z.number(),
+  paymentAccount: accountSchema.nullish(),
+  fundingAccount: accountSchema.nullish(),
 });
 export type Card = z.infer<typeof cardSchema>;
 
@@ -164,6 +168,8 @@ export const savingSchema = z.object({
   location: z.enum(SavingLocation),
   investmentType: z.enum(InvestmentType).nullish(),
   updatedAt: z.string().nullish(),
+  invested: z.coerce.number().nullish(),
+  gain: z.coerce.number().nullish(),
 });
 
 export const roleSchema = z.object({
