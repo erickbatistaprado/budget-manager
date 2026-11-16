@@ -159,6 +159,7 @@ export type Category = {
     id: string;
     name: string;
     transactionType: TransactionType;
+    fixedCost?: boolean | null;
 };
 
 export type Installment = {
@@ -565,6 +566,10 @@ export type Goal = GoalDraft & {
     id: string;
     position: number;
     status: 'ACTIVE' | 'ACHIEVED' | 'CANCELLED';
+    achievedAt?: string | null;
+    expenseTransactionId?: string | null;
+    savedAtPurchase?: number | null;
+    actualPrice?: number | null;
 };
 
 export type GoalPosition = {
@@ -623,6 +628,59 @@ export type GoalPlan = {
      */
     reserved: number;
     goals: Array<GoalForecast>;
+};
+
+export type CategoryFixedCost = {
+    fixedCost?: boolean | null;
+};
+
+/**
+ * Preview writes nothing. Confirmation saves goal allocations only; create the investment remainder through POST /movements. Amount cannot exceed kept less this month's unsaved reservations. Omitted allocations use fixed contributions then waterfall; supplied allocations replace the default split.
+ */
+export type GoalSplitDraft = {
+    date: string;
+    amount: number;
+    fromAccountId?: string | null;
+    preview: boolean;
+    allocations?: {
+        [key: string]: number;
+    };
+};
+
+export type GoalSplit = {
+    goals: {
+        [key: string]: number;
+    };
+    investmentAmount: number;
+    saved: boolean;
+};
+
+export type GoalPurchaseDraft = {
+    price: number;
+    date: string;
+    categoryId: string;
+    paymentMethod: PaymentMethod;
+    cardId?: string | null;
+    accountId?: string | null;
+    installments?: number | null;
+    /**
+     * Destination for a linked saving when paying with cash or other. Card purchases always redeem into the main account.
+     */
+    redemptionAccountId?: string | null;
+};
+
+export type GoalSavingsTip = {
+    categoryId: string;
+    category: string;
+    amount: number;
+    average: number;
+    difference: number;
+    percentAbove: number | null;
+    goalId: string | null;
+    goalName: string | null;
+    expectedMonth: string | null;
+    improvedMonth: string | null;
+    monthsGained: number | null;
 };
 
 export type TransactionWritable = TransactionWrite & {
@@ -2093,6 +2151,119 @@ export type ChangeFinancingDueDayResponses = {
 };
 
 export type ChangeFinancingDueDayResponse = ChangeFinancingDueDayResponses[keyof ChangeFinancingDueDayResponses];
+
+export type SplitGoalsData = {
+    body: GoalSplitDraft;
+    path?: never;
+    query?: never;
+    url: '/goals/allocate';
+};
+
+export type SplitGoalsErrors = {
+    /**
+     * Invalid request
+     */
+    400: unknown;
+    /**
+     * Not found
+     */
+    404: unknown;
+};
+
+export type SplitGoalsResponses = {
+    /**
+     * OK
+     */
+    200: GoalSplit;
+};
+
+export type SplitGoalsResponse = SplitGoalsResponses[keyof SplitGoalsResponses];
+
+export type PurchaseGoalData = {
+    body: GoalPurchaseDraft;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/goals/{id}/purchase';
+};
+
+export type PurchaseGoalErrors = {
+    /**
+     * Invalid request
+     */
+    400: unknown;
+    /**
+     * Not found
+     */
+    404: unknown;
+};
+
+export type PurchaseGoalResponses = {
+    /**
+     * OK
+     */
+    200: Goal;
+};
+
+export type PurchaseGoalResponse = PurchaseGoalResponses[keyof PurchaseGoalResponses];
+
+export type SetCategoryFixedCostData = {
+    body: CategoryFixedCost;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/categories/{id}/fixed-cost';
+};
+
+export type SetCategoryFixedCostErrors = {
+    /**
+     * Invalid request
+     */
+    400: unknown;
+    /**
+     * Not found
+     */
+    404: unknown;
+};
+
+export type SetCategoryFixedCostResponses = {
+    /**
+     * OK
+     */
+    200: Category;
+};
+
+export type SetCategoryFixedCostResponse = SetCategoryFixedCostResponses[keyof SetCategoryFixedCostResponses];
+
+export type GetGoalSavingsTipsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Defaults to the last complete month; average uses the six preceding months.
+         */
+        month?: string;
+    };
+    url: '/goals/savings-tips';
+};
+
+export type GetGoalSavingsTipsErrors = {
+    /**
+     * Invalid request
+     */
+    400: unknown;
+};
+
+export type GetGoalSavingsTipsResponses = {
+    /**
+     * Top three controllable categories ordered by difference above average. Percent is null for a zero baseline; monthsGained is null outside the projection horizon.
+     */
+    200: Array<GoalSavingsTip>;
+};
+
+export type GetGoalSavingsTipsResponse = GetGoalSavingsTipsResponses[keyof GetGoalSavingsTipsResponses];
 
 export type ListGoalsData = {
     body?: never;

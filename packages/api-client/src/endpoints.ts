@@ -1,10 +1,20 @@
-import { goalSchema, goalAllocationSchema, goalPlanSchema } from './goals';
+import {
+  goalSchema,
+  goalAllocationSchema,
+  goalPlanSchema,
+  goalSplitSchema,
+  goalSavingsTipSchema,
+} from './goals';
 import type {
   Goal,
   GoalDraft,
   GoalAllocation,
   GoalAllocationDraft,
   GoalPlan,
+  GoalSplit,
+  GoalSplitDraft,
+  GoalPurchaseDraft,
+  GoalSavingsTip,
 } from './goals';
 import {
   movementSchema,
@@ -101,6 +111,34 @@ export class BudgetManagerApi {
       goalAllocationSchema,
       { method: 'POST', body: draft }
     );
+  }
+  splitGoals(draft: GoalSplitDraft): Promise<GoalSplit> {
+    return this.client.request('/goals/allocate', goalSplitSchema, {
+      method: 'POST',
+      body: draft,
+    });
+  }
+  purchaseGoal(id: string, draft: GoalPurchaseDraft): Promise<Goal> {
+    return this.client.request(`/goals/${id}/purchase`, goalSchema, {
+      method: 'POST',
+      body: draft,
+    });
+  }
+  goalSavingsTips(month?: string): Promise<GoalSavingsTip[]> {
+    const query = month ? `?month=${encodeURIComponent(month)}` : '';
+    return this.client.request(
+      `/goals/savings-tips${query}`,
+      z.array(goalSavingsTipSchema)
+    );
+  }
+  setCategoryFixedCost(
+    id: string,
+    fixedCost: boolean | null
+  ): Promise<import('./models').Category> {
+    return this.client.request(`/categories/${id}/fixed-cost`, categorySchema, {
+      method: 'PUT',
+      body: { fixedCost },
+    });
   }
   goalPlan(): Promise<GoalPlan> {
     return this.client.request('/goals/plan', goalPlanSchema);

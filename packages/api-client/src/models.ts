@@ -98,6 +98,7 @@ export enum UserRole {
 }
 
 export const categorySchema = z.object({
+  fixedCost: z.boolean().nullish(),
   id: z.string(),
   name: z.string(),
   transactionType: z.enum(TransactionType),

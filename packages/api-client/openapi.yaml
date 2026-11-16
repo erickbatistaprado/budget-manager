@@ -1269,6 +1269,85 @@ paths:
             ],
         },
     }
+  /goals/allocate:
+    post:
+      operationId: splitGoals
+      tags: [Goals]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoalSplitDraft' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GoalSplit' }
+        '400': { description: Invalid request }
+        '404': { description: Not found }
+  /goals/{id}/purchase:
+    post:
+      operationId: purchaseGoal
+      tags: [Goals]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoalPurchaseDraft' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Goal' }
+        '400': { description: Invalid request }
+        '404': { description: Not found }
+  /categories/{id}/fixed-cost:
+    put:
+      operationId: setCategoryFixedCost
+      tags: [Goals]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryFixedCost' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Category' }
+        '400': { description: Invalid request }
+        '404': { description: Not found }
+  /goals/savings-tips:
+    get:
+      operationId: getGoalSavingsTips
+      tags: [Goals]
+      parameters:
+        - name: month
+          in: query
+          description: Defaults to the last complete month; average uses the six preceding months.
+          schema: { type: string, pattern: '^\d{4}-\d{2}$' }
+      responses:
+        '200':
+          description: Top three controllable categories ordered by difference above average. Percent is null for a zero baseline; monthsGained is null outside the projection horizon.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/GoalSavingsTip' }
+        '400': { description: Invalid request }
   /goals:
     get:
       operationId: listGoals
@@ -1705,6 +1784,7 @@ components:
           id: { type: string, format: uuid },
           name: { type: string },
           transactionType: { $ref: '#/components/schemas/TransactionType' },
+          fixedCost: { type: ['boolean', 'null'] },
         }
     Installment:
       type: object
@@ -2284,6 +2364,11 @@ components:
             id: { type: string, format: uuid }
             position: { type: integer, minimum: 1 }
             status: { type: string, enum: [ACTIVE, ACHIEVED, CANCELLED] }
+            achievedAt:
+              { type: ['string', 'null'], pattern: '^\d{4}/\d{2}/\d{2}$' }
+            expenseTransactionId: { type: ['string', 'null'], format: uuid }
+            savedAtPurchase: { type: ['number', 'null'] }
+            actualPrice: { type: ['number', 'null'] }
     GoalPosition:
       type: object
       required: [position]
@@ -2370,3 +2455,73 @@ components:
           }
         goals:
           { type: array, items: { $ref: '#/components/schemas/GoalForecast' } }
+    CategoryFixedCost:
+      type: object
+      properties:
+        fixedCost: { type: ['boolean', 'null'] }
+    GoalSplitDraft:
+      type: object
+      required: [date, amount, preview]
+      description: Preview writes nothing. Confirmation saves goal allocations only; create the investment remainder through POST /movements. Amount cannot exceed kept less this month's unsaved reservations. Omitted allocations use fixed contributions then waterfall; supplied allocations replace the default split.
+      properties:
+        date: { type: string, pattern: '^\d{4}/\d{2}/\d{2}$' }
+        amount: { type: number, exclusiveMinimum: 0, multipleOf: 0.01 }
+        fromAccountId: { type: ['string', 'null'], format: uuid }
+        preview: { type: boolean }
+        allocations:
+          type: object
+          additionalProperties: { type: number, minimum: 0, multipleOf: 0.01 }
+    GoalSplit:
+      type: object
+      required: [goals, investmentAmount, saved]
+      properties:
+        goals:
+          type: object
+          additionalProperties: { type: number }
+        investmentAmount: { type: number }
+        saved: { type: boolean }
+    GoalPurchaseDraft:
+      type: object
+      required: [price, date, categoryId, paymentMethod]
+      properties:
+        price: { type: number, exclusiveMinimum: 0, multipleOf: 0.01 }
+        date: { type: string, pattern: '^\d{4}/\d{2}/\d{2}$' }
+        categoryId: { type: string, format: uuid }
+        paymentMethod: { $ref: '#/components/schemas/PaymentMethod' }
+        cardId: { type: ['string', 'null'], format: uuid }
+        accountId: { type: ['string', 'null'], format: uuid }
+        installments: { type: ['integer', 'null'], minimum: 2, maximum: 500 }
+        redemptionAccountId:
+          {
+            type: ['string', 'null'],
+            format: uuid,
+            description: Destination for a linked saving when paying with cash or other. Card purchases always redeem into the main account.,
+          }
+    GoalSavingsTip:
+      type: object
+      required:
+        [
+          categoryId,
+          category,
+          amount,
+          average,
+          difference,
+          percentAbove,
+          goalId,
+          goalName,
+          expectedMonth,
+          improvedMonth,
+          monthsGained,
+        ]
+      properties:
+        categoryId: { type: string, format: uuid }
+        category: { type: string }
+        amount: { type: number }
+        average: { type: number }
+        difference: { type: number }
+        percentAbove: { type: ['number', 'null'] }
+        goalId: { type: ['string', 'null'], format: uuid }
+        goalName: { type: ['string', 'null'] }
+        expectedMonth: { type: ['string', 'null'], pattern: '^\d{4}-\d{2}$' }
+        improvedMonth: { type: ['string', 'null'], pattern: '^\d{4}-\d{2}$' }
+        monthsGained: { type: ['integer', 'null'], minimum: 0 }
