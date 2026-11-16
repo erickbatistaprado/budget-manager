@@ -1,4 +1,12 @@
 'use client';
+import {
+  DismissOverlay,
+  Button,
+  IconButton,
+  Panel,
+  Badge,
+  EntryRow,
+} from '@/components/ui';
 import Link from 'next/link';
 
 import { InstallmentPrepayment, Money, NewTransaction } from '@/components';
@@ -18,25 +26,21 @@ import {
   installmentsInMonth,
 } from '@/utils/installments.util';
 import { monthlyOccurrence, monthKey } from '@/utils/monthlyTransaction.util';
-import clsx from 'clsx';
 import { useMemo, useState, type JSX } from 'react';
 import { BiEdit } from 'react-icons/bi';
 import { FcFullTrash } from 'react-icons/fc';
 import { FiFastForward } from 'react-icons/fi';
 
 export interface FinancialMovementsProps {
+  table?: boolean;
   transaction: Transaction;
   selectedDate: Date;
 }
 
-const dangerButton =
-  'cursor-pointer rounded bg-[var(--ctp-red)]/25 px-2 py-1 text-xs font-semibold whitespace-nowrap text-[var(--ctp-red)] disabled:opacity-50';
-const cancelButton =
-  'cursor-pointer rounded bg-[var(--ctp-surface1)] px-2 py-1 text-xs font-semibold whitespace-nowrap text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)] disabled:opacity-50';
-
 export default function FinancialMovements({
   transaction,
   selectedDate,
+  table = false,
 }: Readonly<FinancialMovementsProps>): JSX.Element {
   const { language, t } = useI18n();
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
@@ -128,191 +132,197 @@ export default function FinancialMovements({
     return <></>;
   }
 
+  const Container = table ? 'tbody' : 'div';
+  const ExtraRow = table ? 'tr' : 'div';
+  const ExtraCell = table ? 'td' : 'div';
   return (
-    <div className="grid grid-cols-4 border-b-2 border-[var(--ctp-surface1)] text-lg">
-      {isEditOpen && (
-        <button
-          className="fixed inset-0 z-40 bg-[var(--ctp-crust)]/25 backdrop-blur-xs transition-opacity"
-          onClick={onEditOrClose}
-        />
-      )}
-      <div className="flex items-center justify-start gap-2">
-        <button
-          type="button"
-          disabled={Boolean(transaction.financingId)}
-          aria-label={t.transactions.editAriaLabel}
-          onClick={onEditOrClose}
-        >
-          <BiEdit
-            className="cursor-pointer text-[var(--ctp-subtext1)] transition-colors duration-500 hover:text-[var(--ctp-subtext0)]"
-            size={22}
-          />
-        </button>
-        <span className="truncate">
-          {transaction.category.name}{' '}
-          {describeInstallments(transaction, selectedDate)}
-          {occurrence?.changed && (
-            <span className="ml-1 text-xs text-[var(--ctp-subtext0)]">
-              {t.transactions.changedThisMonth}
-            </span>
-          )}
-          {paidEarlyThisMonth && (
-            <span className="ml-1 rounded bg-[var(--ctp-green)]/15 px-1 text-xs text-[var(--ctp-green)]">
-              {t.transactions.paidEarly}
-            </span>
-          )}
-        </span>
-        {Boolean(transaction.installmentNumbers) &&
-          !transaction.financingId && (
-            <button
-              type="button"
-              aria-label={t.transactions.payInstallmentsEarly}
-              title={t.transactions.payInstallmentsEarly}
-              onClick={(): void => setIsPrepaying(!isPrepaying)}
-              className="cursor-pointer text-[var(--ctp-subtext1)] transition-colors hover:text-[var(--ctp-blue)]"
+    <Container className="min-w-0">
+      <EntryRow
+        table={table}
+        icon={transaction.category.transactionType === 'INCOME' ? '↗' : '↙'}
+        description={
+          transaction.financingId ? (
+            <Link
+              className="underline"
+              href={`/financings/${transaction.financingId}`}
             >
-              <FiFastForward size={18} />
-            </button>
-          )}
-      </div>
-      <div className="truncate">
-        {transaction.financingId ? (
-          <Link
-            className="underline"
-            href={`/financings/${transaction.financingId}`}
-          >
-            {transaction.notes || t.financing.title}
-          </Link>
-        ) : (
-          displayedNotes
-        )}
-      </div>
-      <div className="truncate">
-        {getDate()}
-        <span className="ml-1 text-xs text-[var(--ctp-subtext0)]">
-          {paymentLabel(transaction, t.payments.methods)}
-        </span>
-        {transaction.billDueDate && (
-          <span className="ml-1 rounded bg-[var(--ctp-blue)]/15 px-1 text-xs">
-            {t.cards.billMonth(
-              parseApiDate(transaction.billDueDate)
-                .toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
-                  month: 'short',
-                })
-                .replace('.', '')
+              {transaction.notes || t.financing.title}
+            </Link>
+          ) : (
+            displayedNotes || transaction.category.name
+          )
+        }
+        detail={
+          <>
+            {transaction.category.name}{' '}
+            {describeInstallments(transaction, selectedDate)}
+            {occurrence?.changed && (
+              <span className="ml-1 text-xs">
+                {t.transactions.changedThisMonth}
+              </span>
             )}
-          </span>
-        )}
-        {transaction.card && transaction.installmentNumbers && (
-          <span className="block text-xs">
-            {formatDate(transaction.date, language)}
-          </span>
-        )}
-      </div>
-      <div className="flex items-center justify-end gap-1">
-        <Money className="truncate" value={calculateInstallmentAmount} />
-        {errorMessage && (
-          <span className="truncate text-xs text-[var(--ctp-red)]">
-            {errorMessage}
-          </span>
-        )}
-        {!isConfirmingDelete && !transaction.financingId && (
-          <button
-            aria-label={t.transactions.deleteAriaLabel}
-            className="cursor-pointer"
-            disabled={isDeleting}
-            onClick={(): void => {
-              void deleteTransaction();
-            }}
-            type="button"
-          >
-            <FcFullTrash size={22} />
-          </button>
-        )}
-      </div>
-      {isConfirmingDelete && (
-        <div className="col-span-4 mb-2 flex flex-wrap items-center justify-between gap-3 rounded-md bg-[var(--ctp-surface0)] px-3 py-2 text-sm">
-          <div className="min-w-0">
-            <p className="font-semibold">
-              {t.transactions.deleteTitle(
-                transaction.notes || transaction.category.name
+            {paidEarlyThisMonth && <Badge>{t.transactions.paidEarly}</Badge>}
+          </>
+        }
+        date={
+          <>
+            {getDate()}
+            <span className="block text-xs text-[var(--ctp-subtext0)]">
+              {paymentLabel(transaction, t.payments.methods)}
+            </span>
+            {transaction.billDueDate && (
+              <Badge>
+                {t.cards.billMonth(
+                  parseApiDate(transaction.billDueDate)
+                    .toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US', {
+                      month: 'short',
+                    })
+                    .replace('.', '')
+                )}
+              </Badge>
+            )}
+            {transaction.card && transaction.installmentNumbers && (
+              <span className="block text-xs">
+                {formatDate(transaction.date, language)}
+              </span>
+            )}
+          </>
+        }
+        amount={<Money value={calculateInstallmentAmount} />}
+        actions={
+          <>
+            <IconButton
+              variant="ghost"
+              disabled={Boolean(transaction.financingId)}
+              aria-label={t.transactions.editAriaLabel}
+              onClick={onEditOrClose}
+            >
+              <BiEdit size={20} />
+            </IconButton>
+            {Boolean(transaction.installmentNumbers) &&
+              !transaction.financingId && (
+                <IconButton
+                  variant="ghost"
+                  aria-label={t.transactions.payInstallmentsEarly}
+                  onClick={(): void => setIsPrepaying(!isPrepaying)}
+                >
+                  <FiFastForward size={18} />
+                </IconButton>
               )}
-            </p>
-            {monthly && (
-              <p className="text-xs text-[var(--ctp-subtext0)]">
-                {t.transactions.earlierUnchanged}
+            {!isConfirmingDelete && !transaction.financingId && (
+              <IconButton
+                variant="ghost"
+                aria-label={t.transactions.deleteAriaLabel}
+                disabled={isDeleting}
+                onClick={(): void => {
+                  void deleteTransaction();
+                }}
+              >
+                <FcFullTrash size={20} />
+              </IconButton>
+            )}
+          </>
+        }
+      />
+      {(isEditOpen ||
+        isConfirmingDelete ||
+        Boolean(errorMessage) ||
+        isPrepaying) && (
+        <ExtraRow>
+          <ExtraCell colSpan={table ? 5 : undefined}>
+            {isEditOpen && (
+              <DismissOverlay
+                aria-label={t.common.cancel}
+
+                onClick={onEditOrClose}
+              />
+            )}
+            {errorMessage && (
+              <p role="alert" className="text-xs text-[var(--ctp-red)]">
+                {errorMessage}
               </p>
             )}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {isDeleting && <span className="text-xs">{t.common.deleting}</span>}
-            {!isDeleting && !monthly && (
-              <button
-                className={dangerButton}
-                onClick={(): void => {
-                  void deleteTransaction('month');
-                }}
-                type="button"
-              >
-                {t.common.delete}
-              </button>
+            {isConfirmingDelete && (
+              <Panel className="col-span-2 mb-2 flex flex-wrap items-center justify-between gap-3 px-3 py-2 text-sm sm:col-span-4">
+                <div className="min-w-0">
+                  <p className="font-semibold">
+                    {t.transactions.deleteTitle(
+                      transaction.notes || transaction.category.name
+                    )}
+                  </p>
+                  {monthly && (
+                    <p className="text-xs text-[var(--ctp-subtext0)]">
+                      {t.transactions.earlierUnchanged}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {isDeleting && (
+                    <span className="text-xs">{t.common.deleting}</span>
+                  )}
+                  {!isDeleting && !monthly && (
+                    <Button
+                      variant="danger"
+                      onClick={(): void => {
+                        void deleteTransaction('month');
+                      }}
+                      type="button"
+                    >
+                      {t.common.delete}
+                    </Button>
+                  )}
+                  {!isDeleting && monthly && (
+                    <>
+                      <Button
+                        variant="danger"
+                        onClick={(): void => {
+                          void deleteTransaction('month');
+                        }}
+                        type="button"
+                      >
+                        {t.transactions.onlyMonth(monthLabel)}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={(): void => {
+                          void deleteTransaction('following');
+                        }}
+                        type="button"
+                      >
+                        {t.transactions.fromMonth(monthLabel)}
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    variant="secondary"
+                    disabled={isDeleting}
+                    onClick={(): void => setIsConfirmingDelete(false)}
+                    type="button"
+                  >
+                    {t.common.cancel}
+                  </Button>
+                </div>
+              </Panel>
             )}
-            {!isDeleting && monthly && (
-              <>
-                <button
-                  className={dangerButton}
-                  onClick={(): void => {
-                    void deleteTransaction('month');
-                  }}
-                  type="button"
-                >
-                  {t.transactions.onlyMonth(monthLabel)}
-                </button>
-                <button
-                  className={dangerButton}
-                  onClick={(): void => {
-                    void deleteTransaction('following');
-                  }}
-                  type="button"
-                >
-                  {t.transactions.fromMonth(monthLabel)}
-                </button>
-              </>
+            {isEditOpen && (
+              <div className="fixed top-0 right-0 z-50 h-full w-full max-w-[500px] overflow-y-auto bg-[var(--ctp-mantle)] shadow-lg">
+                <NewTransaction
+                  onClose={onEditOrClose}
+                  transaction={transaction}
+                  selectedDate={selectedDate}
+                />
+              </div>
             )}
-            <button
-              className={cancelButton}
-              disabled={isDeleting}
-              onClick={(): void => setIsConfirmingDelete(false)}
-              type="button"
-            >
-              {t.common.cancel}
-            </button>
-          </div>
-        </div>
+            {isPrepaying && (
+              <InstallmentPrepayment
+                transaction={transaction}
+                onChanged={refreshTransactions}
+                onClose={(): void => setIsPrepaying(false)}
+              />
+            )}
+          </ExtraCell>
+        </ExtraRow>
       )}
-      <div
-        className={clsx(
-          'fixed top-0 right-0 z-50 h-full w-[400px] transform bg-[var(--ctp-mantle)] shadow-lg transition-transform duration-300 md:w-[500px]',
-          isEditOpen
-            ? 'pointer-events-auto translate-x-0'
-            : 'pointer-events-none translate-x-full'
-        )}
-      >
-        {isEditOpen && (
-          <NewTransaction
-            onClose={onEditOrClose}
-            transaction={transaction}
-            selectedDate={selectedDate}
-          />
-        )}
-      </div>
-      {isPrepaying && (
-        <InstallmentPrepayment
-          transaction={transaction}
-          onChanged={refreshTransactions}
-          onClose={(): void => setIsPrepaying(false)}
-        />
-      )}
-    </div>
+    </Container>
   );
 }

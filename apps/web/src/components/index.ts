@@ -3,8 +3,6 @@ export { default as BalanceBarChart } from '@/components/BalanceBarChart/Balance
 export { default as BalancePieChart } from '@/components/BalancePieChart/BalancePieChart.component';
 export { default as Body } from '@/components/Body/Body.component';
 export { default as Charts } from '@/components/Charts/Charts.component';
-export { default as DatePickerCustomButton } from '@/components/DatePickerCustomButton/DatePickerCustomButton.component';
-export { default as DatePickerDialog } from '@/components/DatePickerDialog/DatePickerDialog.component';
 export { default as FinancialMovements } from '@/components/FinancialMovements/FinancialMovements.component';
 export { default as Header } from '@/components/Header/Header.component';
 export { default as HeaderCell } from '@/components/HeaderCell/HeaderCell.component';
@@ -19,5 +17,25 @@ export { default as SelectWithTooltip } from '@/components/SelectWithTooltip/Sel
 export { default as SideMenu } from '@/components/SideMenu/SideMenu.component';
 export { default as Tooltip } from '@/components/Tooltip/Tooltip.component';
 export { default as Transactions } from '@/components/Transactions/Transactions.component';
-export { default as ThemeSwitcher } from '@/components/ThemeSwitcher/ThemeSwitcher.component';
 export { default as LanguageSwitcher } from '@/components/LanguageSwitcher/LanguageSwitcher.component';
+export {
+  Button,
+  DismissOverlay,
+  IconButton,
+  Field,
+  TextInput,
+  NumberInput,
+  Select,
+  Checkbox,
+  Panel,
+  Badge,
+} from './ui';
+export type {
+  ButtonProps,
+  DismissOverlayProps,
+  IconButtonProps,
+  FieldProps,
+  SelectProps,
+  CheckboxProps,
+  PanelProps,
+} from './ui';

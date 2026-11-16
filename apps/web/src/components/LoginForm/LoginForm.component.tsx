@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui';
 import { Input } from '@/components';
 import { useI18n } from '@/i18n/useI18n';
 import { authenticationService, userService } from '@/services';
@@ -134,27 +135,22 @@ export default function LoginForm(): JSX.Element {
         )}
       </div>
       <div className="mt-8">
-        <button
-          className={clsx(
-            'h-12 w-full rounded-md text-lg font-bold transition-all duration-300',
-            password.length && !isSubmitting
-              ? 'cursor-pointer bg-[var(--ctp-blue)] text-[var(--ctp-crust)] hover:bg-[var(--ctp-lavender)]'
-              : 'cursor-not-allowed bg-[var(--ctp-surface1)] text-[var(--ctp-subtext0)]'
-          )}
+        <Button
+          className="w-full"
+          variant="primary"
+          size="lg"
+          fullWidth
           disabled={!password.length || isSubmitting}
           onClick={onClick}
         >
           {isSubmitting ? t.auth.pleaseWait : submitLabel}
-        </button>
+        </Button>
       </div>
       <p className="mt-6 text-center text-[var(--ctp-subtext1)]">
         {variant === 'login' ? t.auth.noAccount : t.auth.haveAccount}
-        <button
-          className="ml-1 cursor-pointer font-semibold text-[var(--ctp-blue)] hover:underline"
-          onClick={toggleVariant}
-        >
+        <Button variant="ghost" className="ml-1" onClick={toggleVariant}>
           {variant === 'login' ? t.auth.signUp : t.auth.signIn}
-        </button>
+        </Button>
       </p>
     </>
   );

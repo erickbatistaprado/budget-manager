@@ -29,7 +29,7 @@ it.each<Language>(['en', 'pt'])(
       target: { value: '5000' },
     });
     fireEvent.change(screen.getByLabelText(texts.date), {
-      target: { value: '2026-11-28' },
+      target: { value: language === 'pt' ? '28/11/2026' : '11/28/2026' },
     });
     fireEvent.click(screen.getByRole('button', { name: texts.simulate }));
     await screen.findByText(texts.REDUCE_TERM);

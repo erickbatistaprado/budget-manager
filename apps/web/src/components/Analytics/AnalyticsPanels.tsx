@@ -1,3 +1,4 @@
+import { Panel } from '@/components/ui';
 import { useI18n } from '@/i18n/useI18n';
 import {
   formatPercent,
@@ -17,13 +18,13 @@ export function AnalyticsCard({
   note?: string;
 }): JSX.Element {
   return (
-    <section className="min-w-0 rounded-2xl border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-5 shadow-sm">
+    <Panel as="section" className="min-w-0">
       <h2 className="mb-4 font-semibold text-[var(--ctp-text)]">{title}</h2>
       {note && (
         <p className="mb-4 text-sm text-[var(--ctp-subtext1)]">{note}</p>
       )}
       {children}
-    </section>
+    </Panel>
   );
 }
 
@@ -38,7 +39,17 @@ export function EmptyState({
   );
 }
 
-export function RankedList({ items }: { items: RankedAmount[] }): JSX.Element {
+/**
+ * Amounts ranked with their share. With `scrollLabel`, a long list scrolls inside a fixed height
+ * region (keyboard focusable, named by the label) instead of growing the card.
+ */
+export function RankedList({
+  items,
+  scrollLabel,
+}: {
+  items: RankedAmount[];
+  scrollLabel?: string;
+}): JSX.Element {
   const { language } = useI18n();
   const numberLocale = language === 'pt' ? 'pt-BR' : 'en-US';
 
@@ -46,7 +57,7 @@ export function RankedList({ items }: { items: RankedAmount[] }): JSX.Element {
     return <EmptyState />;
   }
 
-  return (
+  const list: JSX.Element = (
     <ol className="space-y-4">
       {items.map((item, index): JSX.Element => (
         <li key={item.label}>
@@ -73,6 +84,21 @@ export function RankedList({ items }: { items: RankedAmount[] }): JSX.Element {
         </li>
       ))}
     </ol>
+  );
+
+  if (!scrollLabel) {
+    return list;
+  }
+
+  return (
+    <div
+      role="region"
+      aria-label={scrollLabel}
+      tabIndex={0}
+      className="max-h-80 overflow-y-auto pr-2 focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--ctp-blue)] focus-visible:outline-none"
+    >
+      {list}
+    </div>
   );
 }
 
@@ -139,7 +165,7 @@ export function BudgetPanel({
           </div>
         </div>
       )}
-      <div className="mt-5 rounded-xl bg-[var(--ctp-surface0)] p-4">
+      <Panel className="mt-5">
         <p className="text-sm text-[var(--ctp-subtext1)]">
           {next ? messages.free : messages.left}
         </p>
@@ -160,7 +186,7 @@ export function BudgetPanel({
             {messages.remaining}: {budget.days}
           </p>
         )}
-      </div>
+      </Panel>
     </AnalyticsCard>
   );
 }

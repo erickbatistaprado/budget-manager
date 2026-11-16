@@ -5,7 +5,7 @@ import type { JSX } from 'react';
 import type { Financing } from '@budget-manager/api-client';
 import { getFetcher } from '@/libs/fetchers.lib';
 import { useI18n } from '@/i18n/useI18n';
-import { button, panel } from '@/components/Financing/styles';
+import { buttonClassName, panelStyle } from '@/components/ui/styles';
 import { parseApiDate } from '@/utils/globalFormats.util';
 import { financingSummary } from '@/utils/financing.util';
 export default function FinancingsPage(): JSX.Element {
@@ -18,7 +18,7 @@ export default function FinancingsPage(): JSX.Element {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
       <h1 className="text-xl font-semibold">{t.financing.title}</h1>
-      <Link className={button} href="/financings/new">
+      <Link className={buttonClassName()} href="/financings/new">
         {t.financing.newContract}
       </Link>
       {error && <p role="alert">{t.financing.error}</p>}
@@ -32,7 +32,7 @@ export default function FinancingsPage(): JSX.Element {
         );
         return (
           <Link
-            className={panel}
+            className={panelStyle}
             key={financing.id}
             href={`/financings/${financing.id}`}
           >

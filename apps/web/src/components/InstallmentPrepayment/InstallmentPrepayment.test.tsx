@@ -64,7 +64,7 @@ describe('InstallmentPrepayment', (): void => {
 
     fireEvent.click(screen.getByRole('checkbox', { name: /2\/3/ }));
     fireEvent.change(screen.getByLabelText('Paid on'), {
-      target: { value: '2026-01-25' },
+      target: { value: '01/25/2026' },
     });
     fireEvent.click(screen.getByRole('button', { name: /pay 1 early/i }));
 

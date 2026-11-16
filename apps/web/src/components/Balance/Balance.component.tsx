@@ -1,6 +1,8 @@
 'use client';
 
-import { DatePickerDialog, Money } from '@/components';
+import { MonthSwitcher, Panel } from '@/components/ui';
+
+import { Money } from '@/components';
 import { useI18n } from '@/i18n/useI18n';
 import type { Transaction } from '@/types';
 import { amountInMonth } from '@/utils/installments.util';
@@ -43,7 +45,7 @@ export default function Balance({
   );
 
   return (
-    <div className="flex w-full cursor-default flex-col justify-between gap-2 rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-2 shadow-md">
+    <Panel className="flex w-full cursor-default flex-col justify-between gap-2 shadow-md">
       <div className="flex w-full justify-between">
         <div>
           <span className="text-2xl">{t.home.total}</span>
@@ -53,13 +55,7 @@ export default function Balance({
           />
         </div>
         <div className="flex items-center">
-          <DatePickerDialog
-            date={date}
-            setDate={setDate}
-            dateFormat="MMMM/yyyy"
-            showMonthYearPicker
-            arrows
-          />
+          <MonthSwitcher value={date} onChange={setDate} />
         </div>
       </div>
       <div className="flex justify-between text-sm">
@@ -80,6 +76,6 @@ export default function Balance({
           </div>
         </div>
       </div>
-    </div>
+    </Panel>
   );
 }

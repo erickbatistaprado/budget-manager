@@ -1,10 +1,20 @@
 'use client';
+
+import {
+  Panel,
+  TextInput,
+  Button,
+  Field,
+  DateField,
+  parseFieldDate,
+  formatFieldDate,
+} from '@/components/ui';
 import { useState, type JSX } from 'react';
 import type { FinancingSimulation } from '@budget-manager/api-client';
 import { postFetcher } from '@/libs/fetchers.lib';
 import { useI18n } from '@/i18n/useI18n';
 import { getApiDate } from '@/utils/globalFormats.util';
-import { field, button, panel } from './styles';
+
 interface Props {
   id: string;
   onClose: () => void;
@@ -54,19 +64,18 @@ export default function ExtraPaymentDialog({
   }
   return (
     <div className="fixed inset-0 z-50 overflow-auto bg-black/60 p-4">
-      <section
+      <Panel
         role="dialog"
         aria-modal="true"
         aria-labelledby="extra-title"
-        className={`${panel} mx-auto flex max-w-2xl flex-col gap-4`}
+        className="mx-auto flex max-w-2xl flex-col gap-4"
       >
         <h2 id="extra-title">{t.financing.extra}</h2>
-        <label className="flex flex-col gap-1">
-          {t.financing.adjustmentAmount}
-          <input
+        <Field label={t.financing.adjustmentAmount}>
+          <TextInput
             autoFocus
             disabled={busy}
-            className={field}
+
             type="number"
             min="0.01"
             step="0.01"
@@ -76,34 +85,33 @@ export default function ExtraPaymentDialog({
               setResults(undefined);
             }}
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          {t.financing.date}
-          <input
+        </Field>
+        <Field label={t.financing.date}>
+          <DateField
             disabled={busy}
-            className={field}
-            type="date"
-            value={date}
-            onChange={(event): void => {
-              setDate(event.currentTarget.value);
+
+            value={parseFieldDate(date)}
+            onChange={(pickedDate): void => {
+              setDate(formatFieldDate(pickedDate));
               setResults(undefined);
             }}
           />
-        </label>
-        <button
-          className={button}
+        </Field>
+        <Button
+          variant="secondary"
           disabled={busy || Number(amount) <= 0}
           onClick={(): void => {
             void submit();
           }}
         >
           {t.financing.simulate}
-        </button>
+        </Button>
         {error && <p role="alert">{t.financing.error}</p>}
         <div className="grid gap-3 sm:grid-cols-2">
           {results?.map((result): JSX.Element => (
-            <section
-              className="rounded border border-[var(--ctp-surface2)] p-3"
+            <Panel
+              as="section"
+
               key={result.option}
             >
               <h3>{t.financing[result.option]}</h3>
@@ -121,22 +129,22 @@ export default function ExtraPaymentDialog({
               <p>
                 {t.financing.savings}: {money.format(result.interestSaved)}
               </p>
-              <button
-                className={button}
+              <Button
+                variant="secondary"
                 disabled={busy}
                 onClick={(): void => {
                   void submit(result.option);
                 }}
               >
                 {t.financing.confirm}
-              </button>
-            </section>
+              </Button>
+            </Panel>
           ))}
         </div>
-        <button className={button} disabled={busy} onClick={onClose}>
+        <Button variant="secondary" disabled={busy} onClick={onClose}>
           {t.financing.cancel}
-        </button>
-      </section>
+        </Button>
+      </Panel>
     </div>
   );
 }

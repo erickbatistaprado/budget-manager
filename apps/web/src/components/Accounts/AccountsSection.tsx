@@ -1,5 +1,6 @@
 'use client';
 
+import { Panel, TextInput, Button, Field } from '@/components/ui';
 import { refreshMoneyFlow } from '@/libs/moneyFlowCache.lib';
 import BalanceAdjust from '@/components/MoneyFlow/BalanceAdjust';
 import { formatBRL } from '@/utils/analytics.util';
@@ -10,10 +11,6 @@ import { deleteFetcher, postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import { Bank, type Account } from '@budget-manager/api-client';
 import { BankSelect, BankBadge } from '@/components/Bank/Bank';
 import { useState, type FormEvent, type JSX } from 'react';
-
-const field =
-  'rounded border border-[var(--ctp-surface2)] bg-[var(--ctp-base)] p-2';
-const button = 'rounded bg-[var(--ctp-surface1)] px-3 py-2 disabled:opacity-50';
 
 export default function AccountsSection(): JSX.Element {
   const { t, language } = useI18n();
@@ -83,43 +80,43 @@ export default function AccountsSection(): JSX.Element {
   return (
     <section className="flex w-full flex-col gap-5">
       <h2 className="text-xl font-semibold">{t.payments.accounts}</h2>
-      <form
+      <Panel
+        as="form"
         onSubmit={save}
         noValidate
-        className="flex flex-wrap items-end gap-3 rounded bg-[var(--ctp-surface0)] p-4"
+        className="grid grid-cols-1 items-end gap-3 sm:grid-cols-4"
       >
-        <label className="flex flex-col gap-1">
-          {t.common.name}
-          <input
-            className={field}
+        <Field label={t.common.name} className="sm:col-span-2">
+          <TextInput
             value={name}
             maxLength={255}
             onChange={(event): void => setName(event.currentTarget.value)}
           />
-        </label>
+        </Field>
         <BankSelect bank={bank} onChange={setBank} />
-        <button className={button} disabled={busy} type="submit">
+        <Button variant="primary" size="lg" disabled={busy} type="submit">
           {editing ? t.common.save : t.payments.addAccount}
-        </button>
+        </Button>
         {editing && (
-          <button
-            className={button}
+          <Button
+            variant="secondary"
             type="button"
             disabled={busy}
             onClick={reset}
           >
             {t.common.cancel}
-          </button>
+          </Button>
         )}
-      </form>
+      </Panel>
       {(message || error) && (
         <p role="alert">{message || t.common.errorGeneric}</p>
       )}
       <ul className="flex flex-col gap-3">
         {accounts?.map((account): JSX.Element => (
-          <li
+          <Panel
+            as="li"
             key={account.id}
-            className="flex flex-wrap items-center gap-3 rounded bg-[var(--ctp-surface0)] p-4"
+            className="flex flex-wrap items-center gap-3"
           >
             <div className="flex-1">
               <strong>{account.name}</strong>
@@ -131,8 +128,8 @@ export default function AccountsSection(): JSX.Element {
                 <BankBadge bank={account.bank} />
               </p>
             </div>
-            <button
-              className={button}
+            <Button
+              variant="secondary"
               disabled={busy}
               onClick={(): void => {
                 setEditing(account.id);
@@ -141,20 +138,20 @@ export default function AccountsSection(): JSX.Element {
               }}
             >
               {t.common.edit}
-            </button>
-            <button
-              className={button}
+            </Button>
+            <Button
+              variant="danger"
               disabled={busy}
               onClick={(): void => setDeleting(account.id)}
             >
               {t.common.delete}
-            </button>
-            <button
-              className={button}
+            </Button>
+            <Button
+              variant="ghost"
               onClick={(): void => setAdjusting(account.id)}
             >
               {t.moneyFlow.adjust}
-            </button>
+            </Button>
             {adjusting === account.id && (
               <BalanceAdjust
                 accountId={account.id}
@@ -168,25 +165,25 @@ export default function AccountsSection(): JSX.Element {
                 className="flex w-full flex-wrap items-center gap-3"
               >
                 <p>{t.payments.deleteAccount(account.name)}</p>
-                <button
-                  className={button}
+                <Button
+                  variant="danger"
                   disabled={busy}
                   onClick={(): void => {
                     void remove(account.id);
                   }}
                 >
                   {t.common.confirm}
-                </button>
-                <button
-                  className={button}
+                </Button>
+                <Button
+                  variant="secondary"
                   disabled={busy}
                   onClick={(): void => setDeleting(undefined)}
                 >
                   {t.common.cancel}
-                </button>
+                </Button>
               </div>
             )}
-          </li>
+          </Panel>
         ))}
       </ul>
     </section>

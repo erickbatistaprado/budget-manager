@@ -233,3 +233,258 @@ input[type='number'] {
 .MuiPieArc-root {
   stroke: transparent !important;
 }
+
+.outlined-field {
+  min-width: 0;
+  color: var(--ctp-text);
+}
+.outlined-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  border-radius: 6px;
+}
+.outlined-field[data-size='small'] .outlined-box {
+  height: 40px;
+}
+.outlined-field[data-size='small'] input,
+.outlined-field[data-size='small'] select {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.outlined-box > input,
+.outlined-box > select {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: inherit;
+  outline: none;
+  background: transparent;
+  color: var(--ctp-text);
+}
+.outlined-box > select {
+  appearance: none;
+  padding-right: 36px;
+}
+.outlined-box option {
+  background: var(--ctp-base);
+  color: var(--ctp-text);
+}
+.outlined-box > label {
+  position: absolute;
+  left: 14px;
+  max-width: calc(100% - 52px);
+  top: 50%;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  pointer-events: none;
+  color: var(--ctp-subtext0);
+  transition:
+    top 150ms,
+    transform 150ms,
+    color 150ms;
+}
+.outlined-box > fieldset {
+  position: absolute;
+  inset: -5px 0 0;
+  pointer-events: none;
+  border: 1px solid var(--ctp-surface2);
+  border-radius: inherit;
+  padding: 0 9px;
+  transition: border-color 150ms;
+}
+.outlined-box legend {
+  width: auto;
+  max-width: 0;
+  height: 10px;
+  padding: 0;
+  font-size: 75%;
+  visibility: hidden;
+  transition: max-width 150ms;
+  white-space: nowrap;
+}
+.outlined-box legend span {
+  padding: 0 5px;
+}
+.outlined-field[data-filled='true'] label,
+.outlined-box:focus-within > label {
+  top: 0;
+  transform: translateY(-50%) scale(0.75);
+}
+.outlined-field[data-filled='true'] legend,
+.outlined-box:focus-within legend {
+  max-width: 100%;
+}
+.outlined-box:hover > fieldset {
+  border-color: var(--ctp-overlay0);
+}
+.outlined-box:focus-within > fieldset {
+  border: 2px solid var(--ctp-blue);
+}
+.outlined-box:focus-within > label {
+  color: var(--ctp-blue);
+}
+.outlined-field[data-filled='false'] select:not(:focus),
+.outlined-field[data-filled='false'] input::placeholder {
+  color: transparent;
+}
+.outlined-field[data-error='true'] fieldset {
+  border-color: var(--ctp-red);
+}
+.outlined-field[data-error='true'] label,
+.outlined-field[data-error='true'] > p {
+  color: var(--ctp-red);
+}
+.outlined-field[data-disabled='true'] {
+  opacity: 0.5;
+}
+.outlined-field[data-disabled='true'] input,
+.outlined-field[data-disabled='true'] select {
+  cursor: not-allowed;
+}
+.outlined-field > p {
+  margin: 4px 14px 0;
+  font-size: 0.75rem;
+}
+.outlined-start {
+  flex-shrink: 0;
+  padding-left: 12px;
+}
+.outlined-box:has(.outlined-start) > label {
+  left: 40px;
+  max-width: calc(100% - 96px);
+}
+.outlined-box:has(.outlined-start):focus-within > label,
+.outlined-field[data-filled='true'] .outlined-box > label {
+  left: 14px;
+}
+.outlined-end {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-right: 12px;
+}
+.outlined-box > select ~ .outlined-end {
+  position: absolute;
+  right: 0;
+  pointer-events: none;
+}
+
+.required-marker::after {
+  content: ' *';
+}
+
+.outlined-box > fieldset {
+  min-width: 0;
+}
+.outlined-field[data-filled='false'] input[type='date']:not(:focus),
+.outlined-field[data-filled='false'] input[type='time']:not(:focus) {
+  color: transparent;
+}
+.react-datepicker {
+  position: relative;
+  display: inline-block;
+  line-height: 1.5;
+}
+.react-datepicker__header {
+  position: relative;
+  padding: 8px 0;
+}
+.react-datepicker__current-month {
+  padding: 0 32px;
+}
+.react-datepicker__day-names,
+.react-datepicker__week {
+  display: flex;
+  justify-content: center;
+}
+.react-datepicker__day-name,
+.react-datepicker__day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  margin: 2px;
+  cursor: pointer;
+}
+.react-datepicker__day:focus-visible {
+  outline: 2px solid var(--ctp-blue);
+  outline-offset: 1px;
+}
+.react-datepicker__day--disabled {
+  color: var(--ctp-overlay0) !important;
+  cursor: not-allowed;
+}
+.react-datepicker__day--disabled:hover {
+  background: transparent !important;
+  color: var(--ctp-overlay0) !important;
+}
+.react-datepicker__day--outside-month {
+  opacity: 0.6;
+}
+.react-datepicker__navigation {
+  position: absolute;
+  top: 8px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  overflow: hidden;
+  text-indent: -9999px;
+  z-index: 1;
+}
+.react-datepicker__navigation--previous {
+  left: 2px;
+}
+.react-datepicker__navigation--next {
+  right: 2px;
+}
+.react-datepicker__navigation-icon::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid var(--ctp-subtext0);
+  border-right: 2px solid var(--ctp-subtext0);
+}
+.react-datepicker__navigation-icon--previous::before {
+  left: 11px;
+  transform: rotate(-135deg);
+}
+.react-datepicker__navigation-icon--next::before {
+  right: 11px;
+  transform: rotate(45deg);
+}
+.react-datepicker__aria-live,
+.react-datepicker__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.react-datepicker {
+  width: 100%;
+}
+.react-datepicker__month-container {
+  width: 100%;
+}
+
+/* MUI X charts use the default light theme's text color for axis labels; follow our theme. */
+svg .MuiChartsAxis-tickContainer .MuiChartsAxis-tickLabel,
+svg .MuiChartsAxis-root .MuiChartsAxis-label,
+svg .MuiChartsReferenceLine-root .MuiChartsReferenceLine-label {
+  fill: var(--ctp-subtext1);
+}
+svg .MuiChartsAxis-root .MuiChartsAxis-line,
+svg .MuiChartsAxis-tickContainer .MuiChartsAxis-tick {
+  stroke: var(--ctp-surface2);
+}

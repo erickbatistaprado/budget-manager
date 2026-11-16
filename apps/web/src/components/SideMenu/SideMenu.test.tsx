@@ -81,3 +81,40 @@ describe('SideMenu', (): void => {
     expect(screen.getByRole('radio', { name: 'PT' })).toBeInTheDocument();
   });
 });
+
+it('uses left aligned navigation, distinct icons, and only the language menu preference', (): void => {
+  render(<SideMenu onClose={jest.fn()} />);
+  const labels = [
+    'Home',
+    'Analytics',
+    'Savings',
+    'Financing',
+    'Cards and accounts',
+    'Import',
+    'Profile',
+    'Sign Out',
+  ];
+  const paths = labels.map((label): string | null => {
+    const button = screen.getByRole('button', { name: label });
+    expect(button).toHaveClass(
+      '!justify-start',
+      '!gap-3',
+      'text-[var(--ctp-text)]'
+    );
+    // Compare the paths drawn by react-icons for each navigation item.
+    // eslint-disable-next-line testing-library/no-node-access
+    return button.querySelector('svg')?.innerHTML ?? null;
+  });
+  expect(new Set(paths).size).toBe(labels.length);
+  expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute(
+    'aria-current',
+    'page'
+  );
+  expect(screen.getByRole('button', { name: 'Analytics' })).not.toHaveAttribute(
+    'aria-current'
+  );
+  expect(
+    screen.queryByRole('radio', { name: 'Light' })
+  ).not.toBeInTheDocument();
+  expect(screen.queryByRole('radio', { name: 'Dark' })).not.toBeInTheDocument();
+});

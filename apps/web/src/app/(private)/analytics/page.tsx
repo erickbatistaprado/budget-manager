@@ -1,6 +1,15 @@
 'use client';
 
 import {
+  Panel,
+  Button,
+  Field,
+  MonthSwitcher,
+  DateField,
+  parseFieldDate,
+  formatFieldDate,
+} from '@/components/ui';
+import {
   AnalyticsCard,
   BudgetPanel,
   EmptyState,
@@ -29,6 +38,10 @@ import {
   validRange,
 } from '@/utils/analytics.util';
 import { parseApiDate } from '@/utils/globalFormats.util';
+import { stillOwed, type StillOwed } from '@/utils/stillOwed.util';
+import { getFetcher } from '@/libs/fetchers.lib';
+import type { Financing } from '@budget-manager/api-client';
+import useSWR from 'swr';
 import {
   BarChart,
   ChartsReferenceLine,
@@ -58,8 +71,6 @@ const chartStyle = {
   },
   '& .MuiChartsGrid-line': { stroke: 'var(--ctp-surface1)' },
 };
-const buttonClass =
-  'rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-[var(--ctp-surface1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ctp-blue)]';
 
 function readStorage(): string | null {
   try {
@@ -91,10 +102,7 @@ function Skeleton({ label }: { label: string }): JSX.Element {
     >
       <span className="sr-only">{label}</span>
       {Array.from({ length: 6 }, (_unusedValue, index): JSX.Element => (
-        <div
-          key={index}
-          className="h-52 rounded-2xl bg-[var(--ctp-surface0)]"
-        />
+        <Panel key={index} className="h-52" />
       ))}
     </div>
   );
@@ -180,6 +188,12 @@ export default function AnalyticsPage(): JSX.Element {
     pageSize: 1000,
   });
   const savingsRequest = useSavings();
+  const financingsRequest = useSWR('/financings', getFetcher<Financing[]>);
+  const owed: StillOwed = useMemo(
+    (): StillOwed =>
+      stillOwed(expenseRequest.data ?? [], financingsRequest.data ?? [], today),
+    [expenseRequest.data, financingsRequest.data, today]
+  );
   const data = useMemo(
     (): AnalyticsOverview =>
       analyticsOverview(
@@ -233,99 +247,112 @@ export default function AnalyticsPage(): JSX.Element {
           {messages.subtitle}
         </p>
       </header>
-      <section
+      <Panel
+        as="section"
         aria-label={messages.title}
-        className="flex flex-col items-stretch justify-between gap-4 rounded-2xl border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-3 sm:flex-row sm:flex-wrap sm:items-center"
+        className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:flex-wrap sm:items-center"
       >
-        <div
-          className="flex justify-between rounded-xl bg-[var(--ctp-surface0)] p-1"
+        <Panel
+          className="flex justify-between"
           role="group"
           aria-label={messages.title}
         >
           {(Object.keys(messages.periods) as PeriodKind[]).map(
             (kind): JSX.Element => (
-              <button
+              <Button
+                variant={selection.kind === kind ? 'primary' : 'ghost'}
                 key={kind}
                 type="button"
                 aria-pressed={selection.kind === kind}
                 onClick={(): void => updateSelection({ kind })}
-                className={`${buttonClass} ${selection.kind === kind ? 'bg-[var(--ctp-base)] shadow-sm' : 'text-[var(--ctp-subtext1)]'}`}
               >
                 {messages.periods[kind]}
-              </button>
+              </Button>
             )
           )}
-        </div>
+        </Panel>
         {selection.kind === 'custom' ? (
           <div className="flex flex-wrap gap-3">
             {(['start', 'end'] as const).map((field): JSX.Element => (
-              <label
+              <Field
+                label={field === 'start' ? messages.from : messages.to}
                 key={field}
-                className="flex items-center gap-2 text-sm text-[var(--ctp-subtext1)]"
               >
-                {field === 'start' ? messages.from : messages.to}
-                <input
-                  type="date"
-                  value={selection[field]}
-                  onChange={(event): void =>
-                    updateSelection({ [field]: event.target.value })
+                <DateField
+                  value={parseFieldDate(selection[field])}
+                  onChange={(pickedDate): void =>
+                    updateSelection({ [field]: formatFieldDate(pickedDate) })
                   }
-                  className="rounded-lg border border-[var(--ctp-surface2)] bg-[var(--ctp-base)] p-2 text-[var(--ctp-text)] [color-scheme:light_dark]"
                 />
-              </label>
+              </Field>
             ))}
           </div>
         ) : (
           <div className="flex items-center justify-between gap-0 sm:gap-2">
-            <button
-              className={buttonClass}
-              aria-label={messages.previous}
-              onClick={(): void =>
-                updateSelection({
-                  anchor: format(
-                    stepPeriod(
-                      selection.kind,
-                      parseApiDate(selection.anchor),
-                      -1
-                    ),
-                    'yyyy-MM-dd'
-                  ),
-                })
-              }
-            >
-              ←
-            </button>
-            <span className="min-w-0 text-center text-xs font-medium whitespace-nowrap sm:text-sm">
-              {format(range.startDate, 'dd MMM yyyy', { locale: dateLocale })} –{' '}
-              {format(range.endDate, 'dd MMM yyyy', { locale: dateLocale })}
-            </span>
-            <button
-              className={buttonClass}
-              aria-label={messages.next}
-              onClick={(): void =>
-                updateSelection({
-                  anchor: format(
-                    stepPeriod(
-                      selection.kind,
-                      parseApiDate(selection.anchor),
-                      1
-                    ),
-                    'yyyy-MM-dd'
-                  ),
-                })
-              }
-            >
-              →
-            </button>
-            <button
-              className={buttonClass}
-              onClick={(): void => updateSelection({ anchor: initialDate })}
-            >
-              {messages.today}
-            </button>
+            {selection.kind === 'month' && (
+              <MonthSwitcher
+                value={parseApiDate(selection.anchor)}
+                onChange={(date): void =>
+                  updateSelection({ anchor: format(date, 'yyyy-MM-dd') })
+                }
+              />
+            )}
+            {selection.kind !== 'month' && (
+              <>
+                <Button
+                  variant="ghost"
+                  aria-label={messages.previous}
+                  onClick={(): void =>
+                    updateSelection({
+                      anchor: format(
+                        stepPeriod(
+                          selection.kind,
+                          parseApiDate(selection.anchor),
+                          -1
+                        ),
+                        'yyyy-MM-dd'
+                      ),
+                    })
+                  }
+                >
+                  ←
+                </Button>
+                <span className="min-w-0 text-center text-xs font-medium whitespace-nowrap sm:text-sm">
+                  {format(range.startDate, 'dd MMM yyyy', {
+                    locale: dateLocale,
+                  })}{' '}
+                  –{' '}
+                  {format(range.endDate, 'dd MMM yyyy', { locale: dateLocale })}
+                </span>
+                <Button
+                  variant="ghost"
+                  aria-label={messages.next}
+                  onClick={(): void =>
+                    updateSelection({
+                      anchor: format(
+                        stepPeriod(
+                          selection.kind,
+                          parseApiDate(selection.anchor),
+                          1
+                        ),
+                        'yyyy-MM-dd'
+                      ),
+                    })
+                  }
+                >
+                  →
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={(): void => updateSelection({ anchor: initialDate })}
+                >
+                  {messages.today}
+                </Button>
+              </>
+            )}
           </div>
         )}
-      </section>
+      </Panel>
       {invalid && (
         <p
           role="alert"
@@ -341,9 +368,10 @@ export default function AnalyticsPage(): JSX.Element {
           <section className="grid grid-cols-2 gap-3 xl:grid-cols-5">
             {(Object.keys(messages.figures) as (keyof Figures)[]).map(
               (key): JSX.Element => (
-                <div
+                <Panel
+                  as="div"
                   key={key}
-                  className="min-w-0 rounded-2xl border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-3 last:col-span-2 sm:p-5 sm:last:col-span-1"
+                  className="min-w-0 last:col-span-2 sm:p-5 sm:last:col-span-1"
                 >
                   <p className="text-sm text-[var(--ctp-subtext1)]">
                     {messages.figures[key]}
@@ -362,7 +390,7 @@ export default function AnalyticsPage(): JSX.Element {
                       language
                     )}
                   </p>
-                </div>
+                </Panel>
               )
             )}
           </section>
@@ -513,7 +541,10 @@ export default function AnalyticsPage(): JSX.Element {
                     hideLegend
                     height={220}
                   />
-                  <RankedList items={data.categories} />
+                  <RankedList
+                    items={data.categories}
+                    scrollLabel={messages.categories}
+                  />
                 </>
               ) : (
                 <EmptyState />
@@ -587,6 +618,78 @@ export default function AnalyticsPage(): JSX.Element {
                 <EmptyState />
               )}
             </AnalyticsCard>
+            <AnalyticsCard title={messages.owed} note={messages.owedNote}>
+              {owed.total > 0 ? (
+                <div className="flex flex-col gap-5">
+                  <p className="text-3xl font-semibold">
+                    {formatMoney(owed.total)}
+                  </p>
+                  {owed.cards.length > 0 && (
+                    <section className="flex flex-col gap-2">
+                      <h3 className="text-sm font-semibold text-[var(--ctp-subtext1)]">
+                        {messages.owedCards}
+                      </h3>
+                      <ul className="flex flex-col gap-2">
+                        {owed.cards.map((card): JSX.Element => (
+                          <li
+                            key={card.card}
+                            className="flex items-baseline justify-between gap-3"
+                          >
+                            <span className="min-w-0">
+                              {card.card}
+                              <span className="ml-2 text-xs text-[var(--ctp-subtext1)]">
+                                {messages.owedInstallments(card.installments)}
+                              </span>
+                            </span>
+                            <span className="font-medium tabular-nums">
+                              {formatMoney(card.amount)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                  {owed.financings.length > 0 && (
+                    <section className="flex flex-col gap-2">
+                      <h3 className="text-sm font-semibold text-[var(--ctp-subtext1)]">
+                        {messages.owedFinancings}
+                      </h3>
+                      <ul className="flex flex-col gap-3">
+                        {owed.financings.map((financing): JSX.Element => (
+                          <li
+                            key={financing.id}
+                            className="flex flex-col gap-1"
+                          >
+                            <span className="flex items-baseline justify-between gap-3">
+                              <span className="min-w-0">
+                                {financing.name}
+                                <span className="ml-2 text-xs text-[var(--ctp-subtext1)]">
+                                  {messages.owedInstallments(
+                                    financing.installments
+                                  )}
+                                </span>
+                              </span>
+                              <span className="font-medium tabular-nums">
+                                {formatMoney(financing.outstanding)}
+                              </span>
+                            </span>
+                            <span className="text-xs text-[var(--ctp-subtext1)]">
+                              {messages.owedWithInterest(
+                                formatMoney(financing.remainingPayments)
+                              )}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-[var(--ctp-subtext1)]">
+                  {messages.owedNothing}
+                </p>
+              )}
+            </AnalyticsCard>
           </div>
         </>
       )}
@@ -603,17 +706,14 @@ export default function AnalyticsPage(): JSX.Element {
             </p>
             <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               {savings.locations.map((location): JSX.Element => (
-                <div
-                  key={location.location}
-                  className="rounded-xl bg-[var(--ctp-surface0)] p-4"
-                >
+                <Panel key={location.location}>
                   <dt className="text-xs text-[var(--ctp-subtext1)]">
                     {messages.locations[location.location]}
                   </dt>
                   <dd className="mt-2 font-semibold">
                     {formatMoney(location.amount)}
                   </dd>
-                </div>
+                </Panel>
               ))}
             </dl>
           </>

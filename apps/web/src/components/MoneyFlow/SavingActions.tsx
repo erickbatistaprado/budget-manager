@@ -1,4 +1,14 @@
 'use client';
+
+import {
+  Button,
+  Panel,
+  TextInput,
+  Field,
+  DateField,
+  parseFieldDate,
+  formatFieldDate,
+} from '@/components/ui';
 import { useState, type FormEvent, type JSX } from 'react';
 import useSWR from 'swr';
 import { useI18n } from '@/i18n/useI18n';
@@ -8,7 +18,7 @@ import { getApiDate, parseApiDate } from '@/utils/globalFormats.util';
 import { formatBRL } from '@/utils/analytics.util';
 import type { SavingHistory } from '@budget-manager/api-client';
 import MovementForm from './MovementForm';
-import { field, button, panel } from './styles';
+
 export default function SavingActions({
   savingId,
 }: {
@@ -49,24 +59,24 @@ export default function SavingActions({
   return (
     <div className="w-full">
       <div className="flex flex-wrap gap-2">
-        <button
-          className={button}
+        <Button
+          variant="secondary"
           onClick={(): void => setAction('INVESTMENT')}
         >
           {labels.invest}
-        </button>
-        <button
-          className={button}
+        </Button>
+        <Button
+          variant="secondary"
           onClick={(): void => setAction('REDEMPTION')}
         >
           {labels.redeem}
-        </button>
-        <button className={button} onClick={(): void => setAction('value')}>
+        </Button>
+        <Button variant="secondary" onClick={(): void => setAction('value')}>
           {labels.value}
-        </button>
-        <button className={button} onClick={(): void => setAction('history')}>
+        </Button>
+        <Button variant="secondary" onClick={(): void => setAction('history')}>
           {labels.history}
-        </button>
+        </Button>
       </div>
       {(action === 'INVESTMENT' || action === 'REDEMPTION') && (
         <MovementForm
@@ -77,44 +87,42 @@ export default function SavingActions({
         />
       )}
       {action === 'value' && (
-        <form className={panel} onSubmit={save}>
-          <label>
-            {labels.current}
-            <input
+        <Panel className="flex w-full flex-col gap-3" as="form" onSubmit={save}>
+          <Field label={labels.current}>
+            <TextInput
               required
-              className={field}
               type="number"
               min="0"
               step="0.01"
               value={value}
               onChange={(event): void => setValue(event.currentTarget.value)}
             />
-          </label>
-          <label>
-            {labels.date}
-            <input
+          </Field>
+          <Field label={labels.date}>
+            <DateField
               required
-              className={field}
-              type="date"
-              value={date}
-              onChange={(event): void => setDate(event.currentTarget.value)}
+
+              value={parseFieldDate(date)}
+              onChange={(pickedDate): void =>
+                setDate(formatFieldDate(pickedDate))
+              }
             />
-          </label>
-          <button className={button} disabled={busy} type="submit">
+          </Field>
+          <Button variant="primary" disabled={busy} type="submit">
             {t.common.save}
-          </button>
-          <button
-            className={button}
+          </Button>
+          <Button
+            variant="secondary"
             disabled={busy}
             type="button"
             onClick={(): void => setAction(undefined)}
           >
             {t.common.cancel}
-          </button>
-        </form>
+          </Button>
+        </Panel>
       )}
       {action === 'history' && (
-        <div className={panel}>
+        <Panel className="flex w-full flex-col gap-3">
           <h4>{labels.history}</h4>
           {historyError && <p role="alert">{t.common.errorGeneric}</p>}
           <ul>
@@ -146,10 +154,13 @@ export default function SavingActions({
                 </li>
               ))}
           </ul>
-          <button className={button} onClick={(): void => setAction(undefined)}>
+          <Button
+            variant="secondary"
+            onClick={(): void => setAction(undefined)}
+          >
             {t.common.cancel}
-          </button>
-        </div>
+          </Button>
+        </Panel>
       )}
       {error && <p role="alert">{error}</p>}
     </div>

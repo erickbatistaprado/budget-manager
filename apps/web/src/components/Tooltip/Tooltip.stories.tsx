@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import type { JSX } from 'react';
 import Tooltip, { type TooltipProps } from './Tooltip.component';
@@ -34,9 +35,9 @@ export const Bottom: Story = {
   args: { tooltip: 'Tooltip at the bottom', placement: 'bottom' },
   render: (args: TooltipProps): JSX.Element => (
     <Tooltip {...args}>
-      <button className="w-32 rounded bg-green-600 px-4 py-2 text-[var(--ctp-text)] hover:bg-green-700">
+      <Button variant="primary" className="w-32">
         Hover me
-      </button>
+      </Button>
     </Tooltip>
   ),
 };
@@ -45,9 +46,9 @@ export const Left: Story = {
   args: { tooltip: 'Tooltip on the left', placement: 'left' },
   render: (args: TooltipProps): JSX.Element => (
     <Tooltip {...args}>
-      <button className="w-32 rounded bg-purple-600 px-4 py-2 text-[var(--ctp-text)] hover:bg-purple-700">
+      <Button variant="secondary" className="w-32">
         Hover me
-      </button>
+      </Button>
     </Tooltip>
   ),
 };
@@ -56,9 +57,9 @@ export const Top: Story = {
   args: { tooltip: 'Tooltip on the top', placement: 'top' },
   render: (args: TooltipProps): JSX.Element => (
     <Tooltip {...args}>
-      <button className="w-32 rounded bg-orange-600 px-4 py-2 text-[var(--ctp-text)] hover:bg-orange-700">
+      <Button variant="secondary" className="w-32">
         Hover me
-      </button>
+      </Button>
     </Tooltip>
   ),
 };

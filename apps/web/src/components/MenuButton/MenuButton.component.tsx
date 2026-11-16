@@ -1,4 +1,4 @@
-import clsx from 'clsx';
+import { Button } from '@/components/ui';
 import type { ButtonHTMLAttributes, JSX } from 'react';
 
 interface MenuButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -9,16 +9,18 @@ export default function MenuButton({
   active = false,
   children,
   onClick,
+  ...props
 }: Readonly<MenuButtonProps>): JSX.Element {
   return (
-    <button
+    <Button
+      variant="nav"
+      aria-current={active ? 'page' : undefined}
+      selected={active}
       onClick={onClick}
-      className={clsx(
-        'flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2 text-[var(--ctp-text)] transition-colors duration-200 hover:bg-[var(--ctp-blue)]/20 focus:ring-2 focus:ring-[var(--ctp-blue)] focus:outline-none active:bg-[var(--ctp-blue)]/30',
-        active && 'bg-[var(--ctp-blue)]/20'
-      )}
+      {...props}
+      className="flex w-full items-center gap-3"
     >
       {children}
-    </button>
+    </Button>
   );
 }

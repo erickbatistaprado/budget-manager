@@ -1,5 +1,6 @@
 'use client';
 
+import { Panel, Button, TextInput, Select, Field } from '@/components/ui';
 import { useCurrentUser, useProfileImage } from '@/hooks';
 import { useTheme } from '@/hooks/useTheme.hook';
 import { useI18n } from '@/i18n/useI18n';
@@ -25,11 +26,6 @@ import {
 } from 'react';
 import useSWR from 'swr';
 
-const panel = 'min-w-0 space-y-4 rounded bg-[var(--ctp-surface0)] p-4';
-const field =
-  'w-full min-w-0 rounded border border-[var(--ctp-surface2)] bg-[var(--ctp-base)] p-2';
-const button =
-  'rounded bg-[var(--ctp-surface1)] px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50';
 type Section = 'name' | 'photo' | 'password' | 'preferences' | 'backup';
 type Message =
   | 'saved'
@@ -249,7 +245,7 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
       Number(salaryDay) <= 31);
   return (
     <>
-      <section className={panel} aria-labelledby="profile-heading">
+      <Panel className="min-w-0 space-y-4" aria-labelledby="profile-heading">
         <h2 id="profile-heading" className="text-lg font-semibold">
           {t.profile.personal}
         </h2>
@@ -274,15 +270,15 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
               void upload(event);
             }}
           />
-          <button
-            className={button}
+          <Button
+            variant="secondary"
             disabled={busy.photo || !summary}
             onClick={(): void => photoInput.current?.click()}
           >
             {t.profile.chooseImage}
-          </button>
-          <button
-            className={button}
+          </Button>
+          <Button
+            variant="secondary"
             disabled={busy.photo || !photo}
             onClick={(): void => {
               void run(
@@ -296,7 +292,7 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
             }}
           >
             {t.profile.deleteImage}
-          </button>
+          </Button>
         </div>
         {summary && (
           <p className="text-sm text-[var(--ctp-subtext0)]">
@@ -306,36 +302,33 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
         {photoError && <p role="alert">{t.profile.imageError}</p>}
         {message('photo')}
         <form onSubmit={saveName} className="space-y-3">
-          <label className="flex flex-col gap-1">
-            {t.common.name}
-            <input
-              className={field}
+          <Field label={t.common.name}>
+            <TextInput
               value={name}
               maxLength={50}
               autoComplete="name"
               onChange={(event): void => setName(event.currentTarget.value)}
             />
-          </label>
-          <label className="flex flex-col gap-1">
-            {t.auth.email}
-            <input
-              className={field}
+          </Field>
+          <Field label={t.auth.email}>
+            <TextInput
               type="email"
               value={user.email}
               readOnly
               autoComplete="email"
             />
-          </label>
-          <button
-            className={button}
+          </Field>
+          <Button
+            type="submit"
+            variant="primary"
             disabled={busy.name || !name.trim() || name.trim() === user.name}
           >
             {t.common.save}
-          </button>
+          </Button>
           {message('name')}
         </form>
-      </section>
-      <section className={panel} aria-labelledby="security-heading">
+      </Panel>
+      <Panel className="min-w-0 space-y-4" aria-labelledby="security-heading">
         <h2 id="security-heading" className="text-lg font-semibold">
           {t.profile.security}
         </h2>
@@ -347,10 +340,8 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
           className="space-y-3"
           aria-describedby="sessions-note"
         >
-          <label className="flex flex-col gap-1">
-            {t.profile.currentPassword}
-            <input
-              className={field}
+          <Field label={t.profile.currentPassword}>
+            <TextInput
               type="password"
               autoComplete="current-password"
               value={currentPassword}
@@ -358,18 +349,16 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
                 setCurrentPassword(event.currentTarget.value)
               }
             />
-          </label>
-          <label className="flex flex-col gap-1">
-            {t.profile.newPassword}
-            <input
-              className={field}
+          </Field>
+          <Field label={t.profile.newPassword}>
+            <TextInput
               type="password"
               autoComplete="new-password"
               value={password}
               aria-describedby="password-rules"
               onChange={(event): void => setPassword(event.currentTarget.value)}
             />
-          </label>
+          </Field>
           <ul
             id="password-rules"
             aria-label={t.profile.passwordRules}
@@ -382,10 +371,8 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
               </li>
             ))}
           </ul>
-          <label className="flex flex-col gap-1">
-            {t.profile.confirmPassword}
-            <input
-              className={field}
+          <Field label={t.profile.confirmPassword}>
+            <TextInput
               type="password"
               autoComplete="new-password"
               value={confirmation}
@@ -393,12 +380,13 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
                 setConfirmation(event.currentTarget.value)
               }
             />
-          </label>
+          </Field>
           {confirmation && confirmation !== password && (
             <p role="alert">{t.profile.passwordsMatchError}</p>
           )}
-          <button
-            className={button}
+          <Button
+            type="submit"
+            variant="primary"
             disabled={
               busy.password ||
               !currentPassword ||
@@ -407,18 +395,19 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
             }
           >
             {t.common.save}
-          </button>
+          </Button>
           {message('password')}
         </form>
-      </section>
-      <section className={panel} aria-labelledby="preferences-heading">
+      </Panel>
+      <Panel
+        className="min-w-0 space-y-4"
+        aria-labelledby="preferences-heading"
+      >
         <h2 id="preferences-heading" className="text-lg font-semibold">
           {t.profile.preferences}
         </h2>
-        <label className="flex flex-col gap-1">
-          {t.profile.language}
-          <select
-            className={field}
+        <Field label={t.profile.language}>
+          <Select
             value={language}
             onChange={(event): void => {
               const value = event.currentTarget.value;
@@ -433,12 +422,10 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
           >
             <option value="pt">Português (Brasil)</option>
             <option value="en">English</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1">
-          {t.profile.theme}
-          <select
-            className={field}
+          </Select>
+        </Field>
+        <Field label={t.profile.theme}>
+          <Select
             value={theme}
             onChange={(event): void => {
               const value = event.currentTarget.value;
@@ -458,13 +445,11 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
             <option value="latte">{t.profile.light}</option>
             <option value="macchiato">{t.profile.dark}</option>
             <option value="system">{t.profile.system}</option>
-          </select>
-        </label>
+          </Select>
+        </Field>
         <form onSubmit={savePreferences} className="space-y-3">
-          <label className="flex flex-col gap-1">
-            {t.profile.salaryDay}
-            <input
-              className={field}
+          <Field label={t.profile.salaryDay}>
+            <TextInput
               type="number"
               min={1}
               max={31}
@@ -475,12 +460,13 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
                 setSalaryDay(event.currentTarget.value)
               }
             />
-          </label>
+          </Field>
           <p id="salary-help" className="text-sm text-[var(--ctp-subtext0)]">
             {t.profile.optional}
           </p>
-          <button
-            className={button}
+          <Button
+            type="submit"
+            variant="primary"
             disabled={
               busy.preferences ||
               !validSalary ||
@@ -488,11 +474,11 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
             }
           >
             {t.common.save}
-          </button>
+          </Button>
         </form>
         {message('preferences')}
-      </section>
-      <section className={panel} aria-labelledby="data-heading">
+      </Panel>
+      <Panel className="min-w-0 space-y-4" aria-labelledby="data-heading">
         <h2 id="data-heading" className="text-lg font-semibold">
           {t.profile.data}
         </h2>
@@ -509,17 +495,17 @@ function ProfileSections({ user }: Readonly<{ user: User }>): JSX.Element {
             </p>
           </>
         )}
-        <button
-          className={button}
+        <Button
+          variant="secondary"
           disabled={busy.backup}
           onClick={(): void => {
             void download();
           }}
         >
           {t.profile.backup}
-        </button>
+        </Button>
         {message('backup')}
-      </section>
+      </Panel>
     </>
   );
 }

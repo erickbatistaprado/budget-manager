@@ -8,7 +8,6 @@ import {
 } from '@/libs/fetchers.lib';
 import ProfileForm from './ProfileForm.component';
 import LanguageSwitcher from '@/components/LanguageSwitcher/LanguageSwitcher.component';
-import ThemeSwitcher from '@/components/ThemeSwitcher/ThemeSwitcher.component';
 
 const mockMutate = jest.fn().mockResolvedValue(undefined);
 const mockSummary = {
@@ -196,7 +195,6 @@ it('keeps language and theme selects synchronized with the header controls, in b
     <>
       <ProfileForm />
       <LanguageSwitcher />
-      <ThemeSwitcher />
     </>,
     { language: 'pt' }
   );
@@ -216,8 +214,9 @@ it('keeps language and theme selects synchronized with the header controls, in b
     target: { value: 'latte' },
   });
   expect(document.documentElement.dataset.theme).toBe('latte');
-  expect(screen.getByRole('radio', { name: 'Claro' })).toBeChecked();
-  fireEvent.click(screen.getByRole('radio', { name: 'Escuro' }));
+  fireEvent.change(screen.getByLabelText('Tema', { selector: 'select' }), {
+    target: { value: 'macchiato' },
+  });
   expect(screen.getByLabelText('Tema', { selector: 'select' })).toHaveValue(
     'macchiato'
   );
@@ -297,7 +296,9 @@ it('rejects passwords exceeding BCrypt’s byte limit even when every character 
   fireEvent.change(screen.getByLabelText('Confirm new password'), {
     target: { value: longPassword },
   });
-  expect(screen.getByText('○ At most 72 characters (fewer with accents or emoji)')).toBeInTheDocument();
+  expect(
+    screen.getByText('○ At most 72 characters (fewer with accents or emoji)')
+  ).toBeInTheDocument();
   expect(
     within(screen.getByRole('region', { name: 'Security' })).getByRole(
       'button',

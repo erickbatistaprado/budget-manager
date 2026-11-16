@@ -1,13 +1,21 @@
 'use client';
 
+import {
+  Panel,
+  Button,
+  Checkbox,
+  Field,
+  DateField,
+  parseFieldDate,
+  formatFieldDate,
+} from '@/components/ui';
 import { Money } from '@/components';
 import { useI18n } from '@/i18n/useI18n';
 import { installmentService } from '@/services';
 import type { Installment, Transaction } from '@/types';
 import { formatDate } from '@/utils/globalFormats.util';
 import { toApiDate, todayInputValue } from '@/utils/installments.util';
-import clsx from 'clsx';
-import { useState, type ChangeEvent, type JSX } from 'react';
+import { useState, type JSX } from 'react';
 
 export interface InstallmentPrepaymentProps {
   transaction: Transaction;
@@ -70,60 +78,51 @@ export default function InstallmentPrepayment({
   const canPay: boolean = chosen.length > 0 && Boolean(paidOn) && !isSaving;
 
   return (
-    <div
+    <Panel
       role="dialog"
       aria-label={t.prepayment.title}
-      className="col-span-4 my-2 flex flex-col gap-3 rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)] p-3 text-sm"
+      className="col-span-4 my-2 flex flex-col gap-3 text-sm"
     >
       <div className="flex items-center justify-between">
         <span className="font-semibold text-[var(--ctp-text)]">
           {t.prepayment.title}
         </span>
-        <button
-          type="button"
-          onClick={onClose}
-          className="cursor-pointer rounded px-2 py-1 text-[var(--ctp-subtext1)] hover:bg-[var(--ctp-surface1)]"
-        >
+        <Button variant="secondary" type="button" onClick={onClose}>
           {t.common.close}
-        </button>
+        </Button>
       </div>
       <p className="text-xs text-[var(--ctp-subtext0)]">
         {t.prepayment.description}
       </p>
       <div className="grid gap-1 sm:grid-cols-2">
         {pending.map((installment: Installment): JSX.Element => (
-          <label
+          <Checkbox
             key={installment.installmentNumber}
-            className="flex items-center gap-2 text-[var(--ctp-text)]"
-          >
-            <input
-              type="checkbox"
-              checked={chosen.includes(installment.installmentNumber)}
-              onChange={(): void => toggle(installment.installmentNumber)}
-            />
-            {installment.installmentNumber}/{installment.totalInstallments} ·{' '}
-            {formatDate(installment.dueDate, language)}
-            <Money
-              className="text-[var(--ctp-subtext1)]"
-              value={Number(installment.amount)}
-            />
-          </label>
+            label={
+              <>
+                {installment.installmentNumber}/{installment.totalInstallments}{' '}
+                · {formatDate(installment.dueDate, language)}
+                <Money
+                  className="text-[var(--ctp-subtext1)]"
+                  value={Number(installment.amount)}
+                />
+              </>
+            }
+            checked={chosen.includes(installment.installmentNumber)}
+            onChange={(): void => toggle(installment.installmentNumber)}
+          />
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2 text-[var(--ctp-text)]">
-          {t.prepayment.paidOn}
-          <input
-            type="date"
+        <Field label={t.prepayment.paidOn}>
+          <DateField
             aria-label={t.prepayment.paidOn}
-            value={paidOn}
-            onChange={({
-              currentTarget: { value },
-            }: ChangeEvent<HTMLInputElement>): void => setPaidOn(value)}
-            className="rounded-md border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] px-2 py-1 text-[var(--ctp-text)]"
+            value={parseFieldDate(paidOn)}
+            onChange={(value): void => setPaidOn(formatFieldDate(value))}
           />
-        </label>
-        <button
+        </Field>
+        <Button
+          variant="primary"
           type="button"
           disabled={!canPay}
           onClick={(): Promise<void> =>
@@ -135,17 +134,11 @@ export default function InstallmentPrepayment({
               )
             )
           }
-          className={clsx(
-            'rounded-md px-3 py-1 font-medium',
-            canPay
-              ? 'cursor-pointer bg-[var(--ctp-blue)] text-[var(--ctp-crust)] hover:bg-[var(--ctp-lavender)]'
-              : 'cursor-not-allowed bg-[var(--ctp-surface2)] text-[var(--ctp-subtext0)]'
-          )}
         >
           {isSaving
             ? t.common.saving
             : t.prepayment.payEarlyButton(chosen.length)}
-        </button>
+        </Button>
       </div>
       {paidEarly.length > 0 && (
         <div className="flex flex-col gap-1 border-t border-[var(--ctp-surface1)] pt-2">
@@ -161,7 +154,8 @@ export default function InstallmentPrepayment({
               {t.prepayment.paidOnDate(
                 formatDate(installment.dueDate, language)
               )}
-              <button
+              <Button
+                variant="primary"
                 type="button"
                 disabled={isSaving}
                 onClick={(): Promise<void> =>
@@ -171,10 +165,9 @@ export default function InstallmentPrepayment({
                     ])
                   )
                 }
-                className="cursor-pointer rounded px-2 py-0.5 text-[var(--ctp-blue)] hover:bg-[var(--ctp-surface1)]"
               >
                 {t.common.undo}
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -184,6 +177,6 @@ export default function InstallmentPrepayment({
           {errorMessage}
         </span>
       )}
-    </div>
+    </Panel>
   );
 }

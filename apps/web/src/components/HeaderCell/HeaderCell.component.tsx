@@ -1,7 +1,7 @@
 'use client';
 
+import { Button } from '@/components/ui';
 import { useI18n } from '@/i18n/useI18n';
-import clsx from 'clsx';
 import type { JSX } from 'react';
 import type { IconType } from 'react-icons';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
@@ -29,11 +29,9 @@ export default function HeaderCell({
   const EyeIcon: IconType = sortOrder === 'asc' ? FaChevronUp : FaChevronDown;
 
   return (
-    <button
-      className={clsx(
-        'flex cursor-pointer items-center justify-center gap-2 font-bold transition-colors select-none hover:text-[var(--ctp-subtext0)]',
-        active ? 'text-[var(--ctp-text)]' : 'text-[var(--ctp-subtext1)]'
-      )}
+    <Button
+      className="flex items-center justify-center gap-2"
+      variant="ghost"
       onClick={(): void => toggleSort(keyName)}
       tabIndex={0}
       aria-pressed={active}
@@ -41,6 +39,6 @@ export default function HeaderCell({
     >
       <span>{label}</span>
       {active ? <EyeIcon aria-label={t.common.sorted(sortOrder)} /> : null}
-    </button>
+    </Button>
   );
 }

@@ -1,3 +1,4 @@
+import { Button, Panel } from '@/components/ui';
 import SavingActions from '@/components/MoneyFlow/SavingActions';
 import { useState, type JSX } from 'react';
 import { formatDistanceToNow } from 'date-fns';
@@ -38,7 +39,10 @@ export default function SavingEntry({
     }
   }
   return (
-    <li className="min-w-0 rounded-xl border border-[var(--ctp-surface1)] px-3 py-2 sm:flex sm:min-h-[72px] sm:flex-wrap sm:items-center sm:gap-3">
+    <Panel
+      as="li"
+      className="min-w-0 sm:flex sm:min-h-[72px] sm:flex-wrap sm:items-center sm:gap-3"
+    >
       <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold break-words">{saving.name}</h3>
@@ -83,44 +87,45 @@ export default function SavingEntry({
         {confirming ? (
           <>
             <span>{t.savings.confirmDelete}</span>
-            <button
+            <Button
+              variant="danger"
               type="button"
               disabled={deleting}
               onClick={(): void => {
                 void remove();
               }}
-              className="rounded-lg bg-[var(--ctp-red)]/15 p-2 text-[var(--ctp-red)]"
             >
               {t.savings.confirm}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               type="button"
               disabled={deleting}
               onClick={(): void => setConfirming(false)}
             >
               {t.savings.cancel}
-            </button>
+            </Button>
           </>
         ) : (
           <>
-            <button
-              className="rounded-lg px-2 py-2"
+            <Button
+              variant="ghost"
               type="button"
               onClick={(): void => onEdit(saving)}
             >
               {t.common.edit}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="danger"
               type="button"
               onClick={(): void => setConfirming(true)}
-              className="rounded-lg px-2 py-2 text-[var(--ctp-red)]"
             >
               {t.common.delete}
-            </button>
+            </Button>
           </>
         )}
       </div>
       <SavingActions savingId={saving.id} />
-    </li>
+    </Panel>
   );
 }

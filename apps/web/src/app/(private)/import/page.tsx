@@ -1,5 +1,18 @@
 'use client';
 
+import { control } from '@/components/ui/styles';
+
+import {
+  Panel,
+  Button,
+  TextInput,
+  Select,
+  Checkbox,
+  Field,
+  DateField,
+  parseFieldDate,
+  formatFieldDate,
+} from '@/components/ui';
 import { Input, Money } from '@/components';
 import { TransactionType } from '@/enums';
 import { useCategories } from '@/hooks';
@@ -44,25 +57,11 @@ import {
 } from 'react';
 import { FiCheck, FiCheckCircle, FiPlus, FiUpload } from 'react-icons/fi';
 
-const panel =
-  'rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-4 shadow-md';
-const field =
-  'rounded-md border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] px-3 py-2 text-sm text-[var(--ctp-text)] focus:border-[var(--ctp-blue)] focus:outline-none';
-const primaryButton =
-  'flex items-center justify-center gap-2 rounded-md px-4 py-2 font-medium transition';
-
 function messageOf(error: unknown, fallback: string): string {
   if (error instanceof StatementImportError) {
     return error.message;
   }
   return fallback;
-}
-
-function buttonState(disabled: boolean): string {
-  if (disabled) {
-    return 'cursor-not-allowed bg-[var(--ctp-surface2)] text-[var(--ctp-subtext0)]';
-  }
-  return 'cursor-pointer bg-[var(--ctp-blue)] text-[var(--ctp-crust)] hover:bg-[var(--ctp-lavender)]';
 }
 
 export default function ImportPage(): JSX.Element {
@@ -252,9 +251,10 @@ export default function ImportPage(): JSX.Element {
   return (
     <div className="flex w-full flex-col gap-4 p-4">
       <section className="grid gap-4 xl:grid-cols-[360px_1fr]">
-        <form
+        <Panel
+          as="form"
           onSubmit={handleRead}
-          className={clsx(panel, 'flex min-w-0 flex-col gap-3')}
+          className="flex min-w-0 flex-col gap-3"
         >
           <h1 className="text-base font-semibold text-[var(--ctp-text)]">
             {t.import.title}
@@ -267,7 +267,7 @@ export default function ImportPage(): JSX.Element {
             type="file"
             accept=".pdf,.csv,application/pdf,text/csv"
             onChange={handleFile}
-            className={clsx(field, 'cursor-pointer')}
+            className={clsx(control, 'cursor-pointer')}
           />
           {needsPassword && (
             <Input
@@ -281,14 +281,10 @@ export default function ImportPage(): JSX.Element {
               }: ChangeEvent<HTMLInputElement>): void => setPassword(value)}
             />
           )}
-          <button
-            type="submit"
-            disabled={!file || isBusy}
-            className={clsx(primaryButton, buttonState(!file || isBusy))}
-          >
+          <Button variant="primary" type="submit" disabled={!file || isBusy}>
             <FiUpload />
             {isBusy && !preview ? t.import.reading : t.import.readStatement}
-          </button>
+          </Button>
           {errorMessage && (
             <span role="alert" className="text-sm text-[var(--ctp-red)]">
               {errorMessage}
@@ -300,19 +296,18 @@ export default function ImportPage(): JSX.Element {
               {t.import.newCategory}
             </span>
             <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
-              <input
+              <TextInput
                 aria-label={t.import.newCategoryName}
                 placeholder={t.common.name}
-                size={1}
+                size="small"
                 value={newCategoryName}
                 onChange={({
                   currentTarget: { value },
                 }: ChangeEvent<HTMLInputElement>): void =>
                   setNewCategoryName(value)
                 }
-                className={field}
               />
-              <select
+              <Select
                 aria-label={t.import.newCategoryType}
                 value={newCategoryType}
                 onChange={({
@@ -320,7 +315,6 @@ export default function ImportPage(): JSX.Element {
                 }: ChangeEvent<HTMLSelectElement>): void =>
                   setNewCategoryType(value as TransactionType)
                 }
-                className={field}
               >
                 <option value={TransactionType.EXPENSE}>
                   {t.common.expense}
@@ -328,25 +322,23 @@ export default function ImportPage(): JSX.Element {
                 <option value={TransactionType.INCOME}>
                   {t.common.income}
                 </option>
-              </select>
-              <button
+              </Select>
+              <Button
+                variant="secondary"
                 type="button"
                 onClick={(): Promise<void> => handleCreateCategory()}
                 disabled={!newCategoryName.trim()}
+                aria-label={t.import.addCategory}
                 title={t.import.addCategory}
-                className={clsx(
-                  'rounded-md px-3',
-                  buttonState(!newCategoryName.trim())
-                )}
               >
                 <FiPlus />
-              </button>
+              </Button>
             </div>
           </div>
-        </form>
+        </Panel>
 
         {preview ? (
-          <div className={clsx(panel, 'flex min-w-0 flex-col gap-3')}>
+          <Panel className="flex min-w-0 flex-col gap-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-base font-semibold text-[var(--ctp-text)]">
                 {t.import.sources[preview.source]}
@@ -380,29 +372,26 @@ export default function ImportPage(): JSX.Element {
               )}
 
             <div className="flex flex-wrap items-center gap-3 text-sm">
-              <label className="flex items-center gap-2 text-[var(--ctp-text)]">
-                <input
-                  type="checkbox"
-                  checked={hideDuplicates}
-                  onChange={(): void => setHideDuplicates(!hideDuplicates)}
-                />
-                {t.import.hideAlreadySaved}
-              </label>
-              <button
+              <Checkbox
+                label={t.import.hideAlreadySaved}
+                checked={hideDuplicates}
+                onChange={(): void => setHideDuplicates(!hideDuplicates)}
+              />
+              <Button
+                variant="primary"
                 type="button"
                 onClick={(): void => selectAll(true)}
-                className="cursor-pointer rounded px-2 py-1 text-[var(--ctp-blue)] hover:bg-[var(--ctp-surface1)]"
               >
                 {t.import.selectAll}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 type="button"
                 onClick={(): void => selectAll(false)}
-                className="cursor-pointer rounded px-2 py-1 text-[var(--ctp-blue)] hover:bg-[var(--ctp-surface1)]"
               >
                 {t.import.selectNone}
-              </button>
-              <select
+              </Button>
+              <Select
                 aria-label={t.import.categoryForSelected}
                 value=""
                 onChange={({
@@ -410,7 +399,6 @@ export default function ImportPage(): JSX.Element {
                 }: ChangeEvent<HTMLSelectElement>): void =>
                   setRows(applyCategory(rows, value, false))
                 }
-                className={field}
               >
                 <option value="">{t.import.categoryForSelected}</option>
                 {categoriesFor(false).map((category: Category): JSX.Element => (
@@ -418,15 +406,13 @@ export default function ImportPage(): JSX.Element {
                     {category.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <label>
-                {t.cards.card}
-                <select
+              <Field label={t.cards.card}>
+                <Select
                   aria-label={t.cards.card}
-                  className={field}
                   value={cardId}
                   onChange={(event): void => {
                     setCardId(event.currentTarget.value);
@@ -441,20 +427,18 @@ export default function ImportPage(): JSX.Element {
                       {card.name}
                     </option>
                   ))}
-                </select>
-              </label>
-              <label>
-                {t.cards.billDueDate}
-                <input
+                </Select>
+              </Field>
+              <Field label={t.cards.billDueDate}>
+                <DateField
                   aria-label={t.cards.billDueDate}
-                  className={field}
-                  type="date"
-                  value={billDueDate}
-                  onChange={(event): void =>
-                    setBillDueDate(event.currentTarget.value)
+
+                  value={parseFieldDate(billDueDate)}
+                  onChange={(pickedDate): void =>
+                    setBillDueDate(formatFieldDate(pickedDate))
                   }
                 />
-              </label>
+              </Field>
             </div>
             {billDueDate && (
               <p className="text-sm text-[var(--ctp-subtext1)]">
@@ -483,8 +467,7 @@ export default function ImportPage(): JSX.Element {
                       )}
                     >
                       <td className="p-2">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           aria-label={t.import.importRow(row.line.description)}
                           checked={row.selected}
                           onChange={(): void =>
@@ -518,7 +501,8 @@ export default function ImportPage(): JSX.Element {
                         />
                       </td>
                       <td className="p-2">
-                        <select
+                        <Select
+                          className="w-full"
                           aria-label={t.import.categoryForRow(
                             row.line.description
                           )}
@@ -528,13 +512,6 @@ export default function ImportPage(): JSX.Element {
                           }: ChangeEvent<HTMLSelectElement>): void =>
                             setRows(chooseCategory(rows, row.line.index, value))
                           }
-                          className={clsx(
-                            field,
-                            'w-full',
-                            row.selected &&
-                              !row.categoryId &&
-                              'border-[var(--ctp-red)]'
-                          )}
                         >
                           <option value="">
                             {row.line.credit
@@ -548,7 +525,7 @@ export default function ImportPage(): JSX.Element {
                               </option>
                             )
                           )}
-                        </select>
+                        </Select>
                         {describeSuggestion(row, t.import) && (
                           <div className="mt-1 text-xs text-[var(--ctp-subtext0)]">
                             {describeSuggestion(row, t.import)}
@@ -565,11 +542,12 @@ export default function ImportPage(): JSX.Element {
             </div>
 
             {result && (
-              <div
+              <Panel
+                as="div"
                 ref={resultRef}
                 role="status"
                 tabIndex={-1}
-                className="flex flex-wrap items-center gap-3 rounded-md border border-[var(--ctp-green)] bg-[var(--ctp-green)]/10 p-3 text-sm text-[var(--ctp-text)] focus:outline-none"
+                className="flex flex-wrap items-center gap-3 text-sm text-[var(--ctp-text)] focus:outline-none"
               >
                 <FiCheckCircle
                   aria-hidden
@@ -593,7 +571,7 @@ export default function ImportPage(): JSX.Element {
                     {t.import.seeOnHome}
                   </Link>
                 )}
-              </div>
+              </Panel>
             )}
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ctp-surface1)] pt-3">
@@ -608,27 +586,22 @@ export default function ImportPage(): JSX.Element {
                   className="text-sm font-semibold"
                   value={summary.selectedAmount}
                 />
-                <button
+                <Button
+                  variant="primary"
                   type="button"
                   onClick={(): Promise<void> => handleImport()}
                   disabled={!canImport}
-                  className={clsx(primaryButton, buttonState(!canImport))}
                 >
                   <FiCheck />
                   {isBusy ? t.import.importing : importButtonLabel()}
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
+          </Panel>
         ) : (
-          <div
-            className={clsx(
-              panel,
-              'flex items-center justify-center text-sm text-[var(--ctp-subtext1)]'
-            )}
-          >
+          <Panel className="flex items-center justify-center text-sm text-[var(--ctp-subtext1)]">
             {t.import.emptyPreview}
-          </div>
+          </Panel>
         )}
       </section>
     </div>

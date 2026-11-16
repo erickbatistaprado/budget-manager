@@ -1,5 +1,6 @@
 'use client';
 
+import { Panel } from '@/components/ui';
 import { FinancialMovements, HeaderCell } from '@/components';
 import { useI18n } from '@/i18n/useI18n';
 import type {
@@ -58,8 +59,8 @@ export default function Transactions({
   }, [hasMore, isLoadingMore, loadMore, transactions?.length]);
 
   return (
-    <div className="flex min-h-0 w-full flex-col rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-base)]/95 px-3 py-3 shadow-md">
-      <div className="mb-2 grid grid-cols-4 place-items-start rounded bg-[var(--ctp-crust)]/60 px-2 py-2">
+    <Panel as="div" className="flex min-h-0 w-full flex-col">
+      <Panel as="div" className="mb-2 grid grid-cols-4 place-items-start">
         <HeaderCell
           label={title}
           keyName="category"
@@ -90,7 +91,7 @@ export default function Transactions({
             toggleSort={toggleSort}
           />
         </div>
-      </div>
+      </Panel>
       <div
         className="min-h-64 space-y-2 overflow-y-auto lg:min-h-0 lg:flex-1"
         onScroll={loadMoreIfNeeded}
@@ -109,6 +110,6 @@ export default function Transactions({
           </div>
         )}
       </div>
-    </div>
+    </Panel>
   );
 }

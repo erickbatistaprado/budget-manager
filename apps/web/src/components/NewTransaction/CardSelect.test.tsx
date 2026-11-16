@@ -74,10 +74,37 @@ it('hides the card select for income', (): void => {
   expect(screen.queryByLabelText('Card')).not.toBeInTheDocument();
 });
 
-it('hides the card selector after choosing monthly repetition', (): void => {
+it('keeps the card for a monthly charge and says it goes into each bill', async (): Promise<void> => {
   renderWithI18n(<NewTransaction transaction={purchase} onClose={jest.fn()} />);
   fireEvent.change(screen.getByRole('combobox', { name: 'Does it repeat?' }), {
     target: { value: RepeatInterval.MONTHLY },
+  });
+  fireEvent.change(screen.getByLabelText('Payment method'), {
+    target: { value: 'CREDIT_CARD' },
+  });
+  fireEvent.change(screen.getByLabelText('Card'), {
+    target: { value: 'visa' },
+  });
+  expect(
+    screen.getByText("Each month it goes into that month's bill")
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/Bill due/)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  await waitFor((): void => expect(postFetcher).toHaveBeenCalled());
+  const body = String(
+    (jest.mocked(postFetcher).mock.calls.at(-1)?.[1] as { body: string }).body
+  );
+  expect(body).toContain('"cardId":"visa"');
+  expect(body).toContain('"repeats":"MONTHLY"');
+});
+
+it('drops the card when the expense repeats weekly', (): void => {
+  renderWithI18n(<NewTransaction transaction={purchase} onClose={jest.fn()} />);
+  fireEvent.change(screen.getByLabelText('Payment method'), {
+    target: { value: 'CREDIT_CARD' },
+  });
+  fireEvent.change(screen.getByRole('combobox', { name: 'Does it repeat?' }), {
+    target: { value: RepeatInterval.WEEKLY },
   });
   expect(screen.queryByLabelText('Card')).not.toBeInTheDocument();
 });

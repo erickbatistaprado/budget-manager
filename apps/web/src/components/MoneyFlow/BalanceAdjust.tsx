@@ -1,4 +1,14 @@
 'use client';
+
+import {
+  Panel,
+  TextInput,
+  Button,
+  Field,
+  DateField,
+  parseFieldDate,
+  formatFieldDate,
+} from '@/components/ui';
 import { useState, type FormEvent, type JSX } from 'react';
 import useSWR from 'swr';
 import { useI18n } from '@/i18n/useI18n';
@@ -10,7 +20,7 @@ import type {
   BalanceResult,
   BalanceCheckpoint,
 } from '@budget-manager/api-client';
-import { field, button, panel } from './styles';
+
 export default function BalanceAdjust({
   accountId,
   onClose,
@@ -68,7 +78,11 @@ export default function BalanceAdjust({
     }
   }
   return (
-    <div role="dialog" aria-label={labels.adjust} className={panel}>
+    <Panel
+      className="flex w-full flex-col gap-3"
+      role="dialog"
+      aria-label={labels.adjust}
+    >
       <form
         className="flex flex-col gap-3"
         onSubmit={(event: FormEvent<HTMLFormElement>): void => {
@@ -76,24 +90,21 @@ export default function BalanceAdjust({
           void save(true);
         }}
       >
-        <label>
-          {labels.date}
-          <input
+        <Field label={labels.date}>
+          <DateField
             required
-            className={field}
-            type="date"
-            value={date}
-            onChange={(event): void => {
-              setDate(event.currentTarget.value);
+
+            value={parseFieldDate(date)}
+            onChange={(pickedDate): void => {
+              setDate(formatFieldDate(pickedDate));
               setPreview(undefined);
             }}
           />
-        </label>
-        <label>
-          {labels.bankBalance}
-          <input
+        </Field>
+        <Field label={labels.bankBalance}>
+          <TextInput
             required
-            className={field}
+
             type="number"
             step="0.01"
             value={balance}
@@ -102,10 +113,10 @@ export default function BalanceAdjust({
               setPreview(undefined);
             }}
           />
-        </label>
-        <button className={button} disabled={busy} type="submit">
+        </Field>
+        <Button variant="primary" disabled={busy} type="submit">
           {labels.preview}
-        </button>
+        </Button>
         {preview && (
           <>
             <p>
@@ -114,8 +125,8 @@ export default function BalanceAdjust({
             <p>
               {labels.difference}: {formatBRL(preview.difference, language)}
             </p>
-            <button
-              className={button}
+            <Button
+              variant="danger"
               disabled={busy}
               type="button"
               onClick={(): void => {
@@ -123,7 +134,7 @@ export default function BalanceAdjust({
               }}
             >
               {t.common.confirm}
-            </button>
+            </Button>
           </>
         )}
       </form>
@@ -141,21 +152,21 @@ export default function BalanceAdjust({
               )}{' '}
               · {formatBRL(checkpoint.balance, language)}
             </span>
-            <button
-              className={button}
+            <Button
+              variant="danger"
               disabled={busy}
               onClick={(): void => {
                 void remove(checkpoint.id);
               }}
             >
               {t.common.delete}
-            </button>
+            </Button>
           </li>
         ))}
       </ul>
-      <button className={button} disabled={busy} onClick={onClose}>
+      <Button variant="secondary" disabled={busy} onClick={onClose}>
         {t.common.cancel}
-      </button>
-    </div>
+      </Button>
+    </Panel>
   );
 }

@@ -1,4 +1,15 @@
 'use client';
+
+import {
+  Panel,
+  TextInput,
+  Select,
+  Button,
+  Field,
+  DateField,
+  parseFieldDate,
+  formatFieldDate,
+} from '@/components/ui';
 import { useEffect, useState, type FormEvent, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -12,7 +23,7 @@ import useCategories from '@/hooks/useCategories.hook';
 import { TransactionType } from '@/enums';
 import { postFetcher } from '@/libs/fetchers.lib';
 import { useI18n } from '@/i18n/useI18n';
-import { field, button, panel } from '@/components/Financing/styles';
+
 import { getApiDate, parseApiDate } from '@/utils/globalFormats.util';
 
 export default function NewFinancingPage(): JSX.Element {
@@ -96,26 +107,23 @@ export default function NewFinancingPage(): JSX.Element {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4">
       <h1 className="text-xl font-semibold">{t.financing.newContract}</h1>
-      <form
+      <Panel
+        as="form"
         onSubmit={save}
-        className={`${panel} grid grid-cols-1 gap-3 sm:grid-cols-2`}
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2"
       >
         {(['name', 'lender'] as const).map((key): JSX.Element => (
-          <label className="flex min-w-0 flex-col gap-1" key={key}>
-            {t.financing[key]}
-            <input
-              className={field}
+          <Field label={t.financing[key]} key={key}>
+            <TextInput
               required={key === 'name'}
               maxLength={255}
               value={draft[key] ?? ''}
               onChange={(event): void => change(key, event.currentTarget.value)}
             />
-          </label>
+          </Field>
         ))}
-        <label className="flex flex-col gap-1">
-          {t.financing.kind}
-          <select
-            className={field}
+        <Field label={t.financing.kind}>
+          <Select
             value={draft.kind}
             onChange={(event): void =>
               change(
@@ -131,12 +139,10 @@ export default function NewFinancingPage(): JSX.Element {
                 </option>
               )
             )}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1">
-          {t.financing.system}
-          <select
-            className={field}
+          </Select>
+        </Field>
+        <Field label={t.financing.system}>
+          <Select
             value={draft.system}
             onChange={(event): void => {
               const system = event.currentTarget
@@ -150,18 +156,16 @@ export default function NewFinancingPage(): JSX.Element {
           >
             <option value="SAC">SAC</option>
             <option value="PRICE">Price</option>
-          </select>
-        </label>
+          </Select>
+        </Field>
         {numeric
           .filter(
             (key): boolean =>
               key !== 'statedInstallment' || draft.system === 'PRICE'
           )
           .map((key): JSX.Element => (
-            <label key={key} className="flex min-w-0 flex-col gap-1">
-              {t.financing[key]}
-              <input
-                className={field}
+            <Field label={t.financing[key]} key={key}>
+              <TextInput
                 type="number"
                 min={0}
                 max={key === 'term' ? 500 : undefined}
@@ -177,12 +181,10 @@ export default function NewFinancingPage(): JSX.Element {
                   )
                 }
               />
-            </label>
+            </Field>
           ))}
-        <label className="flex flex-col gap-1">
-          {t.financing.monthlyRate}
-          <input
-            className={field}
+        <Field label={t.financing.monthlyRate}>
+          <TextInput
             type="number"
             min={0}
             max={100}
@@ -192,27 +194,24 @@ export default function NewFinancingPage(): JSX.Element {
               change('monthlyRate', Number(event.currentTarget.value) / 100)
             }
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          {t.financing.firstDueDate}
-          <input
+        </Field>
+        <Field label={t.financing.firstDueDate}>
+          <DateField
             required
-            className={field}
-            type="date"
-            value={draft.firstDueDate.replaceAll('/', '-')}
-            onChange={(event): void =>
+
+            value={parseFieldDate(draft.firstDueDate.replaceAll('/', '-'))}
+            onChange={(pickedDate): void =>
               change(
                 'firstDueDate',
-                event.currentTarget.value.replaceAll('-', '/')
+                formatFieldDate(pickedDate).replaceAll('-', '/')
               )
             }
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          {t.financing.categoryId}
-          <select
+        </Field>
+        <Field label={t.financing.categoryId}>
+          <Select
             required
-            className={field}
+
             value={draft.categoryId}
             onChange={(event): void =>
               change('categoryId', event.currentTarget.value)
@@ -224,12 +223,10 @@ export default function NewFinancingPage(): JSX.Element {
                 {category.name}
               </option>
             ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1">
-          {t.financing.paymentMethod}
-          <select
-            className={field}
+          </Select>
+        </Field>
+        <Field label={t.financing.paymentMethod}>
+          <Select
             value={draft.paymentMethod}
             onChange={(event): void => {
               const paymentMethod = event.currentTarget.value as PaymentMethod;
@@ -247,14 +244,12 @@ export default function NewFinancingPage(): JSX.Element {
                   {t.payments.methods[method]}
                 </option>
               ))}
-          </select>
-        </label>
+          </Select>
+        </Field>
         {draft.paymentMethod !== PaymentMethod.CASH &&
           draft.paymentMethod !== PaymentMethod.OTHER && (
-            <label className="flex flex-col gap-1">
-              {t.financing.accountId}
-              <select
-                className={field}
+            <Field label={t.financing.accountId}>
+              <Select
                 value={draft.accountId ?? ''}
                 onChange={(event): void =>
                   change('accountId', event.currentTarget.value || null)
@@ -266,16 +261,16 @@ export default function NewFinancingPage(): JSX.Element {
                     {account.name}
                   </option>
                 ))}
-              </select>
-            </label>
+              </Select>
+            </Field>
           )}
-        <button className={button} disabled={busy || !preview} type="submit">
+        <Button variant="primary" disabled={busy || !preview} type="submit">
           {t.financing.save}
-        </button>
-      </form>
+        </Button>
+      </Panel>
       {error && <p role="alert">{error}</p>}
       {preview && (
-        <section className={panel}>
+        <Panel>
           <h2>{t.financing.preview}</h2>
           <p>
             {t.financing.effectiveRate}:{' '}
@@ -296,7 +291,7 @@ export default function NewFinancingPage(): JSX.Element {
               · {money.format(row.payment)}
             </p>
           ))}
-        </section>
+        </Panel>
       )}
     </main>
   );

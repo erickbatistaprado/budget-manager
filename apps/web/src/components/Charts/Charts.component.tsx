@@ -1,5 +1,6 @@
 'use client';
 
+import { Panel } from '@/components/ui';
 import { BalanceBarChart, BalancePieChart } from '@/components';
 import { useI18n } from '@/i18n/useI18n';
 import type { Transaction } from '@/types';
@@ -21,7 +22,7 @@ export default function Charts({
   const { t } = useI18n();
 
   return (
-    <div className="flex w-full cursor-default items-center justify-start rounded border border-[var(--ctp-surface1)] bg-[var(--ctp-surface0)]/90 p-2 shadow-md">
+    <Panel className="flex w-full cursor-default items-center justify-start shadow-md">
       <BalanceBarChart
         startDate={startDate}
         endDate={endDate}
@@ -40,6 +41,6 @@ export default function Charts({
         transactions={expenses}
         typography={t.home.expenses}
       />
-    </div>
+    </Panel>
   );
 }

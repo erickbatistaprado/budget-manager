@@ -62,7 +62,7 @@ it('prefills the printed date and sends card and bill date with the import', asy
   });
   fireEvent.click(screen.getByRole('button', { name: 'Read statement' }));
   await waitFor((): void =>
-    expect(screen.getByLabelText('Bill due date')).toHaveValue('2027-01-05')
+    expect(screen.getByLabelText('Bill due date')).toHaveValue('01/05/2027')
   );
   fireEvent.change(screen.getByLabelText('Card'), {
     target: { value: 'visa' },
@@ -92,7 +92,7 @@ it('defaults an open bill from its export date after a card is selected', async 
   fireEvent.change(screen.getByLabelText('Card'), {
     target: { value: 'visa' },
   });
-  expect(screen.getByLabelText('Bill due date')).toHaveValue('2027-01-05');
+  expect(screen.getByLabelText('Bill due date')).toHaveValue('01/05/2027');
 });
 
 it('can apply a bill date when every line is already saved', async (): Promise<void> => {

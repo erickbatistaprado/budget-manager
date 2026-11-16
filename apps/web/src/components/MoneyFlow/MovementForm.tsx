@@ -1,11 +1,22 @@
 'use client';
+
+import {
+  Select,
+  Panel,
+  TextInput,
+  Checkbox,
+  Button,
+  Field,
+  DateField,
+  parseFieldDate,
+  formatFieldDate,
+} from '@/components/ui';
 import { useState, type FormEvent, type JSX } from 'react';
-import { DatePickerDialog } from '@/components';
 import useAccounts from '@/hooks/useAccounts.hook';
 import useCards from '@/hooks/useCards.hook';
 import useSavings from '@/hooks/useSavings.hook';
 import { useI18n } from '@/i18n/useI18n';
-import { postFetcher } from '@/libs/fetchers.lib';
+import { postFetcher, putFetcher } from '@/libs/fetchers.lib';
 import { refreshMoneyFlow } from '@/libs/moneyFlowCache.lib';
 import {
   formatDate,
@@ -13,10 +24,7 @@ import {
   parseApiDate,
 } from '@/utils/globalFormats.util';
 import type { MovementKind, MovementDraft } from '@budget-manager/api-client';
-import { field, button, panel } from './styles';
-const drawerButton =
-  'h-12 w-full cursor-pointer rounded-md bg-[var(--ctp-surface1)] font-bold text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)] disabled:cursor-not-allowed disabled:opacity-50';
-const checkbox = 'h-4 w-4 accent-[var(--ctp-blue)]';
+
 const BILL_MONTHS_BEFORE = 3;
 const BILL_MONTHS_AFTER = 1;
 
@@ -49,30 +57,42 @@ export default function MovementForm({
   savingId: fixedSaving,
   initialKind = 'TRANSFER',
   variant = 'panel',
+  initialDraft,
+  movementId,
 }: {
   onClose: () => void;
   savingId?: string;
   initialKind?: MovementKind;
   variant?: 'drawer' | 'panel';
+  initialDraft?: Partial<MovementDraft>;
+  movementId?: string;
 }): JSX.Element {
   const { t, language } = useI18n();
   const drawer = variant === 'drawer';
-  const [pickedDate, setPickedDate] = useState<Date>(new Date());
+  const [pickedDate, setPickedDate] = useState<Date>(
+    initialDraft?.date ? parseApiDate(initialDraft.date) : new Date()
+  );
   const labels = t.moneyFlow;
   const { data: accounts } = useAccounts();
   const { data: cards } = useCards();
   const { data: savings } = useSavings();
   const [kind, setKind] = useState<MovementKind>(initialKind);
-  const [date, setDate] = useState(getApiDate(new Date()).replaceAll('/', '-'));
-  const [amount, setAmount] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [card, setCard] = useState('');
-  const [bill, setBill] = useState('');
-  const [saving, setSaving] = useState(fixedSaving ?? '');
-  const [notes, setNotes] = useState('');
-  const [opening, setOpening] = useState(false);
-  const [funding, setFunding] = useState(false);
+  const [date, setDate] = useState(
+    (initialDraft?.date ?? getApiDate(new Date())).replaceAll('/', '-')
+  );
+  const [amount, setAmount] = useState(initialDraft?.amount?.toString() ?? '');
+  const [from, setFrom] = useState(initialDraft?.fromAccountId ?? '');
+  const [to, setTo] = useState(initialDraft?.toAccountId ?? '');
+  const [card, setCard] = useState(initialDraft?.cardId ?? '');
+  const [bill, setBill] = useState(initialDraft?.billDueDate ?? '');
+  const [saving, setSaving] = useState(
+    fixedSaving ?? initialDraft?.savingId ?? ''
+  );
+  const [notes, setNotes] = useState(initialDraft?.notes ?? '');
+  const [opening, setOpening] = useState(initialDraft?.opening ?? false);
+  const [funding, setFunding] = useState(
+    initialKind === 'TRANSFER' && Boolean(initialDraft?.cardId)
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const fromNeeded =
@@ -113,7 +133,10 @@ export default function MovementForm({
       notes: notes.trim() || null,
     };
     try {
-      await postFetcher('/movements', { body: JSON.stringify(draft) });
+      const write = movementId ? putFetcher : postFetcher;
+      await write(movementId ? `/movements/${movementId}` : '/movements', {
+        body: JSON.stringify(draft),
+      });
       await refreshMoneyFlow();
       onClose();
     } catch {
@@ -128,11 +151,10 @@ export default function MovementForm({
     onChange: (value: string) => void
   ): JSX.Element {
     return (
-      <label className="flex flex-col gap-1">
-        {label}
-        <select
+      <Field label={label}>
+        <Select
           required
-          className={field}
+
           value={value}
           onChange={(event): void => onChange(event.currentTarget.value)}
         >
@@ -142,23 +164,32 @@ export default function MovementForm({
               {account.name}
             </option>
           ))}
-        </select>
-      </label>
+        </Select>
+      </Field>
     );
   }
   return (
-    <form
-      className={drawer ? 'flex w-full flex-col gap-3' : panel}
+    <Panel
+      as="form"
+      className={
+        drawer
+          ? 'flex w-full flex-col gap-3 border-0 bg-transparent p-0'
+          : 'flex w-full flex-col gap-3'
+      }
       onSubmit={save}
     >
       {drawer && (
-        <DatePickerDialog date={pickedDate} setDate={setPickedDate} arrows />
+        <DateField
+          label={language === 'pt' ? 'Data' : 'Date'}
+          value={pickedDate}
+          onChange={(value): void => {
+            if (value) setPickedDate(value);
+          }}
+        />
       )}
       {!fixedSaving && (
-        <label>
-          {labels.kind}
-          <select
-            className={field}
+        <Field label={labels.kind}>
+          <Select
             value={kind}
             onChange={(event): void =>
               changeKind(event.currentTarget.value as MovementKind)
@@ -176,25 +207,23 @@ export default function MovementForm({
                 {labels[value]}
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </Field>
       )}
       {!drawer && (
-        <label>
-          {labels.date}
-          <input
-            className={field}
+        <Field label={labels.date}>
+          <DateField
             required
-            type="date"
-            value={date}
-            onChange={(event): void => setDate(event.currentTarget.value)}
+
+            value={parseFieldDate(date)}
+            onChange={(pickedDate): void =>
+              setDate(formatFieldDate(pickedDate))
+            }
           />
-        </label>
+        </Field>
       )}
-      <label>
-        {labels.amount}
-        <input
-          className={field}
+      <Field label={labels.amount}>
+        <TextInput
           required
           type="number"
           min="0.01"
@@ -202,37 +231,29 @@ export default function MovementForm({
           value={amount}
           onChange={(event): void => setAmount(event.currentTarget.value)}
         />
-      </label>
+      </Field>
       {kind === 'INVESTMENT' && (
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            className={checkbox}
-            checked={opening}
-            onChange={(event): void => setOpening(event.currentTarget.checked)}
-          />
-          {labels.opening}
-        </label>
+        <Checkbox
+          label={labels.opening}
+
+          checked={opening}
+          onChange={(event): void => setOpening(event.currentTarget.checked)}
+        />
       )}
       {fromNeeded && accountSelect(labels.from, from, setFrom)}
       {toNeeded && accountSelect(labels.to, to, setTo)}
       {kind === 'TRANSFER' && (
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            className={checkbox}
-            checked={funding}
-            onChange={(event): void => setFunding(event.currentTarget.checked)}
-          />
-          {labels.funding}
-        </label>
+        <Checkbox
+          label={labels.funding}
+
+          checked={funding}
+          onChange={(event): void => setFunding(event.currentTarget.checked)}
+        />
       )}
       {billNeeded && (
         <>
-          <label>
-            {labels.card}
-            <select
-              className={field}
+          <Field label={labels.card}>
+            <Select
               required
               value={card}
               onChange={(event): void => {
@@ -246,12 +267,10 @@ export default function MovementForm({
                   {item.name}
                 </option>
               ))}
-            </select>
-          </label>
-          <label>
-            {labels.bill}
-            <select
-              className={field}
+            </Select>
+          </Field>
+          <Field label={labels.bill}>
+            <Select
               required
               disabled={!selectedCard}
               value={bill}
@@ -263,16 +282,14 @@ export default function MovementForm({
                   {formatDate(dueDate, language)}
                 </option>
               ))}
-            </select>
-          </label>
+            </Select>
+          </Field>
           <p className="text-sm">{labels.fundingHelp}</p>
         </>
       )}
       {savingNeeded && !fixedSaving && (
-        <label>
-          {labels.saving}
-          <select
-            className={field}
+        <Field label={labels.saving}>
+          <Select
             required
             value={saving}
             onChange={(event): void => setSaving(event.currentTarget.value)}
@@ -283,36 +300,38 @@ export default function MovementForm({
                 {item.name}
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </Field>
       )}
-      <label>
-        {labels.notes}
-        <input
-          className={field}
+      <Field label={labels.notes}>
+        <TextInput
           maxLength={4000}
           value={notes}
           onChange={(event): void => setNotes(event.currentTarget.value)}
         />
-      </label>
+      </Field>
       {error && <p role="alert">{error}</p>}
       <div className={drawer ? 'flex w-full gap-2' : 'flex gap-2'}>
-        <button
-          className={drawer ? drawerButton : button}
+        <Button
+          variant="secondary"
+          size={drawer ? 'lg' : 'md'}
+          fullWidth={drawer}
           disabled={busy}
           type="button"
           onClick={onClose}
         >
           {t.common.cancel}
-        </button>
-        <button
-          className={drawer ? drawerButton : button}
+        </Button>
+        <Button
+          variant="primary"
+          size={drawer ? 'lg' : 'md'}
+          fullWidth={drawer}
           disabled={busy}
           type="submit"
         >
           {t.common.save}
-        </button>
+        </Button>
       </div>
-    </form>
+    </Panel>
   );
 }

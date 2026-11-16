@@ -1,4 +1,14 @@
 'use client';
+
+import {
+  Panel,
+  Button,
+  TextInput,
+  Field,
+  DateField,
+  parseFieldDate,
+  formatFieldDate,
+} from '@/components/ui';
 import { use, useState, type JSX, type FormEvent } from 'react';
 import useSWR from 'swr';
 import { LineChart } from '@mui/x-charts/LineChart';
@@ -12,7 +22,6 @@ import { formatCompactBRL } from '@/utils/analytics.util';
 import clsx from 'clsx';
 import { financingSummary } from '@/utils/financing.util';
 import ExtraPaymentDialog from '@/components/Financing/ExtraPaymentDialog';
-import { button, field, panel } from '@/components/Financing/styles';
 
 export default function FinancingPage({
   params,
@@ -132,10 +141,10 @@ export default function FinancingPage({
       </header>
       <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3">
         {cards.map(([label, value]): JSX.Element => (
-          <section key={label} className={panel}>
+          <Panel key={label}>
             <h2 className="text-sm text-[var(--ctp-subtext1)]">{label}</h2>
             <p className="text-lg font-semibold break-words">{value}</p>
-          </section>
+          </Panel>
         ))}
       </div>
       <div
@@ -151,7 +160,7 @@ export default function FinancingPage({
           style={{ width: `${progress}%` }}
         />
       </div>
-      <section className={panel}>
+      <Panel>
         <h2 className="mb-3 font-semibold">{t.financing.details}</h2>
         <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm min-[480px]:grid-cols-2 lg:grid-cols-3">
           {(
@@ -184,17 +193,17 @@ export default function FinancingPage({
             </div>
           ))}
         </dl>
-      </section>
+      </Panel>
       <div className="flex flex-wrap gap-2">
-        <button className={button} onClick={(): void => setAction('extra')}>
+        <Button variant="secondary" onClick={(): void => setAction('extra')}>
           {t.financing.extra}
-        </button>
-        <button className={button} onClick={(): void => setAction('sync')}>
+        </Button>
+        <Button variant="secondary" onClick={(): void => setAction('sync')}>
           {t.financing.sync}
-        </button>
-        <button className={button} onClick={(): void => setAction('day')}>
+        </Button>
+        <Button variant="secondary" onClick={(): void => setAction('day')}>
           {t.financing.changeDay}
-        </button>
+        </Button>
       </div>
       {message && <p role="alert">{message}</p>}
       {action === 'extra' && (
@@ -205,15 +214,13 @@ export default function FinancingPage({
         />
       )}
       {action && action !== 'extra' && (
-        <form onSubmit={adjust} className={`${panel} flex flex-col gap-3`}>
+        <Panel as="form" onSubmit={adjust} className="flex flex-col gap-3">
           <h2>{actionTitle}</h2>
           {action === 'paid' && <p>{t.financing.paidHint}</p>}
           {action === 'day' ? (
             <>
-              <label className="flex flex-col gap-1">
-                {t.financing.fromInstallment}
-                <input
-                  className={field}
+              <Field label={t.financing.fromInstallment}>
+                <TextInput
                   type="number"
                   min={1}
                   max={rows.length}
@@ -222,11 +229,9 @@ export default function FinancingPage({
                     setNumber(Number(event.currentTarget.value))
                   }
                 />
-              </label>
-              <label className="flex flex-col gap-1">
-                {t.financing.dueDay}
-                <input
-                  className={field}
+              </Field>
+              <Field label={t.financing.dueDay}>
+                <TextInput
                   type="number"
                   min={1}
                   max={31}
@@ -235,15 +240,13 @@ export default function FinancingPage({
                     setDay(Number(event.currentTarget.value))
                   }
                 />
-              </label>
+              </Field>
             </>
           ) : (
             <>
-              <label className="flex flex-col gap-1">
-                {t.financing.adjustmentAmount}
-                <input
+              <Field label={t.financing.adjustmentAmount}>
+                <TextInput
                   required
-                  className={field}
                   type="number"
                   min={action === 'sync' ? 0 : 0.01}
                   step="0.01"
@@ -252,36 +255,34 @@ export default function FinancingPage({
                     setAmount(event.currentTarget.value)
                   }
                 />
-              </label>
+              </Field>
               {action === 'sync' && (
-                <label className="flex flex-col gap-1">
-                  {t.financing.date}
-                  <input
+                <Field label={t.financing.date}>
+                  <DateField
                     required
-                    className={field}
-                    type="date"
-                    value={date}
-                    onChange={(event): void =>
-                      setDate(event.currentTarget.value)
+
+                    value={parseFieldDate(date)}
+                    onChange={(pickedDate): void =>
+                      setDate(formatFieldDate(pickedDate))
                     }
                   />
-                </label>
+                </Field>
               )}
             </>
           )}
-          <button className={button} disabled={busy}>
+          <Button type="submit" variant="primary" disabled={busy}>
             {t.financing.confirm}
-          </button>
-          <button
-            className={button}
+          </Button>
+          <Button
+            variant="secondary"
             type="button"
             onClick={(): void => setAction(undefined)}
           >
             {t.financing.cancel}
-          </button>
-        </form>
+          </Button>
+        </Panel>
       )}
-      <section className={`${panel} min-w-0`}>
+      <Panel className="min-w-0">
         <h2>{t.financing.balance}</h2>
         <LineChart
           height={250}
@@ -316,8 +317,8 @@ export default function FinancingPage({
         <p className="text-sm text-[var(--ctp-blue)]">
           ● {t.financing.outstanding}
         </p>
-      </section>
-      <section className={`${panel} min-w-0`}>
+      </Panel>
+      <Panel className="min-w-0">
         <h2>{t.financing.composition}</h2>
         <BarChart
           height={250}
@@ -354,8 +355,8 @@ export default function FinancingPage({
             ● {t.financing.interest}
           </span>
         </div>
-      </section>
-      <section className={`${panel} overflow-x-auto`}>
+      </Panel>
+      <Panel className="overflow-x-auto">
         <h2 className="mb-3 font-semibold">{t.financing.preview}</h2>
         <table className="w-full text-left text-sm">
           <thead className="text-[var(--ctp-subtext1)]">
@@ -413,8 +414,8 @@ export default function FinancingPage({
                       </span>
                     )}
                     {!paid && row.number === current && (
-                      <button
-                        className={button}
+                      <Button
+                        variant="secondary"
                         onClick={(): void => {
                           setNumber(row.number);
                           setAmount(String(row.payment));
@@ -422,7 +423,7 @@ export default function FinancingPage({
                         }}
                       >
                         {t.financing.recordPaid}
-                      </button>
+                      </Button>
                     )}
                     {!paid && row.number !== current && (
                       <span>{t.financing.scheduled}</span>
@@ -433,7 +434,7 @@ export default function FinancingPage({
             })}
           </tbody>
         </table>
-      </section>
+      </Panel>
     </main>
   );
 }

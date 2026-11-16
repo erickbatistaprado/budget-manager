@@ -1,6 +1,6 @@
 'use client';
 
-import { LanguageSwitcher, MenuButton, ThemeSwitcher } from '@/components';
+import { LanguageSwitcher, MenuButton } from '@/components';
 import { useI18n } from '@/i18n/useI18n';
 import { authenticationService } from '@/services';
 import { usePathname, useRouter } from 'next/navigation';
@@ -8,8 +8,12 @@ import type { JSX } from 'react';
 import { CgProfile } from 'react-icons/cg';
 import { FaHome } from 'react-icons/fa';
 import { FiUpload } from 'react-icons/fi';
-import { PiSignOutBold } from 'react-icons/pi';
-import { RiSafe2Line } from 'react-icons/ri';
+import {
+  PiSignOutBold,
+  PiPiggyBank,
+  PiBank,
+  PiCreditCard,
+} from 'react-icons/pi';
 import { VscGraph } from 'react-icons/vsc';
 
 interface SideMenuProps {
@@ -53,21 +57,21 @@ export default function SideMenu({
           active={isActive('/savings')}
           onClick={(): void => onClick('/savings')}
         >
-          <RiSafe2Line size={22} />
+          <PiPiggyBank size={22} />
           {t.menu.savings}
         </MenuButton>
         <MenuButton
           active={isActive('/financings')}
           onClick={(): void => onClick('/financings')}
         >
-          <RiSafe2Line size={22} />
+          <PiBank size={22} />
           {t.financing.title}
         </MenuButton>
         <MenuButton
           active={isActive('/cards')}
           onClick={(): void => onClick('/cards')}
         >
-          <RiSafe2Line size={22} />
+          <PiCreditCard size={22} />
           {t.cards.title}
         </MenuButton>
         <MenuButton
@@ -90,7 +94,6 @@ export default function SideMenu({
         </MenuButton>
       </nav>
       <div className="mt-auto flex flex-col gap-3 pt-8">
-        <ThemeSwitcher />
         <LanguageSwitcher />
       </div>
     </div>

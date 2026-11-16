@@ -1,6 +1,61 @@
 import { SavingLocation } from '@/enums';
 
 export const en = {
+  dashboard: {
+    loadMore: 'Load more',
+    noIncome: 'No income this month.',
+    empty: 'No entries in this period',
+    summary: 'Month at a glance',
+    surplus: 'Surplus',
+    invested: 'Invested',
+    kept: 'Kept in accounts',
+    shortfall: 'Shortfall',
+    invest: 'Invest the surplus',
+    accounts: 'Accounts',
+    available: 'Total available',
+    updated: 'Updated on',
+    unassigned: (count: number): string =>
+      count === 1
+        ? '1 entry without an account this month'
+        : `${count} entries without an account this month`,
+    bills: 'Bills this month',
+    paidFrom: 'Paid from',
+    paid: 'Paid',
+    due: 'Due',
+    evolution: 'Evolution',
+    year: '12 months',
+    allTime: 'All time',
+    netWorth: 'Net worth',
+    entries: 'Entries',
+    search: 'Search description, category, notes, card or account',
+    all: 'All',
+    income: 'Income',
+    expenses: 'Expenses',
+    movements: 'Movements',
+    category: 'Category',
+    payment: 'Payment method / card / account',
+    noAccount: 'No account',
+    totals: 'Filtered totals',
+    record: 'Record payment',
+    salaryToday: 'Salary today',
+    salaryDays: (days: number): string => `${days} days until salary`,
+    loading: 'Loading the complete month…',
+    accountFlows: 'Account flows',
+    projection: 'Projected through month end',
+    description: 'Description',
+    date: 'Date',
+    value: 'Value',
+    actions: 'Actions',
+    minimumValue: 'Minimum value',
+    maximumValue: 'Maximum value',
+    from: 'From',
+    until: 'To',
+    filters: 'Filters',
+    clearFilters: 'Clear filters',
+    done: 'Done',
+    clearAll: 'Clear all',
+    sort: 'Sort by',
+  },
   moneyFlow: {
     title: 'Movement',
     TRANSFER: 'Transfer',
@@ -137,6 +192,12 @@ export const en = {
     },
   },
   cards: {
+    creditLimit: 'Credit limit',
+    availableLimit: 'Available limit',
+    of: 'of',
+    overLimit: 'Over the limit',
+    limitValidation:
+      'Enter a positive credit limit with at most two decimal places.',
     selectCard: 'Select a card',
     applyBillDates: 'Apply bill date to saved purchases',
     reimportHint:
@@ -149,6 +210,7 @@ export const en = {
     paidWith: 'Paid with',
     noCard: 'No card (Pix, debit, cash)',
     card: 'Card',
+    monthlyBill: "Each month it goes into that month's bill",
     billDueDate: 'Bill due date',
     validation: 'Enter a name and whole days between 1 and 31.',
     deleteConfirmation: (name: string): string =>
@@ -556,7 +618,17 @@ export const en = {
     merchants: 'Top merchants',
     unknownMerchant: 'Without a merchant',
     unknownCategory: 'Uncategorized',
-    installments: 'The next 6 months, already committed',
+    installments: 'Installments in the next 6 months',
+    owed: 'What you still owe',
+    owedNote:
+      'Card installments still to be billed, and each financing by its outstanding balance (what paying it off today would cost).',
+    owedCards: 'Cards',
+    owedFinancings: 'Financing',
+    owedInstallments: (count: number): string =>
+      count === 1 ? '1 installment left' : `${count} installments left`,
+    owedWithInterest: (amount: string): string =>
+      `${amount} in installments, interest included`,
+    owedNothing: 'Nothing left to pay in installments.',
     installmentNote:
       'Installments only, grouped by category. Early payments follow their updated due date.',
     savings: 'Savings by location',

@@ -1,52 +1,31 @@
+import { Select, type SelectProps } from '@/components/ui';
 import { Tooltip } from '@/components';
-import type { JSX } from 'react';
+import { forwardRef, type JSX, type ReactNode } from 'react';
 
-interface Option {
-  label: string;
-  value: string | number;
-}
-
-interface SelectWithTooltipProps {
-  id: string;
-  name?: string;
+interface SelectWithTooltipProps extends SelectProps {
   tooltip: string;
-  icon: React.ReactNode;
-  value?: string | number;
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  options: Option[];
-  disabled?: boolean;
+  icon: ReactNode;
 }
 
-export default function SelectWithTooltip({
-  id,
-  name,
-  tooltip,
-  icon,
-  value,
-  onChange,
-  options,
-  disabled = false,
-}: Readonly<SelectWithTooltipProps>): JSX.Element {
-  return (
-    <div className="flex flex-col gap-1">
-      {icon}
-      <Tooltip placement="top" tooltip={tooltip}>
-        <select
-          id={id}
-          name={name}
-          aria-label={tooltip}
-          className="w-full rounded-md border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-3 text-[var(--ctp-text)] shadow-sm transition-colors focus:border-[var(--ctp-blue)] focus:ring-2 focus:ring-[var(--ctp-blue)]/25 focus:outline-none disabled:opacity-50"
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
+const SelectWithTooltip = forwardRef<HTMLSelectElement, SelectWithTooltipProps>(
+  function SelectWithTooltip({ tooltip, icon, ...props }, ref): JSX.Element {
+    return (
+      <div className="flex flex-col gap-1">
+        <Tooltip
+          fullWidth={props.fullWidth !== false}
+          placement="top"
+          tooltip={tooltip}
         >
-          {options.map(({ value, label }: Option): JSX.Element => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </Tooltip>
-    </div>
-  );
-}
+          <Select
+            startAdornment={icon}
+            label={tooltip}
+            ref={ref}
+            aria-label={tooltip}
+            {...props}
+          />
+        </Tooltip>
+      </div>
+    );
+  }
+);
+export default SelectWithTooltip;

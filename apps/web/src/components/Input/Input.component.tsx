@@ -1,15 +1,12 @@
 'use client';
 
-import {
-  useState,
-  type HTMLInputTypeAttribute,
-  type InputHTMLAttributes,
-  type JSX,
-} from 'react';
+import { TextInput, IconButton, type TextInputProps } from '@/components/ui';
+import { useState, type HTMLInputTypeAttribute, type JSX } from 'react';
+import { useI18n } from '@/i18n/useI18n';
 import type { IconType } from 'react-icons';
 import { PiEyeDuotone, PiEyeSlashDuotone } from 'react-icons/pi';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends TextInputProps {
   label: string;
 }
 
@@ -23,6 +20,11 @@ export default function Input({
   onChange,
   ...props
 }: Readonly<InputProps>): JSX.Element {
+  const { language } = useI18n();
+  const eyeLabels =
+    language === 'pt'
+      ? ['Mostrar senha', 'Ocultar senha']
+      : ['Show password', 'Hide password'];
   const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
 
   const EyeIcon: IconType = isPasswordVisible
@@ -38,8 +40,9 @@ export default function Input({
 
   return (
     <div className="relative">
-      <input
-        className={`text-md peer block w-full appearance-none rounded-md border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] px-5 pt-5 pb-1 text-[var(--ctp-text)] shadow-sm transition-colors focus:border-[var(--ctp-blue)] focus:ring-2 focus:ring-[var(--ctp-blue)]/25 focus:outline-none ${className ?? ''}`}
+      <TextInput
+        className={className}
+        label={label}
         placeholder=" "
         id={id}
         type={handleType()}
@@ -47,23 +50,17 @@ export default function Input({
         onKeyDown={onKeyDown}
         onChange={onChange}
         {...props}
+        endAdornment={
+          type === 'password' && (
+            <IconButton
+              aria-label={eyeLabels[Number(isPasswordVisible)]}
+              onClick={(): void => setIsPasswordVisible(!isPasswordVisible)}
+            >
+              <EyeIcon data-testid="eye-icon" size={22} />
+            </IconButton>
+          )
+        }
       />
-      <label
-        className="text-md absolute top-3 left-6 z-10 origin-[0] -translate-y-3 scale-75 transform cursor-text text-[var(--ctp-subtext0)] duration-150 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-3 peer-focus:scale-75"
-        htmlFor={id}
-      >
-        {label}
-      </label>
-      {type === 'password' && (
-        <div className="absolute top-4 right-3">
-          <EyeIcon
-            data-testid="eye-icon"
-            className="cursor-pointer text-[var(--ctp-subtext0)]"
-            size={22}
-            onClick={(): void => setIsPasswordVisible(!isPasswordVisible)}
-          />
-        </div>
-      )}
     </div>
   );
 }

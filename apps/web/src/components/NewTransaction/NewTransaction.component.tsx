@@ -1,7 +1,9 @@
 'use client';
 
+import { DateField, Button, Select, Field } from '@/components/ui';
+
 import MovementForm from '@/components/MoneyFlow/MovementForm';
-import { DatePickerDialog, Input, SelectWithTooltip } from '@/components';
+import { Input, SelectWithTooltip } from '@/components';
 import { RepeatInterval, TransactionType } from '@/enums';
 import { useCategories } from '@/hooks';
 import useCards from '@/hooks/useCards.hook';
@@ -19,7 +21,6 @@ import {
   parseApiDate,
 } from '@/utils/globalFormats.util';
 import { monthlyOccurrence, monthKey } from '@/utils/monthlyTransaction.util';
-import clsx from 'clsx';
 import {
   useId,
   useState,
@@ -51,10 +52,6 @@ function useIsBrowser(): boolean {
     (): boolean => false
   );
 }
-
-const paymentSelect =
-  'w-full rounded-md text-base border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-3 text-[var(--ctp-text)] shadow-sm transition-colors focus:border-[var(--ctp-blue)] focus:ring-2 focus:ring-[var(--ctp-blue)]/25 focus:outline-none disabled:opacity-50';
-const paymentLabel = 'flex flex-col gap-1 text-sm text-[var(--ctp-subtext1)]';
 
 export interface NewTransactionProps {
   transaction?: Transaction;
@@ -166,8 +163,7 @@ export default function NewTransaction({
         ? (form.accountId ?? form.account?.id ?? null) || null
         : null,
       cardId:
-        isInstallmentsEnabled &&
-        form.paymentMethod === PaymentMethod.CREDIT_CARD
+        isCardEnabled && form.paymentMethod === PaymentMethod.CREDIT_CARD
           ? (form.cardId ?? form.card?.id ?? null) || null
           : null,
       date: getApiDate(date ?? new Date()),
@@ -216,6 +212,7 @@ export default function NewTransaction({
     if (
       name === 'repeats' &&
       value !== RepeatInterval.NONE &&
+      value !== RepeatInterval.MONTHLY &&
       form.paymentMethod === PaymentMethod.CREDIT_CARD
     ) {
       setForm((previous): Partial<Transaction> => ({
@@ -266,6 +263,10 @@ export default function NewTransaction({
     form.repeats === RepeatInterval.NONE &&
     transactionType === TransactionType.EXPENSE
   );
+  const repeatsMonthly: boolean = form.repeats === RepeatInterval.MONTHLY;
+  const isCardEnabled: boolean =
+    transactionType === TransactionType.EXPENSE &&
+    (form.repeats === RepeatInterval.NONE || repeatsMonthly);
   const selectedCard = cards?.find(
     (card): boolean => card.id === (form.cardId ?? form.card?.id)
   );
@@ -302,13 +303,14 @@ export default function NewTransaction({
             ],
           ] as const
         ).map(([value, label, hint]): JSX.Element => (
-          <button
+          <Button
+            variant="secondary"
             key={value}
             type="button"
             onClick={(): void => setScope(value)}
             aria-label={label}
             aria-describedby={`${fieldId}-${value}-hint`}
-            className="flex w-full cursor-pointer flex-col items-start gap-1 rounded-md border border-[var(--ctp-surface1)] bg-[var(--ctp-base)] p-4 text-left shadow-sm transition-colors hover:border-[var(--ctp-blue)] focus:border-[var(--ctp-blue)] focus:ring-2 focus:ring-[var(--ctp-blue)]/25 focus:outline-none"
+            className="flex w-full flex-col items-start gap-1 text-left"
           >
             <span className="font-semibold">{label}</span>
             <span
@@ -317,22 +319,23 @@ export default function NewTransaction({
             >
               {hint}
             </span>
-          </button>
+          </Button>
         ))}
         <p className="text-sm text-[var(--ctp-subtext0)]">
           {t.transactions.earlierUnchanged}
         </p>
-        <button
-          className="h-12 w-full cursor-pointer rounded-md bg-[var(--ctp-surface1)] font-bold text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)]"
+        <Button
+          variant="secondary"
+          size="lg"
+          className="w-full"
           type="button"
           onClick={onClose}
         >
           {t.common.cancel}
-        </button>
+        </Button>
       </div>
     );
   }
-
   if (movement)
     return (
       <div className="w-full p-5">
@@ -342,9 +345,17 @@ export default function NewTransaction({
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[var(--ctp-surface0)]/55 p-5 text-[var(--ctp-text)] backdrop-blur-xs">
-      <div className="flex items-center justify-center">
+      <div className="flex w-full items-center justify-center">
         {date ? (
-          <DatePickerDialog date={date} setDate={setDate} arrows />
+          <DateField
+            form={`${fieldId}-form`}
+            required
+            label={language === 'pt' ? 'Data' : 'Date'}
+            value={date}
+            onChange={(value): void => {
+              if (value) setDate(value);
+            }}
+          />
         ) : (
           <div aria-hidden className="h-10" />
         )}
@@ -416,12 +427,14 @@ export default function NewTransaction({
           ]}
           disabled={!categories?.length || (monthly && scope === 'month')}
         />
-        <label className={paymentLabel}>
-          {transactionType === TransactionType.INCOME
-            ? t.payments.receivedBy
-            : t.payments.method}
-          <select
-            className={paymentSelect}
+        <Field
+          label={
+            transactionType === TransactionType.INCOME
+              ? t.payments.receivedBy
+              : t.payments.method
+          }
+        >
+          <Select
             value={form.paymentMethod ?? ''}
             disabled={monthly && scope === 'month'}
             onChange={(event): void => {
@@ -448,25 +461,21 @@ export default function NewTransaction({
                     PaymentMethod.OTHER,
                   ].includes(method);
                 }
-                return (
-                  isInstallmentsEnabled || method !== PaymentMethod.CREDIT_CARD
-                );
+                return isCardEnabled || method !== PaymentMethod.CREDIT_CARD;
               })
               .map((method): JSX.Element => (
                 <option key={method} value={method}>
                   {t.payments.methods[method]}
                 </option>
               ))}
-          </select>
-        </label>
+          </Select>
+        </Field>
         {supportsAccount(
           form.paymentMethod,
           transactionType === TransactionType.INCOME
         ) && (
-          <label className={paymentLabel}>
-            {t.payments.account}
-            <select
-              className={paymentSelect}
+          <Field label={t.payments.account}>
+            <Select
               name="accountId"
               disabled={monthly && scope === 'month'}
               value={form.accountId ?? form.account?.id ?? ''}
@@ -478,35 +487,38 @@ export default function NewTransaction({
                   {account.name}
                 </option>
               ))}
-            </select>
-          </label>
+            </Select>
+          </Field>
         )}
-        {isInstallmentsEnabled &&
-          form.paymentMethod === PaymentMethod.CREDIT_CARD && (
-            <div className={paymentLabel}>
-              <label htmlFor={`${fieldId}-card`}>{t.cards.card}</label>
-              <select
-                className={paymentSelect}
-                id={`${fieldId}-card`}
-                name="cardId"
-                required
-                value={form.cardId ?? form.card?.id ?? ''}
-                onChange={handleChange}
-              >
-                <option value="">{t.cards.selectCard}</option>
-                {cards?.map((card): JSX.Element => (
-                  <option key={card.id} value={card.id}>
-                    {card.name}
-                  </option>
-                ))}
-              </select>
-              {billDate && (
-                <p className="text-sm text-[var(--ctp-subtext1)]">
-                  {t.cards.billDue(formatDate(billDate, language))}
-                </p>
-              )}
-            </div>
-          )}
+        {isCardEnabled && form.paymentMethod === PaymentMethod.CREDIT_CARD && (
+          <div>
+            <Select
+              label={t.cards.card}
+              id={`${fieldId}-card`}
+              name="cardId"
+              required
+              value={form.cardId ?? form.card?.id ?? ''}
+              onChange={handleChange}
+            >
+              <option value="">{t.cards.selectCard}</option>
+              {cards?.map((card): JSX.Element => (
+                <option key={card.id} value={card.id}>
+                  {card.name}
+                </option>
+              ))}
+            </Select>
+            {repeatsMonthly && (
+              <p className="text-sm text-[var(--ctp-subtext1)]">
+                {t.cards.monthlyBill}
+              </p>
+            )}
+            {!repeatsMonthly && billDate && (
+              <p className="text-sm text-[var(--ctp-subtext1)]">
+                {t.cards.billDue(formatDate(billDate, language))}
+              </p>
+            )}
+          </div>
+        )}
         {isInstallmentsEnabled && (
           <div className="flex flex-col gap-1">
             <BsFillCreditCard2BackFill
@@ -526,8 +538,8 @@ export default function NewTransaction({
           </div>
         )}
         <div className="flex flex-col gap-1">
-          <FcSurvey size={25} />
           <Input
+            startAdornment={<FcSurvey size={25} />}
             id={`${fieldId}-notes`}
             name="notes"
             label={t.common.notes}
@@ -537,8 +549,8 @@ export default function NewTransaction({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <FcCurrencyExchange size={25} />
           <Input
+            startAdornment={<FcCurrencyExchange size={25} />}
             className="no-spinner"
             id={`${fieldId}-totalValue`}
             name="totalValue"
@@ -554,25 +566,24 @@ export default function NewTransaction({
           <p className="text-sm text-[var(--ctp-red)]">{errorMessage}</p>
         )}
         <div className="flex w-full items-center justify-center gap-2">
-          <button
-            className="h-12 w-full cursor-pointer rounded-md bg-[var(--ctp-surface1)] font-bold text-[var(--ctp-text)] hover:bg-[var(--ctp-surface2)]"
+          <Button
+            variant="secondary"
+            size="lg"
+            className="w-full"
             type="button"
             onClick={handleOnClose}
           >
             {t.common.cancel}
-          </button>
-          <button
-            className={clsx(
-              'h-12 w-full rounded-md font-bold',
-              isSaveDisabled || isSubmitting
-                ? 'cursor-not-allowed bg-[var(--ctp-surface0)] text-[var(--ctp-overlay0)]'
-                : 'cursor-pointer bg-[var(--ctp-blue)] text-[var(--ctp-crust)] hover:bg-[var(--ctp-lavender)]'
-            )}
+          </Button>
+          <Button
+            className="w-full"
+            variant="primary"
+            size="lg"
             type="submit"
             disabled={isSaveDisabled || isSubmitting}
           >
             {isSubmitting ? t.common.saving : t.common.save}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

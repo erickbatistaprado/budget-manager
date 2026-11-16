@@ -77,7 +77,7 @@ it('records a transfer with API dates and refreshes affected data', async (): Pr
   const close = jest.fn();
   renderWithI18n(<MovementForm onClose={close} />);
   fireEvent.change(screen.getByLabelText('Date'), {
-    target: { value: '2026-01-10' },
+    target: { value: '01/10/2026' },
   });
   fireEvent.change(screen.getByLabelText('Amount'), {
     target: { value: '100' },
@@ -128,7 +128,7 @@ it.each(['en', 'pt'] as const)(
       screen.queryByRole('button', { name: common.confirm })
     ).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(labels.date), {
-      target: { value: '2026-01-31' },
+      target: { value: language === 'pt' ? '31/01/2026' : '01/31/2026' },
     });
     fireEvent.change(screen.getByLabelText(labels.bankBalance), {
       target: { value: '150' },
@@ -181,7 +181,7 @@ it.each(['en', 'pt'] as const)(
       target: { value: '120' },
     });
     fireEvent.change(screen.getByLabelText(labels.date), {
-      target: { value: '2026-01-31' },
+      target: { value: language === 'pt' ? '31/01/2026' : '01/31/2026' },
     });
     fireEvent.click(screen.getByRole('button', { name: common.save }));
     await waitFor((): void =>
@@ -204,3 +204,47 @@ it('lists the card bill due dates around the movement, clamped to short months',
     new Date(2025, 11, 31).toDateString(),
   ]);
 });
+
+it.each(['en', 'pt'] as const)(
+  'prefills the investment drawer and saves its date, account and amount in %s',
+  async (language): Promise<void> => {
+    const labels = language === 'pt' ? pt.moneyFlow : en.moneyFlow;
+    const common = language === 'pt' ? pt.common : en.common;
+    renderWithI18n(
+      <MovementForm
+        variant="drawer"
+        initialKind="INVESTMENT"
+        initialDraft={{
+          amount: 321.5,
+          fromAccountId: 'checking',
+          date: '2026/02/28',
+        }}
+        onClose={jest.fn()}
+      />,
+      { language }
+    );
+    expect(screen.getByLabelText(labels.amount)).toHaveValue(321.5);
+    expect(screen.getByLabelText(labels.from)).toHaveValue('checking');
+    fireEvent.change(screen.getByLabelText(labels.saving), {
+      target: { value: 'saving' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: common.save }));
+    await waitFor((): void => {
+      expect(postFetcher).toHaveBeenCalledWith('/movements', {
+        body: JSON.stringify({
+          kind: 'INVESTMENT',
+          date: '2026/02/28',
+          amount: 321.5,
+          fromAccountId: 'checking',
+          toAccountId: null,
+          cardId: null,
+          billDueDate: null,
+          savingId: 'saving',
+          opening: false,
+          notes: null,
+        }),
+      });
+    });
+    expect(refreshMoneyFlow).toHaveBeenCalled();
+  }
+);

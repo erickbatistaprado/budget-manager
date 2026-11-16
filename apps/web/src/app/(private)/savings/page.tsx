@@ -1,5 +1,6 @@
 'use client';
 
+import { Panel, TextInput, Select, Button, Field } from '@/components/ui';
 import {
   AnalyticsCard,
   EmptyState,
@@ -52,8 +53,7 @@ const initialForm: SavingForm = {
   location: SavingLocation.SAVINGS_ACCOUNT,
   investmentType: '',
 };
-const fieldClass =
-  'w-full min-w-0 rounded-lg border border-[var(--ctp-surface2)] bg-[var(--ctp-base)] p-3 text-sm focus-visible:outline-[var(--ctp-blue)]';
+
 const colors = [
   'var(--ctp-blue)',
   'var(--ctp-peach)',
@@ -214,10 +214,7 @@ export default function SavingsPage(): JSX.Element {
         >
           <span className="sr-only">{messages.loading}</span>
           {[0, 1, 2, 3].map((index): JSX.Element => (
-            <div
-              key={index}
-              className="h-40 rounded-2xl bg-[var(--ctp-surface0)]"
-            />
+            <Panel key={index} className="h-40" />
           ))}
         </div>
       ) : (
@@ -406,18 +403,16 @@ export default function SavingsPage(): JSX.Element {
       <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <AnalyticsCard title={messages.entries}>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="min-w-0 text-sm">
-              {messages.search}
-              <input
-                className={`${fieldClass} mt-1`}
+            <Field label={messages.search}>
+              <TextInput
+                className="mt-1"
                 value={search}
                 onChange={(event): void => setSearch(event.target.value)}
               />
-            </label>
-            <label className="min-w-0 text-sm">
-              {messages.sort}
-              <select
-                className={`${fieldClass} mt-1`}
+            </Field>
+            <Field label={messages.sort}>
+              <Select
+                className="mt-1"
                 value={sort}
                 onChange={(event): void =>
                   setSort(event.target.value as SavingsSort)
@@ -426,8 +421,8 @@ export default function SavingsPage(): JSX.Element {
                 <option value="amount">{messages.sortAmount}</option>
                 <option value="name">{messages.sortName}</option>
                 <option value="updated">{messages.sortUpdated}</option>
-              </select>
-            </label>
+              </Select>
+            </Field>
           </div>
           <div
             className="my-4 flex flex-wrap gap-2"
@@ -436,7 +431,8 @@ export default function SavingsPage(): JSX.Element {
           >
             {[null, ...Object.values(SavingLocation)].map(
               (value): JSX.Element => (
-                <button
+                <Button
+                  variant={investmentType === value ? 'primary' : 'secondary'}
                   key={value ?? 'all'}
                   type="button"
                   aria-pressed={location === value}
@@ -444,10 +440,9 @@ export default function SavingsPage(): JSX.Element {
                     setLocation(value);
                     setInvestmentType(null);
                   }}
-                  className={`rounded-full border px-3 py-2 text-xs ${location === value ? 'border-[var(--ctp-blue)] bg-[var(--ctp-blue)]/10 text-[var(--ctp-blue)]' : 'border-[var(--ctp-surface1)] text-[var(--ctp-subtext1)]'}`}
                 >
                   {value === null ? messages.all : messages.locations[value]}
-                </button>
+                </Button>
               )
             )}
           </div>
@@ -463,17 +458,17 @@ export default function SavingsPage(): JSX.Element {
                   .filter((item): boolean => item.amount > 0)
                   .map((item): InvestmentType => item.type),
               ].map((value): JSX.Element => (
-                <button
+                <Button
+                  variant={investmentType === value ? 'primary' : 'secondary'}
                   key={value ?? 'all'}
                   type="button"
                   aria-pressed={investmentType === value}
                   onClick={(): void => setInvestmentType(value)}
-                  className={`rounded-full border px-3 py-2 text-xs ${investmentType === value ? 'border-[var(--ctp-blue)] text-[var(--ctp-blue)]' : 'border-[var(--ctp-surface1)]'}`}
                 >
                   {value === null
                     ? messages.allInvestmentTypes
                     : messages.investmentTypes[value]}
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -504,12 +499,11 @@ export default function SavingsPage(): JSX.Element {
         </AnalyticsCard>
         <AnalyticsCard title={editing ? messages.editTitle : messages.addTitle}>
           <form noValidate onSubmit={submit} className="space-y-4">
-            <label className="block text-sm" htmlFor="saving-name">
-              {t.common.name}
-              <input
+            <Field label={t.common.name}>
+              <TextInput
                 ref={nameInput}
                 id="saving-name"
-                className={`${fieldClass} mt-1`}
+                className="mt-1"
                 value={form.name}
                 aria-invalid={submitted && nameInvalid}
                 aria-describedby={
@@ -519,20 +513,19 @@ export default function SavingsPage(): JSX.Element {
                   setForm({ ...form, name: event.target.value })
                 }
               />
-            </label>
+            </Field>
             {submitted && nameInvalid && (
               <p id="name-error" className="text-xs text-[var(--ctp-red)]">
                 {messages.nameRequired}
               </p>
             )}
-            <label className="block text-sm" htmlFor="saving-amount">
-              {messages.amount} (BRL)
-              <input
+            <Field label={<>{messages.amount} (BRL)</>}>
+              <TextInput
                 id="saving-amount"
                 type="number"
                 min="0"
                 step="0.01"
-                className={`${fieldClass} mt-1`}
+                className="mt-1"
                 value={form.amount}
                 aria-invalid={submitted && amountInvalid}
                 aria-describedby={
@@ -542,17 +535,16 @@ export default function SavingsPage(): JSX.Element {
                   setForm({ ...form, amount: event.target.value })
                 }
               />
-            </label>
+            </Field>
             {submitted && amountInvalid && (
               <p id="amount-error" className="text-xs text-[var(--ctp-red)]">
                 {messages.amountInvalid}
               </p>
             )}
-            <label className="block text-sm" htmlFor="saving-location">
-              {messages.location}
-              <select
+            <Field label={messages.location}>
+              <Select
                 id="saving-location"
-                className={`${fieldClass} mt-1`}
+                className="mt-1"
                 value={form.location}
                 onChange={(event): void =>
                   setForm({
@@ -566,19 +558,15 @@ export default function SavingsPage(): JSX.Element {
                     {messages.locations[value]}
                   </option>
                 ))}
-              </select>
-            </label>
+              </Select>
+            </Field>
             {form.location === SavingLocation.INVESTMENT && (
               <>
-                <label
-                  className="block text-sm"
-                  htmlFor="saving-investment-type"
-                >
-                  {messages.investmentType}
-                  <select
+                <Field label={messages.investmentType}>
+                  <Select
                     id="saving-investment-type"
                     required
-                    className={`${fieldClass} mt-1`}
+                    className="mt-1"
                     value={form.investmentType}
                     aria-invalid={submitted && typeInvalid}
                     aria-describedby={
@@ -605,8 +593,8 @@ export default function SavingsPage(): JSX.Element {
                         ))}
                       </optgroup>
                     ))}
-                  </select>
-                </label>
+                  </Select>
+                </Field>
                 {submitted && typeInvalid && (
                   <span
                     id="type-error"
@@ -618,22 +606,18 @@ export default function SavingsPage(): JSX.Element {
               </>
             )}
             <div className="flex flex-wrap gap-3">
-              <button
-                type="submit"
-                disabled={busy}
-                className="rounded-lg bg-[var(--ctp-blue)] px-4 py-3 text-sm font-medium text-[var(--ctp-crust)] disabled:opacity-50"
-              >
+              <Button variant="primary" type="submit" disabled={busy}>
                 {busy ? t.common.saving : t.common.save}
-              </button>
+              </Button>
               {editing && (
-                <button
+                <Button
+                  variant="secondary"
                   type="button"
                   disabled={busy}
                   onClick={reset}
-                  className="rounded-lg bg-[var(--ctp-surface0)] px-4 py-3 text-sm"
                 >
                   {messages.cancel}
-                </button>
+                </Button>
               )}
             </div>
           </form>
