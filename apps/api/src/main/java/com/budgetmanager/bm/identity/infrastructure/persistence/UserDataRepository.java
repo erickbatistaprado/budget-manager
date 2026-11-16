@@ -22,7 +22,7 @@ public class UserDataRepository {
           Map.ofEntries(
               Map.entry(
                   "profile",
-                  "SELECT id, name, email, salary_day, created_at, updated_at FROM t_user WHERE id = :owner"),
+                  "SELECT id, name, email, salary_day, main_account_id, goal_monthly_pace, created_at, updated_at FROM t_user WHERE id = :owner"),
               Map.entry("categories", "SELECT * FROM t_category WHERE user_id = :owner"),
               Map.entry("transactions", "SELECT * FROM t_transaction WHERE user_id = :owner"),
               Map.entry(
@@ -33,6 +33,10 @@ public class UserDataRepository {
                   "SELECT child.* FROM t_transaction_month child JOIN t_transaction parent ON parent.id = child.transaction_id WHERE parent.user_id = :owner"),
               Map.entry("cards", "SELECT * FROM t_card WHERE user_id = :owner"),
               Map.entry("accounts", "SELECT * FROM t_account WHERE user_id = :owner"),
+              Map.entry("goals", "SELECT * FROM t_goal WHERE user_id = :owner"),
+              Map.entry(
+                  "goalAllocations",
+                  "SELECT child.* FROM t_goal_allocation child JOIN t_goal parent ON parent.id = child.goal_id WHERE parent.user_id = :owner"),
               Map.entry("savings", "SELECT * FROM t_saving WHERE user_id = :owner"),
               Map.entry("financings", "SELECT * FROM t_financing WHERE user_id = :owner"),
               Map.entry(

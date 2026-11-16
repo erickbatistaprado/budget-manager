@@ -13,7 +13,9 @@ public record UserDto(
     @Size(max = 50) String name,
     @Email @NotBlank String email,
     Set<RoleDto> roles,
-    Integer salaryDay) {
+    Integer salaryDay,
+    UUID mainAccountId,
+    java.math.BigDecimal goalMonthlyPace) {
 
   public UserDto {
     roles = roles == null ? Set.of() : Set.copyOf(roles);

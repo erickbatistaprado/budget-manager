@@ -17,6 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public class UserController {
 
   private final UserService service;
+  private final com.budgetmanager.bm.identity.application.UserPreferencesService preferences;
 
   @PostMapping
   public ResponseEntity<UserDto> save(@Valid @RequestBody UserRegistrationRequest userDto) {
@@ -41,7 +42,7 @@ public class UserController {
 
   @PutMapping("/current/preferences")
   public ResponseEntity<Void> updatePreferences(@Valid @RequestBody UserPreferencesRequest dto) {
-    service.updatePreferences(dto.salaryDay());
+    preferences.update(dto.salaryDay(), dto.mainAccountId());
     return noContent().build();
   }
 

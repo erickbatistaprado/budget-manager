@@ -81,6 +81,10 @@ class OverviewServiceTest {
     var january = service.month(YearMonth.of(2026, 1));
     assertThat(january.surplus()).isEqualByComparingTo("800");
     assertThat(january.kept()).isEqualByComparingTo("800");
+    var kept = service.keptHistory(YearMonth.of(2026, 3), 2);
+    assertThat(kept).hasSize(2);
+    assertThat(kept.get(0)).isEqualByComparingTo("-50");
+    assertThat(kept.get(1)).isEqualByComparingTo("800");
   }
 
   @Test

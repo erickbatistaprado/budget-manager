@@ -87,6 +87,28 @@ public class UserService {
     repository.save(user);
   }
 
+  @Transactional
+  public void updateGoalPace(java.math.BigDecimal pace) {
+    if (pace != null && pace.signum() < 0) {
+      throw new ApplicationException(ApplicationError.BAD_REQUEST, "Pace cannot be negative");
+    }
+    User user = lockCurrentUser();
+    user.setGoalMonthlyPace(pace);
+    repository.save(user);
+  }
+
+  @Transactional
+  public User lockCurrentUser() {
+    return repository.lockById(requireCurrentUser().getId()).orElseThrow();
+  }
+
+  @Transactional
+  public void updateMainAccount(UUID accountId) {
+    User user = lockCurrentUser();
+    user.setMainAccountId(accountId);
+    repository.save(user);
+  }
+
   public Optional<User> findByEmail(String email) {
     return repository.findByEmail(email);
   }

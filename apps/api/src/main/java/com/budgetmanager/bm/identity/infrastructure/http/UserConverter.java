@@ -14,6 +14,8 @@ public final class UserConverter {
         .email(entity.getEmail())
         .name(entity.getName())
         .salaryDay(entity.getSalaryDay())
+        .mainAccountId(entity.getMainAccountId())
+        .goalMonthlyPace(entity.getGoalMonthlyPace())
         .roles(checkRoles(entity))
         .build();
   }

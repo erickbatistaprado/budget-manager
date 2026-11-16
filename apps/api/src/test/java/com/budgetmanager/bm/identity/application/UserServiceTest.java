@@ -99,4 +99,18 @@ class UserServiceTest {
     service.updatePreferences(null);
     assertThat(owner.getSalaryDay()).isNull();
   }
+
+  @Test
+  void updatesMainAccountAndGoalPace() {
+    when(repository.lockById(owner.getId())).thenReturn(Optional.of(owner));
+    UUID accountId = UUID.randomUUID();
+    service.updateMainAccount(accountId);
+    assertThat(owner.getMainAccountId()).isEqualTo(accountId);
+    service.updateGoalPace(new java.math.BigDecimal("250.00"));
+    assertThat(owner.getGoalMonthlyPace()).isEqualByComparingTo("250.00");
+    service.updateGoalPace(null);
+    assertThat(owner.getGoalMonthlyPace()).isNull();
+    assertThatThrownBy(() -> service.updateGoalPace(new java.math.BigDecimal("-1")))
+        .isInstanceOf(ApplicationException.class);
+  }
 }

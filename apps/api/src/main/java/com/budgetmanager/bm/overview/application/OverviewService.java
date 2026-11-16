@@ -72,6 +72,24 @@ public class OverviewService {
       BigDecimal debt,
       BigDecimal netWorth) {}
 
+  /** The same kept calculation as the monthly overview, with one ledger snapshot. */
+  public List<BigDecimal> keptHistory(YearMonth before, int count) {
+    var snapshot = ledger.snapshot(before.minusMonths(1).atEndOfMonth());
+    List<BigDecimal> result = new ArrayList<>();
+    for (int offset = 1; offset <= count; offset++) {
+      YearMonth month = before.minusMonths(offset);
+      var entries =
+          snapshot.entries().stream()
+              .filter(entry -> YearMonth.from(entry.date()).equals(month))
+              .toList();
+      result.add(
+          total(entries, TransactionType.INCOME)
+              .subtract(total(entries, TransactionType.EXPENSE))
+              .subtract(invested(snapshot.movements(), month)));
+    }
+    return result;
+  }
+
   public Month month(YearMonth month) {
     LocalDate today = LocalDate.now(clock);
     var snapshot =

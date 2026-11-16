@@ -34,6 +34,10 @@ public class User {
 
   private Integer salaryDay;
 
+  private UUID mainAccountId;
+
+  private java.math.BigDecimal goalMonthlyPace;
+
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "t_user_roles",
