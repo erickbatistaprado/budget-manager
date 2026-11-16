@@ -47,7 +47,11 @@ public class GoalController {
       int position,
       BigDecimal monthlyAmount,
       UUID savingId,
-      Goal.Status status) {
+      Goal.Status status,
+      @JsonFormat(pattern = "yyyy/MM/dd") LocalDate achievedAt,
+      UUID expenseTransactionId,
+      BigDecimal savedAtPurchase,
+      BigDecimal actualPrice) {
     static View of(Goal goal) {
       return new View(
           goal.getId(),
@@ -60,7 +64,11 @@ public class GoalController {
           goal.getPosition(),
           goal.getMonthlyAmount(),
           goal.getSavingId(),
-          goal.getStatus());
+          goal.getStatus(),
+          goal.getAchievedAt(),
+          goal.getExpenseTransactionId(),
+          goal.getSavedAtPurchase(),
+          goal.getActualPrice());
     }
   }
 
@@ -123,6 +131,106 @@ public class GoalController {
     public Plan {
       goals = List.copyOf(goals);
     }
+  }
+
+  public record SplitDraft(
+      @NotNull @JsonFormat(pattern = "yyyy/MM/dd") LocalDate date,
+      @NotNull @DecimalMin(value = "0", inclusive = false) @Digits(integer = 12, fraction = 2)
+          BigDecimal amount,
+      UUID fromAccountId,
+      boolean preview,
+      Map<UUID, @NotNull @DecimalMin("0") @Digits(integer = 12, fraction = 2) BigDecimal>
+          allocations) {
+    public SplitDraft {
+      allocations = allocations == null ? null : Map.copyOf(allocations);
+    }
+  }
+
+  public record SplitView(Map<UUID, BigDecimal> goals, BigDecimal investmentAmount, boolean saved) {
+    public SplitView {
+      goals = Map.copyOf(goals);
+    }
+  }
+
+  @PostMapping("/allocate")
+  public SplitView split(@Valid @RequestBody SplitDraft draft) {
+    var result =
+        service.split(
+            draft.date(),
+            draft.amount(),
+            draft.fromAccountId(),
+            draft.preview(),
+            draft.allocations());
+    return new SplitView(result.goals(), result.investmentAmount(), result.saved());
+  }
+
+  public record PurchaseDraft(
+      @NotNull @DecimalMin(value = "0", inclusive = false) @Digits(integer = 12, fraction = 2)
+          BigDecimal price,
+      @NotNull @JsonFormat(pattern = "yyyy/MM/dd") LocalDate date,
+      @NotNull UUID categoryId,
+      @NotNull com.budgetmanager.bm.ledger.domain.PaymentMethod paymentMethod,
+      UUID cardId,
+      UUID accountId,
+      @Min(2) @Max(500) Integer installments,
+      UUID redemptionAccountId) {}
+
+  @PostMapping("/{id}/purchase")
+  public View purchase(@PathVariable UUID id, @Valid @RequestBody PurchaseDraft draft) {
+    return View.of(
+        service.purchase(
+            id,
+            new GoalService.Purchase(
+                draft.price(),
+                draft.date(),
+                draft.categoryId(),
+                draft.paymentMethod(),
+                draft.cardId(),
+                draft.accountId(),
+                draft.installments(),
+                draft.redemptionAccountId())));
+  }
+
+  public record TipView(
+      UUID categoryId,
+      String category,
+      BigDecimal amount,
+      BigDecimal average,
+      BigDecimal difference,
+      BigDecimal percentAbove,
+      UUID goalId,
+      String goalName,
+      String expectedMonth,
+      String improvedMonth,
+      Long monthsGained) {
+    static TipView of(GoalSavingsTips.Tip tip) {
+      return new TipView(
+          tip.categoryId(),
+          tip.category(),
+          tip.amount(),
+          tip.average(),
+          tip.difference(),
+          tip.percentAbove(),
+          tip.goalId(),
+          tip.goalName(),
+          Forecast.month(tip.expectedMonth()),
+          Forecast.month(tip.improvedMonth()),
+          tip.monthsGained());
+    }
+  }
+
+  @GetMapping("/savings-tips")
+  public List<TipView> tips(@RequestParam(required = false) String month) {
+    YearMonth selected = null;
+    if (month != null) {
+      try {
+        selected = YearMonth.parse(month);
+      } catch (java.time.format.DateTimeParseException exception) {
+        throw new com.budgetmanager.bm.shared.application.ApplicationException(
+            com.budgetmanager.bm.shared.application.ApplicationError.BAD_REQUEST, "Use yyyy-MM");
+      }
+    }
+    return service.tips(selected).stream().map(TipView::of).toList();
   }
 
   @GetMapping

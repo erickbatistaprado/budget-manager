@@ -34,6 +34,8 @@ public class Goal {
 
   private LocalDate achievedAt;
   private UUID expenseTransactionId;
+  private BigDecimal savedAtPurchase;
+  private BigDecimal actualPrice;
 
   @CreationTimestamp
   @Column(updatable = false)

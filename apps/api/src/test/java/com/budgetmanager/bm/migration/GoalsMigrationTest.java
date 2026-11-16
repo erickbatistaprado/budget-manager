@@ -34,7 +34,7 @@ class GoalsMigrationTest {
       statement.execute(
           "INSERT INTO t_account(id,user_id,name,bank) VALUES ('00000000-0000-0000-0000-000000000017','00000000-0000-0000-0000-000000000017','Checking','OTHER')");
     }
-    configuration.target("17").load().migrate();
+    configuration.target("19").load().migrate();
     try (var connection =
             DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
@@ -45,6 +45,15 @@ class GoalsMigrationTest {
         assertThat(result.getObject(1)).isNull();
         assertThat(result.getBigDecimal(2)).isNull();
       }
+      try (var result = statement.executeQuery("SELECT fixed_cost FROM t_category LIMIT 1")) {
+        if (result.next()) {
+          assertThat(result.getObject(1)).isNull();
+        }
+      }
+      statement
+          .executeQuery(
+              "SELECT saved_at_purchase, actual_price, achieved_at, expense_transaction_id FROM t_goal")
+          .close();
       statement.execute(
           "UPDATE t_user SET main_account_id = '00000000-0000-0000-0000-000000000017'");
       statement.execute("DELETE FROM t_account WHERE id = '00000000-0000-0000-0000-000000000017'");

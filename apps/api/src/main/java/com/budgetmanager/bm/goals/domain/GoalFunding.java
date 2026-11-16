@@ -55,6 +55,22 @@ public final class GoalFunding {
     return allocations;
   }
 
+  public static BigDecimal remainder(
+      BigDecimal kept, BigDecimal amount, Collection<BigDecimal> lines) {
+    if (kept == null
+        || amount == null
+        || amount.signum() <= 0
+        || amount.compareTo(kept) > 0
+        || lines.stream().anyMatch(value -> value == null || value.signum() < 0)) {
+      throw new IllegalArgumentException("Invalid split or amount exceeds the month's kept amount");
+    }
+    BigDecimal assigned = lines.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+    if (assigned.compareTo(amount) > 0) {
+      throw new IllegalArgumentException("Split exceeds the kept amount");
+    }
+    return amount.subtract(assigned);
+  }
+
   public static Map<UUID, YearMonth> simulate(List<Item> items, BigDecimal pace, YearMonth start) {
     Map<UUID, BigDecimal> saved = new HashMap<>();
     Map<UUID, YearMonth> months = new HashMap<>();

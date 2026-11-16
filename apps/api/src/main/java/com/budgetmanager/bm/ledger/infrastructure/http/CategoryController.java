@@ -23,6 +23,13 @@ public class CategoryController {
 
   private final CategoryService service;
 
+  public record FixedCost(Boolean fixedCost) {}
+
+  @PutMapping("/{id}/fixed-cost")
+  public CategoryDto fixedCost(@PathVariable java.util.UUID id, @RequestBody FixedCost draft) {
+    return CategoryConverter.entityToDto(service.setFixedCost(id, draft.fixedCost()));
+  }
+
   @PostMapping
   public ResponseEntity<CategoryDto> save(@Valid @RequestBody CategoryDto dto) {
     Category category = service.save(CategoryConverter.dtoToEntity(dto));

@@ -33,6 +33,8 @@ public class Category {
   @Column(nullable = false)
   private String name;
 
+  private Boolean fixedCost;
+
   @NotNull
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)

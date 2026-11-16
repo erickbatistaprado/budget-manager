@@ -8,4 +8,4 @@ import lombok.Builder;
 
 @Builder
 public record CategoryDto(
-    UUID id, @NotBlank String name, @NotNull TransactionType transactionType) {}
+    UUID id, @NotBlank String name, @NotNull TransactionType transactionType, Boolean fixedCost) {}

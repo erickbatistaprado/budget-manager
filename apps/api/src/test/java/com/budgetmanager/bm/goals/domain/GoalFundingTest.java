@@ -24,6 +24,24 @@ class GoalFundingTest {
   }
 
   @Test
+  void splitLeavesInvestmentRemainderAndRejectsExcess() {
+    var first = item("100", null, null);
+    var fixed = item("50", "30", null);
+    var split = GoalFunding.split(List.of(first, fixed), money("200"));
+    assertThat(split.get(first.id())).isEqualByComparingTo("100");
+    assertThat(split.get(fixed.id())).isEqualByComparingTo("50");
+    assertThat(GoalFunding.remainder(money("200"), money("200"), split.values()))
+        .isEqualByComparingTo("50");
+    assertThatThrownBy(() -> GoalFunding.remainder(money("199"), money("200"), split.values()))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> GoalFunding.remainder(money("200"), money("100"), split.values()))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(
+            () -> GoalFunding.remainder(money("200"), money("100"), List.of(money("-1"))))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void waterfallUsesRankAndCarriesRemainderToNextGoal() {
     var first = item("150", null, null);
     var second = item("100", null, null);

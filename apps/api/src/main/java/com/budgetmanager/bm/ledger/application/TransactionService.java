@@ -278,6 +278,17 @@ public class TransactionService {
     return transaction;
   }
 
+  @Transactional(readOnly = true)
+  public List<Transaction> controllableExpenses() {
+    return repository.findMoneyFlowData(userService.requireCurrentUser().getId()).stream()
+        .filter(transaction ->
+            transaction.getCategory().getTransactionType() == TransactionType.EXPENSE)
+        .filter(transaction -> transaction.getRepeats() != RepeatInterval.MONTHLY)
+        .filter(transaction -> transaction.getFinancingId() == null)
+        .filter(transaction -> !Boolean.TRUE.equals(transaction.getCategory().getFixedCost()))
+        .toList();
+  }
+
   private String normalizeSortKey(String sortKey) {
     return switch (sortKey) {
       case "category", "notes", "date", "value" -> sortKey;

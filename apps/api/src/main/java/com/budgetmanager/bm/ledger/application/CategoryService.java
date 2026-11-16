@@ -54,6 +54,7 @@ public class CategoryService {
               return Category.builder()
                   .user(user)
                   .name(name)
+                  .fixedCost(draft.getFixedCost())
                   .transactionType(draft.getTransactionType())
                   .build();
             })
@@ -65,6 +66,13 @@ public class CategoryService {
   public List<Category> findByTransactionType(TransactionType transactionType) {
     return repository.findByUserIdAndTransactionTypeOrderByNameAsc(
         userService.requireCurrentUser().getId(), transactionType);
+  }
+
+  @Transactional
+  public Category setFixedCost(UUID id, Boolean fixedCost) {
+    Category category = requireOwned(id, userService.requireCurrentUser());
+    category.setFixedCost(fixedCost);
+    return repository.save(category);
   }
 
   public Category requireOwned(UUID categoryId, User owner) {
