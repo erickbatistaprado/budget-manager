@@ -37,9 +37,9 @@ export default function InstallmentPrepayment({
   onClose,
 }: Readonly<InstallmentPrepaymentProps>): JSX.Element {
   const { language, t } = useI18n();
-  const installments: Installment[] = [
-    ...(transaction.installments ?? []),
-  ].sort(byNumber);
+  const installments: Installment[] = (transaction.installments ?? []).toSorted(
+    byNumber
+  );
   const pending: Installment[] = installments.filter(
     (installment: Installment): boolean => !installment.paidEarly
   );

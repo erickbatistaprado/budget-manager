@@ -13,7 +13,6 @@ import {
   type ChangeEvent,
   type FormEvent,
   type JSX,
-  type KeyboardEvent,
 } from 'react';
 
 export default function LoginForm(): JSX.Element {
@@ -43,8 +42,8 @@ export default function LoginForm(): JSX.Element {
     await authenticationService.login({ email, password });
   }, [email, name, password]);
 
-  async function onClick(event?: FormEvent): Promise<void> {
-    event?.preventDefault();
+  async function onSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
     setIsError(false);
     setErrorMessage('');
 
@@ -81,71 +80,71 @@ export default function LoginForm(): JSX.Element {
     }
   }
 
-  async function onKeyDown({
-    key,
-  }: KeyboardEvent<HTMLInputElement>): Promise<void> {
-    if (key === 'Enter') {
-      await onClick();
-    }
-  }
-
   return (
     <>
       <h2 className="mb-8 text-center text-3xl font-bold text-[var(--ctp-text)]">
         {variant === 'login' ? t.auth.signIn : t.auth.signUp}
       </h2>
-      <div className="flex flex-col gap-4">
-        {variant === 'register' && (
-          <Input
-            id="name"
-            label={t.common.name}
-            type="text"
-            value={name}
-            onChange={({
-              currentTarget: { value },
-            }: ChangeEvent<HTMLInputElement>): void => setName(value)}
-          />
-        )}
-        <div className={clsx('rounded-md', isError && 'border border-red-400')}>
-          <Input
-            id="email"
-            label={t.auth.email}
-            type="email"
-            value={email}
-            onChange={({
-              currentTarget: { value },
-            }: ChangeEvent<HTMLInputElement>): void => setEmail(value)}
-            onKeyDown={onKeyDown}
-          />
+      <form
+        noValidate
+        aria-label={variant === 'login' ? t.auth.signIn : t.auth.signUp}
+        onSubmit={onSubmit}
+      >
+        <div className="flex flex-col gap-4">
+          {variant === 'register' && (
+            <Input
+              id="name"
+              label={t.common.name}
+              type="text"
+              value={name}
+              onChange={({
+                currentTarget: { value },
+              }: ChangeEvent<HTMLInputElement>): void => setName(value)}
+            />
+          )}
+          <div
+            className={clsx('rounded-md', isError && 'border border-red-400')}
+          >
+            <Input
+              id="email"
+              label={t.auth.email}
+              type="email"
+              value={email}
+              onChange={({
+                currentTarget: { value },
+              }: ChangeEvent<HTMLInputElement>): void => setEmail(value)}
+            />
+          </div>
+          <div
+            className={clsx('rounded-md', isError && 'border border-red-400')}
+          >
+            <Input
+              id="password"
+              label={t.auth.password}
+              type="password"
+              value={password}
+              onChange={({
+                currentTarget: { value },
+              }: ChangeEvent<HTMLInputElement>): void => setPassword(value)}
+            />
+          </div>
+          {errorMessage && (
+            <p className="text-sm text-[var(--ctp-red)]">{errorMessage}</p>
+          )}
         </div>
-        <div className={clsx('rounded-md', isError && 'border border-red-400')}>
-          <Input
-            id="password"
-            label={t.auth.password}
-            type="password"
-            value={password}
-            onChange={({
-              currentTarget: { value },
-            }: ChangeEvent<HTMLInputElement>): void => setPassword(value)}
-            onKeyDown={onKeyDown}
-          />
+        <div className="mt-8">
+          <Button
+            className="w-full"
+            variant="primary"
+            size="lg"
+            fullWidth
+            type="submit"
+            disabled={!password.length || isSubmitting}
+          >
+            {isSubmitting ? t.auth.pleaseWait : submitLabel}
+          </Button>
         </div>
-        {errorMessage && (
-          <p className="text-sm text-[var(--ctp-red)]">{errorMessage}</p>
-        )}
-      </div>
-      <div className="mt-8">
-        <Button
-          className="w-full"
-          variant="primary"
-          size="lg"
-          fullWidth
-          disabled={!password.length || isSubmitting}
-          onClick={onClick}
-        >
-          {isSubmitting ? t.auth.pleaseWait : submitLabel}
-        </Button>
-      </div>
+      </form>
       <p className="mt-6 text-center text-[var(--ctp-subtext1)]">
         {variant === 'login' ? t.auth.noAccount : t.auth.haveAccount}
         <Button variant="ghost" className="ml-1" onClick={toggleVariant}>

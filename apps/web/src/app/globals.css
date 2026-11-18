@@ -158,9 +158,20 @@ input[type='number'] {
   input:disabled {
     cursor: not-allowed;
   }
+  * {
+    scrollbar-color: var(--ctp-blue) transparent;
+    scrollbar-width: thin;
+  }
+}
+
+/* Browsers without the standard scrollbar properties keep the thin blue bar. */
+@supports not (scrollbar-color: auto) {
+  * {
+    scrollbar-width: auto;
+  }
   ::-webkit-scrollbar {
     width: 5px;
-    border-radius: 10px;
+    height: 5px;
   }
   ::-webkit-scrollbar-track {
     background: none;
