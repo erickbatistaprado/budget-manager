@@ -94,6 +94,7 @@ export default function LoginForm(): JSX.Element {
           {variant === 'register' && (
             <Input
               id="name"
+              autoComplete="name"
               label={t.common.name}
               type="text"
               value={name}
@@ -107,6 +108,8 @@ export default function LoginForm(): JSX.Element {
           >
             <Input
               id="email"
+              autoComplete="username"
+              spellCheck={false}
               label={t.auth.email}
               type="email"
               value={email}
@@ -120,6 +123,9 @@ export default function LoginForm(): JSX.Element {
           >
             <Input
               id="password"
+              autoComplete={
+                variant === 'login' ? 'current-password' : 'new-password'
+              }
               label={t.auth.password}
               type="password"
               value={password}

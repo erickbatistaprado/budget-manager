@@ -280,6 +280,15 @@ input[type='number'] {
   appearance: none;
   padding-right: 36px;
 }
+/* Picking a saved suggestion makes browsers paint the field light with dark text, using
+   !important styles; an inset shadow paints the theme's colours over it, slightly tinted so
+   an autofilled field still reads as one. */
+.outlined-box > input:is(:autofill, :-webkit-autofill) {
+  box-shadow: inset 0 0 0 100vmax
+    color-mix(in srgb, var(--ctp-blue) 12%, var(--ctp-surface0));
+  -webkit-text-fill-color: var(--ctp-text);
+  caret-color: var(--ctp-text);
+}
 .outlined-box option {
   background: var(--ctp-base);
   color: var(--ctp-text);
